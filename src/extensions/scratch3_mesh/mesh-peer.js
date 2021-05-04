@@ -69,7 +69,7 @@ class MeshPeer extends MeshService {
             return;
         }
 
-        this.requestDisconnect();
+        this.disconnect();
     }
 }
 

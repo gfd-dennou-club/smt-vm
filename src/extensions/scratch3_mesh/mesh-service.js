@@ -130,6 +130,9 @@ class MeshService {
             }
             this.emitPeripheralEvent(this.runtime.constructor.PERIPHERAL_DISCONNECTED);
             break;
+        case 'request_error':
+            this.emitPeripheralEvent(this.runtime.constructor.PERIPHERAL_REQUEST_ERROR);
+            break;
         }
     }
 
