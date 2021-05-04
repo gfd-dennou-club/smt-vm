@@ -1,34 +1,36 @@
-/* global chrome */
+const debugMode = true;
 
 const formatMessage = require('format-message');
 const Variable = require('../../engine/variable');
+const BlockUtility = require('../../engine/block-utility.js');
 
 const log = require('../../util/log');
 const debugLogger = require('../../util/debug-logger');
-const debug = debugLogger(true);
+const debug = debugLogger(debugMode);
 
-const CHROME_MESH_EXTENSION_ID = 'ioaoebnfpgnbehdolokpdddomfnhpckn';
-const MESH_WSS_URL = 'wss://api.smalruby.app/mesh-signaling';
+const TTL = 15 * 60 * 1000;
+
+const Peer = require('skyway-js');
 
 class MeshService {
-    constructor (blocks, meshId, webSocket) {
+    constructor (blocks, meshId, peer) {
         this.blocks = blocks;
 
         this.runtime = this.blocks.runtime;
 
         this.meshId = meshId;
 
-        this.setWebSocket(webSocket);
+        this.peerId = `${this.meshId}_peer_${this.ttl()}`;
+
+        this.peer = peer;
+
+        this.room = null;
 
         this.connectionState = 'disconnected';
 
         this.connectTimeoutId = null;
 
         this.connectTimeoutSeconds = 10;
-
-        this.rtcConnections = {};
-
-        this.rtcDataChannels = {};
 
         this.variables = {};
 
@@ -41,25 +43,8 @@ class MeshService {
         return 'Mesh Service';
     }
 
-    setWebSocket (webSocket) {
-        this.webSocket = webSocket;
-
-        if (this.webSocket) {
-            this.webSocket.onopen = this.onWebSocketOpen.bind(this);
-            this.webSocket.onmessage = this.onWebSocketMessage.bind(this);
-            this.webSocket.onclose = this.onWebSocketClose.bind(this);
-            this.webSocket.onerror = this.onWebSocketError.bind(this);
-        }
-    }
-
-    isWebSocketOpened () {
-        return this.webSocket && this.webSocket.readyState === 1;
-    }
-
-    openWebSocket () {
-        if (!this.webSocket || this.webSocket.readyState === 2 || this.webSocket.readyState === 3) {
-            this.setWebSocket(new WebSocket(MESH_WSS_URL));
-        }
+    ttl () {
+        return new Date().getTime() + TTL;
     }
 
     scan (hostMeshId) {
@@ -79,13 +64,7 @@ class MeshService {
 
             this.emitPeripheralEvent(this.runtime.constructor.PERIPHERAL_LIST_UPDATE);
 
-            if (this.isWebSocketOpened()) {
-                this.sendWebSocketMessage('list', {
-                    meshId: this.meshId
-                });
-            } else {
-                this.openWebSocket();
-            }
+            this.openPeerThenListAllPeers();
         } catch (error) {
             log.error(`Failed to scan: reason=<${error}>`);
         }
@@ -118,15 +97,9 @@ class MeshService {
             this.connectTimeoutId = null;
         }
 
-        this.webSocket.close();
-
-        Object.keys(this.rtcConnections).forEach(meshId => {
-            this.rtcConnections[meshId].close();
-        });
-        this.rtcConnections = {};
-        this.rtcDataChannels = {};
-
         this.setConnectionState('disconnected');
+
+        this.peer.destroy();
     }
 
     setConnectionState (connectionState) {
@@ -153,55 +126,57 @@ class MeshService {
         }
     }
 
-    onWebSocketOpen () {
-        try {
-            debug(() => 'WebSocket opened.');
-
-            this.sendWebSocketMessage('list', {
-                meshId: this.meshId
-            });
-        } catch (error) {
-            log.error(`Failed in WebSocket open event handler: reason=<${error}>`);
+    openPeer() {
+        if (this.peer) {
+            debug(() => 'service: peer destroy');
+            this.peer.destroy();
         }
+
+        let debugLevel = 0;
+        if (debugMode) {
+            debugLevel = 3;
+        }
+        this.peer = new Peer(this.peerId, {
+            key: 'a9023dec-9791-4949-add5-d5306a45ad95',
+            debug: debugLevel
+        });
+        this.peer.on('close', this.onPeerClose.bind(this));
     }
 
-    onWebSocketMessage (event) {
-        try {
-            debug(() => `Received WebSocket message: message=<${event.data}>`);
-
-            const message = JSON.parse(event.data);
-            const {action, result, data} = message;
-
-            const actionMethodName = `${action}WebSocketAction`;
-            if (this[actionMethodName]) {
-                log.info(`Process WebSocket message: ` +
-                         `action=${action} result=<${result}> data=<${JSON.stringify(data)}>`);
-                this[actionMethodName](result, data);
+    openPeerThenListAllPeers () {
+        if (this.peer) {
+            if (this.peer.open) {
+                this.peer.listAllPeers(this.updateAvailablePeripherals.bind(this));
             } else {
-                log.error(`Unknown WebSocket message action: ${action}`);
+                log.info('Now listing, please wait to list.');
             }
-        } catch (error) {
-            log.error(`Failed to process WebSocket message: reason=<${error}>`);
+        } else {
+            this.openPeer();
+            this.peer.on('open', () => {
+                debug(() => `Opened peer: peerId=<${this.peerId}>`);
+                this.peer.listAllPeers(this.updateAvailablePeripherals.bind(this));
+            });
         }
     }
 
-    onWebSocketClose () {
-        debug(() => 'WebSocket closed.');
-    }
+    updateAvailablePeripherals (peers) {
+        const now = new Date().getTime();
+        peers.forEach(peerId => {
+            let meshId, hostOrPeer, timestamp, domain;
+            [meshId, hostOrPeer, ttl, domain] = peerId.split('_');
+            debug(() => `service: peer updateAvailablePeripherals=<${[meshId, hostOrPeer, ttl, domain]}>`);
 
-    onWebSocketError (event) {
-        log.error(`Occured WebSocket error: ${event}`);
-    }
+            if (this.meshId === meshId || hostOrPeer !== 'host') {
+                debug(() => `service: peer skip add availablePeripherals reason=<not host>`);
+                return;
+            }
 
-    listWebSocketAction (result, data) {
-        if (!result) {
-            log.error(`Failed to list: reason=<${data.error}>`);
-            return;
-        }
+            const t = Math.floor((Number(ttl) - now) / 1000);
+            if (t >= 15 * 60) {
+                debug(() => `service: peer skip add availablePeripherals reason=<timeout> t=<${t}>`);
+                return;
+            }
 
-        const now = Math.floor(Date.now() / 1000);
-        data.hosts.forEach(host => {
-            const t = host.ttl - now;
             let rssi;
             if (t >= 4 * 60) {
                 rssi = 0;
@@ -214,13 +189,13 @@ class MeshService {
             } else {
                 rssi = -80;
             }
-            this.availablePeripherals[host.meshId] = {
+            this.availablePeripherals[meshId] = {
                 name: formatMessage({
                     id: 'mesh.clientPeripheralName',
                     default: 'Join Mesh [{ MESH_ID }]',
                     description: 'label for "Join Mesh" in connect modal for Mesh extension'
-                }, {MESH_ID: this.blocks.makeMeshIdLabel(host.meshId)}),
-                peripheralId: host.meshId,
+                }, {MESH_ID: this.blocks.makeMeshIdLabel(meshId)}),
+                peripheralId: peerId,
                 rssi: rssi
             };
         });
@@ -228,85 +203,25 @@ class MeshService {
         this.emitPeripheralEvent(this.runtime.constructor.PERIPHERAL_LIST_UPDATE);
     }
 
-    sendWebSocketMessage (action, data, result) {
-        const message = {
-            action: action,
-            data: data
-        };
-        if (typeof result !== 'undefined') {
-            message.result = result;
+    onPeerClose() {
+        debug(() => 'Closed peer');
+
+        if (this.room) {
+            this.room.close();
         }
 
-        debug(() => `Send WebSocket message: message=<${JSON.stringify(message)}>`);
-
-        this.webSocket.send(JSON.stringify(message));
-    }
-
-    openRTCPeerConnection (meshId) {
-        if (this.rtcConnections[meshId]) {
-            log.info(`Already open WebRTC connection: peer=<${meshId}>`);
-
-            const channel = this.rtcDataChannels[meshId];
-            if (channel) {
-                channel.onopen = null;
-                channel.onmessage = null;
-                channel.onclose = null;
-                delete this.rtcDataChannels[meshId];
-            }
-            this.closeRTCPeerConnection(meshId);
+        if (this.connectionState !== 'disconnected') {
+            this.disconnect();
         }
 
-        debug(() => `Open WebRTC connection: peer=<${meshId}>`);
-
-        const connection = new RTCPeerConnection({
-            iceServers: [
-                {
-                    urls: [
-                        'stun:stun.l.google.com:19302',
-                        'stun:stun1.l.google.com:19302',
-                        'stun:stun2.l.google.com:19302',
-                        'stun:stun3.l.google.com:19302',
-                        'stun:stun4.l.google.com:19302'
-                    ]
-                }
-            ]
-        });
-        this.rtcConnections[meshId] = connection;
-        return connection;
+        debug(() => 'set peer=null');
+        this.peer = null;
     }
 
-    onRTCConnectionStateChange (connection, peerMeshId) {
-        debug(() => `Changed WebRTC connection state: ${connection.connectionState}`);
-
-        switch (connection.connectionState) {
-        case 'disconnected':
-            log.error(`Disconnected WebRTC connection by peer: peer=<${peerMeshId}>`);
-            this.closeRTCPeerConnection(peerMeshId);
-            break;
-        case 'failed':
-            log.error(`Failed WebRTC connection: peer=<${peerMeshId}>`);
-            this.closeRTCPeerConnection(peerMeshId);
-            break;
-        }
-    }
-
-    onRTCICECandidate (connection, peerMeshId, event, onDescriptionCreate) {
-        if (event.candidate) {
-            debug(() => `ICE candidate: peer=<${peerMeshId}> candidate=<\n` +
-                  `${JSON.stringify(event.candidate, null, 2)}\n` +
-                  `>`);
-        } else {
-            onDescriptionCreate(connection.localDescription);
-        }
-    }
-
-    closeRTCPeerConnection (meshId) {
-        debug(() => `Close WebRTC connection: peer=<${meshId}>`);
-
-        const connection = this.rtcConnections[meshId];
-        if (connection) {
-            connection.close();
-            delete this.rtcConnections[meshId];
+    onConnectTimeout () {
+        this.connectTimeoutId = null;
+        if (!this.isConnected()) {
+            this.peer.destroy();
         }
     }
 
@@ -326,83 +241,52 @@ class MeshService {
         return variables;
     }
 
-    onRTCDataChannelOpen (connection, dataChannel, peerMeshId) {
-        debug(() => `Open WebRTC data channel: peer=<${peerMeshId}>`);
-
-        this.revertWebRTCIPHandlingPolicy();
-
-        if (this.rtcDataChannels[peerMeshId]) {
-            log.error(`Already open WebRTC data channel: peer=<${peerMeshId}>`);
-        }
-        this.rtcDataChannels[peerMeshId] = dataChannel;
-
-        this.sendVariablesTo(this.getGlobalVariables(), peerMeshId);
+    onRoomOpen () {
+        debug(() => `Opened room: ${this.room.name}`);
+        this.setConnectionState('connected');
     }
 
-    onRTCDataChannelMessage (connection, dataChannel, peerMeshId, event) {
+    onRoomPeerJoin (peerId) {
+        debug(() => `Joined peer to our room: name=<${this.room.name}> peerId=<${peerId}>`);
+
+        this.sendVariables(this.getGlobalVariables());
+    }
+
+    onRoomPeerLeave (peerId) {
+        debug(() => `Leaved peer from our room: room=<${this.room.name}> peerId=<${peerId}>`);
+    }
+
+    onRoomLog (logs) {
+        debug(() => `Received logs: num logs=<${logs.length}>`);
+        for (const logStr of logs) {
+            log.info(logStr);
+        }
+    }
+
+    onRoomData ({src, data}) {
+        debug(() => `Received Room data: src=<${src}> data=<${data}>`);
         try {
-            debug(() => `Received WebRTC message: peer=<${peerMeshId}> data=<${event.data}>`);
+            const message = JSON.parse(data);
 
-            const message = JSON.parse(event.data);
-
-            const {type, data} = message;
-
-            const actionMethodName = `${type}RTCAction`;
+            const actionMethodName = `${message.type}Action`;
             if (this[actionMethodName]) {
-                log.info(`Process WebRTC message: ` +
-                         `type=${type} peer=<${peerMeshId}> data=<${JSON.stringify(data)}>`);
+                debug(() => `Process Room data: src=${src} ` +
+                      `owner=${message.owner} type=${message.type} data=<${JSON.stringify(message.data)}>`);
 
-                this[actionMethodName](peerMeshId, message);
+                this[actionMethodName](message.owner, message.data);
             } else {
-                log.error(`Unknown WebRTC message type: type=<${type}> peer=<${peerMeshId}>`);
+                log.error(`Unknown Room data type: type=<${message.type}> src=<${src}>`);
             }
         } catch (error) {
-            log.error(`Failed to process WebRTC message: ${error}`);
+            log.error(`Failed to process Room data: ${error}`);
             return;
         }
     }
 
-    onRTCDataChannelClose (connection, dataChannel, peerMeshId) {
-        debug(() => `Close WebRTC data channel: peer=<${peerMeshId}>`);
+    onRoomClose () {
+        debug(() => `Closed room: name=<${this.room.name}>`);
 
-        this.revertWebRTCIPHandlingPolicy();
-
-        this.closeRTCPeerConnection(peerMeshId);
-        delete this.rtcDataChannels[peerMeshId];
-    }
-
-    sendMessageToChromeMeshExtension (action) {
-        debug(() => `Send message to Chrome mesh extension: action=<${action}>`);
-
-        return new Promise((resolve, reject) => {
-            try {
-                chrome.runtime.sendMessage(CHROME_MESH_EXTENSION_ID, {action: action}, null, response => {
-                    if (typeof chrome.runtime.lastError === 'undefined') {
-                        debug(() => `Succeeded sending message to Chrome mesh extension: ` +
-                              `response=<${JSON.stringify(response)}>`);
-                    } else {
-                        log.error(`Failed to send message to Chrome extension: ` +
-                                  `lastError=<${JSON.stringify(chrome.runtime.lastError)}>`);
-                    }
-                    resolve();
-                });
-            } catch (error) {
-                debug(() => `Failed to send message to Chrome extension: ${error}`);
-                resolve();
-            }
-        });
-    }
-
-    changeWebRTCIPHandlingPolicy () {
-        debug(() => 'Change WebRTC IPHandlingPolicy to default.');
-
-        return this.sendMessageToChromeMeshExtension('change');
-    }
-
-    revertWebRTCIPHandlingPolicy () {
-        debug(() => 'Revert WebRTC IPHandlingPolicy to before default.');
-
-        return this.sendMessageToChromeMeshExtension('revert');
+        this.room = null;
     }
 
     emitPeripheralEvent (event) {
@@ -444,24 +328,18 @@ class MeshService {
         return variable.value;
     }
 
-    sendRTCMessage (message) {
-        const peers = Object.keys(this.rtcDataChannels);
-
-        debug(() => `Send WebRTC message to all peers: ` +
-              `message=<${JSON.stringify(message)}> peers=<${peers.join(', ')}>`);
-
+    sendMessage (message) {
+        debug(() => `Send message to room: ` +
+              `name=<${this.room.name}> message=<${JSON.stringify(message)}>`);
         try {
-            peers.forEach(meshId => {
-                const channel = this.rtcDataChannels[meshId];
-                channel.send(JSON.stringify(message));
-            });
+            this.room.send(JSON.stringify(message));
         } catch (error) {
-            log.error(`Failed to send WebRTC message: error=<${error}> message=<${JSON.stringify(message)}>`);
+            log.error(`Failed to send message: error=<${error}> message=<${JSON.stringify(message)}>`);
         }
     }
 
-    sendRTCBroadcastMessage (name) {
-        this.sendRTCMessage({
+    sendBroadcastMessage (name) {
+        this.sendMessage({
             owner: this.meshId,
             type: 'broadcast',
             data: {
@@ -470,8 +348,8 @@ class MeshService {
         });
     }
 
-    sendRTCVariableMessage (name, value) {
-        this.sendRTCMessage({
+    sendVariableMessage (name, value) {
+        this.sendMessage({
             owner: this.meshId,
             type: 'variable',
             data: {
@@ -481,31 +359,59 @@ class MeshService {
         });
     }
 
-    sendVariablesTo (variables, peerMeshId) {
-        const channel = this.rtcDataChannels[peerMeshId];
+    sendVariables (variables) {
+        if (!this.room) {
+            log.error('Failed to send variables: reason=<not join room>');
+            return;
+        }
+
+        const message = {
+            owner: this.meshId,
+            type: 'variables',
+            data: variables
+        };
+
+        debug(() => `Send Room message: ` +
+              `message=<${JSON.stringify(message)}>`);
+
+        this.room.send(JSON.stringify(message));
+    }
+
+    variableAction (owner, data) {
+        const variable = data;
+
+        debug(() => `Process variable: owner=<${owner}> variable=<${JSON.stringify(variable)}>`);
+
+        this.setVariable(variable.name, variable.value, owner);
+    }
+
+    variablesAction (owner, data) {
+        const variables = data;
+
+        debug(() => `Process variables: owner=<${owner}> variables=<${JSON.stringify(variables)}>`);
+
         Object.keys(variables).forEach(name => {
             const variable = variables[name];
-
-            const message = {
-                owner: variable.owner,
-                type: 'variable',
-                data: {
-                    name: variable.name,
-                    value: variable.value
-                }
-            };
-
-            debug(() => `Send WebRTC message: ` +
-                  `message=<${JSON.stringify(message)}> peer=<${peerMeshId}>`);
-
-            channel.send(JSON.stringify(message));
+            this.setVariable(variable.name, variable.value, variable.owner);
         });
     }
 
-    sleep (seconds) {
-        debug(() => `Sleep: senconds=<${seconds}>`);
+    broadcastAction (owner, data) {
+        const broadcast = data;
 
-        return new Promise(resolve => setTimeout(resolve, seconds * 1000));
+        debug(() => `Process broadcast: owner=<${owner}> broadcast=<${JSON.stringify(broadcast)}>`);
+
+        const args = {
+            BROADCAST_OPTION: {
+                id: null,
+                name: broadcast.name
+            }
+        };
+        const util = BlockUtility.lastInstance();
+        if (!util.sequencer) {
+            util.sequencer = this.runtime.sequencer;
+        }
+        this.blocks.opcodeFunctions.event_broadcast(args, util);
     }
 }
 
