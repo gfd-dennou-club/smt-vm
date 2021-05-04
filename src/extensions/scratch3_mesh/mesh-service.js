@@ -8,21 +8,24 @@ const log = require('../../util/log');
 const debugLogger = require('../../util/debug-logger');
 const debug = debugLogger(debugMode);
 
-const TTL = 15 * 60 * 1000;
+const TTL = 15 * 60;
 
 const Peer = require('skyway-js');
 
 class MeshService {
-    constructor (blocks, meshId, peer) {
+    constructor (blocks, meshId) {
         this.blocks = blocks;
 
         this.runtime = this.blocks.runtime;
 
         this.meshId = meshId;
 
-        this.peerId = `${this.meshId}_peer_${this.ttl()}`;
+        const urlParams = new URLSearchParams(window.location.search);
+        this.domain = (urlParams.get('mesh') || 'none').replaceAll('_', '-').slice(0, 10);
 
-        this.peer = peer;
+        this.peerId = this.makePeerId('peer');
+
+        this.peer = null;
 
         this.room = null;
 
@@ -43,8 +46,12 @@ class MeshService {
         return 'Mesh Service';
     }
 
+    makePeerId (hostOrPeer) {
+        return `${this.meshId}_${hostOrPeer}_${this.ttl()}_${this.domain}`;
+    }
+
     ttl () {
-        return new Date().getTime() + TTL;
+        return Math.floor(new Date().getTime() / 1000) + TTL;
     }
 
     scan (hostMeshId) {
@@ -126,7 +133,7 @@ class MeshService {
         }
     }
 
-    openPeer() {
+    openPeer () {
         if (this.peer) {
             debug(() => 'service: peer destroy');
             this.peer.destroy();
@@ -160,18 +167,17 @@ class MeshService {
     }
 
     updateAvailablePeripherals (peers) {
-        const now = new Date().getTime();
+        const now = Math.floor(new Date().getTime() / 1000);
         peers.forEach(peerId => {
-            let meshId, hostOrPeer, timestamp, domain;
-            [meshId, hostOrPeer, ttl, domain] = peerId.split('_');
+            const [meshId, hostOrPeer, ttl, domain] = peerId.split('_');
             debug(() => `service: peer updateAvailablePeripherals=<${[meshId, hostOrPeer, ttl, domain]}>`);
 
-            if (this.meshId === meshId || hostOrPeer !== 'host') {
+            if (this.meshId === meshId || hostOrPeer !== 'host' || domain !== this.domain) {
                 debug(() => `service: peer skip add availablePeripherals reason=<not host>`);
                 return;
             }
 
-            const t = Math.floor((Number(ttl) - now) / 1000);
+            const t = Number(ttl) - now;
             if (t >= 15 * 60) {
                 debug(() => `service: peer skip add availablePeripherals reason=<timeout> t=<${t}>`);
                 return;
@@ -203,7 +209,7 @@ class MeshService {
         this.emitPeripheralEvent(this.runtime.constructor.PERIPHERAL_LIST_UPDATE);
     }
 
-    onPeerClose() {
+    onPeerClose () {
         debug(() => 'Closed peer');
 
         if (this.room) {

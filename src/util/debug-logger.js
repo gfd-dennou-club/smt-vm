@@ -10,6 +10,6 @@ const debugLogger = debugFlag => {
         }
     };
     return debug;
-}
+};
 
 module.exports = debugLogger;

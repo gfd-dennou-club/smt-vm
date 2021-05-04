@@ -18,22 +18,22 @@ const blockIconURI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYA
 const MESH_HOST_PERIPHERAL_ID = 'mesh_host';
 
 const MESH_ID_LABEL_CHARACTERS = {
-    '0': 'い',
-    '1': 'し',
-    '2': 'か',
-    '3': 'た',
-    '4': 'う',
-    '5': 'ん',
-    '6': 'て',
-    '7': 'と',
-    '8': 'の',
-    '9': 'つ',
-    'a': 'は',
-    'b': 'こ',
-    'c': 'に',
-    'd': 'な',
-    'e': 'く',
-    'f': 'き'
+    0: 'い',
+    1: 'し',
+    2: 'か',
+    3: 'た',
+    4: 'う',
+    5: 'ん',
+    6: 'て',
+    7: 'と',
+    8: 'の',
+    9: 'つ',
+    a: 'は',
+    b: 'こ',
+    c: 'に',
+    d: 'な',
+    e: 'く',
+    f: 'き'
 };
 
 /**
@@ -67,13 +67,13 @@ class Scratch3MeshBlocks {
          * Mesh ID
          * @type {string}
          */
-        this.meshId = uuidv4();
+        this.meshId = uuidv4().replaceAll('-', '');
 
         /**
          * Mesh Object
          * @type {MeshHost|MeshPeer}
          */
-        this.meshService = new MeshPeer(this, this.meshId, null);
+        this.meshService = new MeshPeer(this, this.meshId);
 
         this.runtime.registerPeripheralExtension(Scratch3MeshBlocks.EXTENSION_ID, this);
     }
@@ -128,7 +128,7 @@ class Scratch3MeshBlocks {
     scan () {
         if (this.meshService.isHost) {
             this.meshService.disconnect();
-            this.meshService = new MeshPeer(this, this.meshId, null);
+            this.meshService = new MeshPeer(this, this.meshId);
         }
 
         this.meshService.scan(MESH_HOST_PERIPHERAL_ID);
@@ -136,7 +136,7 @@ class Scratch3MeshBlocks {
 
     /**
      * Called by the runtime when user wants to connect to a certain peripheral.
-     * @param {string} meshId - the Mesh ID of the peripheral to connect to.
+     * @param {string} peerId - the Peer ID of the peripheral to connect to.
      */
     connect (peerId) {
         this.setOpcodeFunctionHOC();
@@ -145,7 +145,7 @@ class Scratch3MeshBlocks {
         if (peerId === MESH_HOST_PERIPHERAL_ID) {
             this.meshService.disconnect();
 
-            this.meshService = new MeshHost(this, this.meshId, this.meshService.peer);
+            this.meshService = new MeshHost(this, this.meshId);
             this.meshService.connect();
         } else {
             this.meshService.connect(peerId);

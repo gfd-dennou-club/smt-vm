@@ -1,17 +1,16 @@
 const debugMode = true;
 
 const MeshService = require('./mesh-service');
-const MeshPeer = require('./mesh-peer');
 
 const log = require('../../util/log');
 const debugLogger = require('../../util/debug-logger');
 const debug = debugLogger(debugMode);
 
 class MeshHost extends MeshService {
-    constructor (blocks, meshId, peer) {
-        super(blocks, meshId, peer);
+    constructor (blocks, meshId) {
+        super(blocks, meshId);
 
-        this.peerId = `${this.meshId}_host_${this.ttl()}`;
+        this.peerId = this.makePeerId('host');
 
         this.isHost = true;
     }

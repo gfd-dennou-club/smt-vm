@@ -1,10 +1,6 @@
-const debugMode = true;
-
 const MeshService = require('./mesh-service');
 
 const log = require('../../util/log');
-const debugLogger = require('../../util/debug-logger');
-const debug = debugLogger(debugMode);
 
 class MeshPeer extends MeshService {
     get logPrefix () {
@@ -21,31 +17,41 @@ class MeshPeer extends MeshService {
             return;
         }
 
-        let meshId, hostOrPeer, timestamp, domain;
-        [hostMeshId, hostOrPeer, ttl, domain] = hostPeerId.split('_');
+        this.peer.fetchPeerExists(hostPeerId).then(isExist => {
+            if (!isExist) {
+                this.setConnectionState('request_error');
 
-        if (!hostMeshId || hostMeshId.trim() === '' || hostOrPeer !== 'host') {
-            this.setConnectionState('request_error');
+                log.error(`Not exists host: ${hostPeerId}`);
+                return;
+            }
 
-            log.error('Not select Host Mesh ID');
-            return;
-        }
+            const [hostMeshId, hostOrPeer, ttl, domain] = hostPeerId.split('_');
 
-        this.hostMeshId = hostMeshId;
-        this.hostPeerId = hostPeerId;
+            const now = Math.floor(new Date().getTime() / 1000);
+            if (!hostMeshId || hostMeshId.trim() === '' || hostOrPeer !== 'host' ||
+                Number(ttl) - now < 0 || domain !== this.domain) {
+                this.setConnectionState('request_error');
 
-        this.setConnectionState('connecting');
+                log.error('Not select Host Mesh ID');
+                return;
+            }
 
-        this.room = this.peer.joinRoom(this.hostPeerId);
-        this.room.on('open', this.onRoomOpen.bind(this));
-        this.room.on('peerJoin', this.onRoomPeerJoin.bind(this));
-        this.room.on('peerLeave', this.onRoomPeerLeave.bind(this));
-        this.room.once('log', this.onRoomLog.bind(this));
-        this.room.on('data', this.onRoomData.bind(this));
-        this.room.on('close', this.onRoomClose.bind(this));
+            this.hostMeshId = hostMeshId;
+            this.hostPeerId = hostPeerId;
 
-        this.connectTimeoutId =
-            setTimeout(this.onConnectTimeout.bind(this), this.connectTimeoutSeconds * 1000);
+            this.setConnectionState('connecting');
+
+            this.room = this.peer.joinRoom(this.hostPeerId);
+            this.room.on('open', this.onRoomOpen.bind(this));
+            this.room.on('peerJoin', this.onRoomPeerJoin.bind(this));
+            this.room.on('peerLeave', this.onRoomPeerLeave.bind(this));
+            this.room.once('log', this.onRoomLog.bind(this));
+            this.room.on('data', this.onRoomData.bind(this));
+            this.room.on('close', this.onRoomClose.bind(this));
+
+            this.connectTimeoutId =
+                setTimeout(this.onConnectTimeout.bind(this), this.connectTimeoutSeconds * 1000);
+        });
     }
 
     onRoomOpen () {
