@@ -58,6 +58,8 @@ class MeshService {
         try {
             debug(() => `Scan: hostMeshId=<${hostMeshId}>`);
 
+            this.setConnectionState('scanning');
+
             this.availablePeripherals = {};
             this.availablePeripherals[hostMeshId] = {
                 name: formatMessage({
@@ -123,7 +125,7 @@ class MeshService {
             this.emitPeripheralEvent(this.runtime.constructor.PERIPHERAL_CONNECTED);
             break;
         case 'disconnected':
-            if (prevConnectionState === 'connecting') {
+            if (prevConnectionState === 'scanning' || prevConnectionState === 'connecting') {
                 this.emitPeripheralEvent(this.runtime.constructor.PERIPHERAL_REQUEST_ERROR);
             } else if (prevConnectionState !== 'disconnecting' && prevConnectionState !== 'disconnected') {
                 this.emitPeripheralEvent(this.runtime.constructor.PERIPHERAL_CONNECTION_LOST_ERROR);
@@ -151,6 +153,7 @@ class MeshService {
             debug: debugLevel
         });
         this.peer.on('close', this.onPeerClose.bind(this));
+        this.peer.on('error', this.onPeerError.bind(this));
     }
 
     openPeerThenListAllPeers () {
@@ -223,8 +226,19 @@ class MeshService {
             this.disconnect();
         }
 
-        debug(() => 'set peer=null');
         this.peer = null;
+    }
+
+    onPeerError (error) {
+        debug(() => `Occured error: ${JSON.stringify(error)}`);
+
+        log.error(`Error: type=<${error.type}> message=<${error.message}>`);
+
+        if (this.connectionState === 'disconnected') {
+            return;
+        }
+
+        this.disconnect();
     }
 
     onConnectTimeout () {
