@@ -25,10 +25,11 @@ class MeshPeer extends MeshService {
                 return;
             }
 
-            const [hostMeshId, hostOrPeer, ttl, domain] = hostPeerId.split('_');
+            const [hostMeshId, hostOrPeer, ttl, ...domains] = hostPeerId.split('_');
+            const domain = domains.join('_');
 
             const now = Math.floor(new Date().getTime() / 1000);
-            if (!hostMeshId || hostMeshId.trim() === '' || hostOrPeer !== 'host' ||
+            if (!hostMeshId || hostMeshId.trim() === '' || hostOrPeer !== 'h' ||
                 Number(ttl) - now < 0 || domain !== this.domain) {
                 this.setConnectionState('request_error');
 

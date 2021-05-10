@@ -7,10 +7,8 @@ const debugLogger = require('../../util/debug-logger');
 const debug = debugLogger(debugMode);
 
 class MeshHost extends MeshService {
-    constructor (blocks, meshId) {
-        super(blocks, meshId);
-
-        this.peerId = this.makePeerId('host');
+    constructor (blocks, meshId, domain) {
+        super(blocks, meshId, domain);
 
         this.isHost = true;
     }

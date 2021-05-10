@@ -67,13 +67,13 @@ class Scratch3MeshBlocks {
          * Mesh ID
          * @type {string}
          */
-        this.meshId = uuidv4().replaceAll('-', '');
+        this.meshId = uuidv4().replaceAll('-', ''); /* NOTE: IDのバイト数を短くするため "-" を削っている */
 
         /**
          * Mesh Object
          * @type {MeshHost|MeshPeer}
          */
-        this.meshService = new MeshPeer(this, this.meshId);
+        this.meshService = new MeshPeer(this, this.meshId, null);
 
         this.runtime.registerPeripheralExtension(Scratch3MeshBlocks.EXTENSION_ID, this);
     }
@@ -128,7 +128,7 @@ class Scratch3MeshBlocks {
     scan () {
         if (this.meshService.isHost) {
             this.meshService.disconnect();
-            this.meshService = new MeshPeer(this, this.meshId);
+            this.meshService = new MeshPeer(this, this.meshId, null);
         }
 
         this.meshService.scan(MESH_HOST_PERIPHERAL_ID);
@@ -145,7 +145,7 @@ class Scratch3MeshBlocks {
         if (peerId === MESH_HOST_PERIPHERAL_ID) {
             this.meshService.disconnect();
 
-            this.meshService = new MeshHost(this, this.meshId);
+            this.meshService = new MeshHost(this, this.meshId, this.meshService.domain);
             this.meshService.connect();
         } else {
             this.meshService.connect(peerId);

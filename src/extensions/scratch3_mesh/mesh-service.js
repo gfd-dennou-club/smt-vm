@@ -8,22 +8,22 @@ const log = require('../../util/log');
 const debugLogger = require('../../util/debug-logger');
 const debug = debugLogger(debugMode);
 
+const MESH_DOMAIN_MAKER_URL = 'https://api.smalruby.app/mesh-domain';
 const TTL = 15 * 60;
 
 const Peer = require('skyway-js');
 
 class MeshService {
-    constructor (blocks, meshId) {
+    constructor (blocks, meshId, domain) {
         this.blocks = blocks;
 
         this.runtime = this.blocks.runtime;
 
         this.meshId = meshId;
 
-        const urlParams = new URLSearchParams(window.location.search);
-        this.domain = (urlParams.get('mesh') || 'none').replaceAll('_', '-').slice(0, 10);
+        this.peerId_ = null;
 
-        this.peerId = this.makePeerId('peer');
+        this.domain = domain;
 
         this.peer = null;
 
@@ -46,6 +46,15 @@ class MeshService {
         return 'Mesh Service';
     }
 
+    get peerId () {
+        if (this.peerId_) {
+            return this.peerId_;
+        }
+
+        this.peerId_ = this.makePeerId(this.isHost ? 'h' : 'p');
+        return this.peerId_;
+    }
+
     makePeerId (hostOrPeer) {
         return `${this.meshId}_${hostOrPeer}_${this.ttl()}_${this.domain}`;
     }
@@ -58,25 +67,58 @@ class MeshService {
         try {
             debug(() => `Scan: hostMeshId=<${hostMeshId}>`);
 
-            this.setConnectionState('scanning');
+            this.setDomain()
+                .then(() => {
+                    this.setConnectionState('scanning');
 
-            this.availablePeripherals = {};
-            this.availablePeripherals[hostMeshId] = {
-                name: formatMessage({
-                    id: 'mesh.hostPeripheralName',
-                    default: 'Host Mesh [{ MESH_ID }]',
-                    description: 'label for "Host Mesh" in connect modal for Mesh extension'
-                }, {MESH_ID: this.blocks.makeMeshIdLabel(this.meshId)}),
-                peripheralId: hostMeshId,
-                rssi: 0
-            };
+                    this.availablePeripherals = {};
+                    this.availablePeripherals[hostMeshId] = {
+                        name: formatMessage({
+                            id: 'mesh.hostPeripheralName',
+                            default: 'Host Mesh [{ MESH_ID }]',
+                            description: 'label for "Host Mesh" in connect modal for Mesh extension'
+                        }, {MESH_ID: this.blocks.makeMeshIdLabel(this.meshId)}),
+                        peripheralId: hostMeshId,
+                        rssi: 0
+                    };
 
-            this.emitPeripheralEvent(this.runtime.constructor.PERIPHERAL_LIST_UPDATE);
+                    this.emitPeripheralEvent(this.runtime.constructor.PERIPHERAL_LIST_UPDATE);
 
-            this.openPeerThenListAllPeers();
+                    this.openPeerThenListAllPeers();
+                })
+                .catch(error => {
+                    log.error(`Failed to scan: reason=<${error}>`);
+                    this.emitPeripheralEvent(this.runtime.constructor.PERIPHERAL_REQUEST_ERROR);
+                });
         } catch (error) {
             log.error(`Failed to scan: reason=<${error}>`);
+            this.emitPeripheralEvent(this.runtime.constructor.PERIPHERAL_REQUEST_ERROR);
         }
+    }
+
+    setDomain () {
+        if (this.domain) {
+            return Promise.resolve();
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        this.domain = (urlParams.get('mesh') || '')
+            .replace(/[^a-zA-Z0-9_-]/g, x => x.codePointAt(0).toString(16)).slice(0, 10); /* 最大10文字 */
+        if (this.domain) {
+            return Promise.resolve();
+        }
+
+        return fetch(MESH_DOMAIN_MAKER_URL)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Failed Mesh Domain Maker: ${response.statusText}(${response.status})`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                this.domain = data.domain;
+                return Promise.resolve();
+            });
     }
 
     connect () {
@@ -175,10 +217,11 @@ class MeshService {
     updateAvailablePeripherals (peers) {
         const now = Math.floor(new Date().getTime() / 1000);
         peers.forEach(peerId => {
-            const [meshId, hostOrPeer, ttl, domain] = peerId.split('_');
+            const [meshId, hostOrPeer, ttl, ...domains] = peerId.split('_');
+            const domain = domains.join('_');
             debug(() => `service: peer updateAvailablePeripherals=<${[meshId, hostOrPeer, ttl, domain]}>`);
 
-            if (this.meshId === meshId || hostOrPeer !== 'host' || domain !== this.domain) {
+            if (this.meshId === meshId || hostOrPeer !== 'h' || domain !== this.domain) {
                 debug(() => `service: peer skip add availablePeripherals reason=<not host>`);
                 return;
             }
