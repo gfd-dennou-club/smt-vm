@@ -133,7 +133,7 @@ class Smalrubot {
         this.serialPort = null;
 
         this.options = {
-            baudrate: 19200,
+            baudRate: 19200,
             databits: 8,
             stopbits: 1,
             parity: 'none',
