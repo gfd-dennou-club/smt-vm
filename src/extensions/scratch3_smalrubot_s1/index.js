@@ -1,9 +1,8 @@
-const debugMode = (process.env.NODE_ENV !== 'production');
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const log = require('../../util/log');
 const debugLogger = require('../../util/debug-logger');
-const debug = debugLogger(debugMode);
+const debug = debugLogger(process.env.DEBUG);
 const formatMessage = require('format-message');
 const Cast = require('../../util/cast');
 const Timer = require('../../util/timer');
