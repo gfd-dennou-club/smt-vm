@@ -1,4 +1,4 @@
-const debugMode = false;
+const debugMode = (process.env.NODE_ENV !== 'production');
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const log = require('../../util/log');
