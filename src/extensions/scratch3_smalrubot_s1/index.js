@@ -694,7 +694,7 @@ class SmalrubotS1 extends Smalrubot {
                 return Promise.resolve();
             })
             .then(() => this.writeCommand('dc_motor_control', PORT_M1, leftValue))
-            .then(() => this.writeCommand('dc_motor_control', PORT_M2, rightValue))
+            .then(() => this.writeCommand('dc_motor_control', PORT_M2, rightValue));
     }
 
     bendArm (degree) {

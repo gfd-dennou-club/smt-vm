@@ -94,7 +94,6 @@ class MeshService {
         }
     }
 
-
     setDomain () {
         if (this.domain) {
             return Promise.resolve();

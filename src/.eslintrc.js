@@ -3,5 +3,8 @@ module.exports = {
     extends: ['scratch', 'scratch/es6'],
     env: {
         browser: true
+    },
+    globals: {
+        process: true
     }
 };
