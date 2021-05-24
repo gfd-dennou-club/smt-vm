@@ -1,12 +1,10 @@
-const debugMode = true;
-
 const formatMessage = require('format-message');
 const Variable = require('../../engine/variable');
 const BlockUtility = require('../../engine/block-utility.js');
 
 const log = require('../../util/log');
 const debugLogger = require('../../util/debug-logger');
-const debug = debugLogger(debugMode);
+const debug = debugLogger(process.env.DEBUG);
 
 const MESH_DOMAIN_MAKER_URL = 'https://api.smalruby.app/mesh-domain';
 const TTL = 15 * 60;
@@ -95,6 +93,7 @@ class MeshService {
             this.emitPeripheralEvent(this.runtime.constructor.PERIPHERAL_REQUEST_ERROR);
         }
     }
+
 
     setDomain () {
         if (this.domain) {
@@ -187,7 +186,7 @@ class MeshService {
         }
 
         let debugLevel = 0;
-        if (debugMode) {
+        if (process.env.DEBUG) {
             debugLevel = 3;
         }
         this.peer = new Peer(this.peerId, {

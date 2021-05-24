@@ -2,7 +2,7 @@ const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const log = require('../../util/log');
 const debugLogger = require('../../util/debug-logger');
-const debug = debugLogger(true);
+const debug = debugLogger(process.env.DEBUG);
 const formatMessage = require('format-message');
 const Cast = require('../../util/cast');
 const Timer = require('../../util/timer');
@@ -32,14 +32,14 @@ const PORT_A2 = 2;
 const _PORT_A3 = 3;
 const PORT_A4 = 4;
 const PORT_A5 = 5;
-const _PORT_A6 = 6;
-const _PORT_A7 = 7;
+const PORT_A6 = 6;
+const PORT_A7 = 7;
 
 const _PIDOPEN = 0;
 const PIDLED = 1;
 const _PIDBUZZER = 2;
-const _PIDLIGHTSENSOR = 3;
-const _PIDSOUNDSENSOR = 4;
+const PIDLIGHTSENSOR = 3;
+const PIDSOUNDSENSOR = 4;
 const PIDIRPHOTOREFLECTOR = 5;
 const _PIDACCELEROMETER = 6;
 const PIDTOUCHSENSOR = 7;
@@ -87,6 +87,7 @@ class Smalrubot {
             show_neo_pixel: '13',
 
             set_dc_motor_calibration: '20',
+            set_servomotor_calibration: '21',
             init_dc_motor_port: '22',
             init_servo_motor_port: '23',
             init_sensor_port: '25',
@@ -106,6 +107,7 @@ class Smalrubot {
 
             get_touch_sensor_value: '61',
             get_light_sensor_value: '62',
+            get_sound_sensor_value: '63',
             get_ir_photoreflector_value: '64',
 
             reset_v2: '91'
@@ -172,7 +174,7 @@ class Smalrubot {
         return Promise.resolve()
             .then(() => {
                 if (this.connectionState !== 'disconnected') {
-                    log.info('Disconnect before connecting: reason=<Already connected>');
+                    debug(() => 'Disconnect before connecting: reason=<Already connected>');
                     return this.disconnect();
                 }
                 return Promise.resolve();
@@ -205,12 +207,12 @@ class Smalrubot {
         debug(() => 'Smalrubot.disconnect');
 
         if (this.connectionState === 'disconnected') {
-            log.info('Already disconnected.');
+            debug(() => 'Already disconnected.');
             return Promise.resolve();
         }
 
         if (!this.serialPort) {
-            log.info('Already disconnected.');
+            debug(() => 'Already disconnected.');
             this.setConnectionState('disconnected');
             return Promise.resolve();
         }
@@ -338,8 +340,8 @@ class Smalrubot {
                 const updatedAt = this.sensorValues[pin].updatedAt;
                 const value = this.sensorValues[pin].value;
                 if (updatedAt >= nowMilliseconds) {
-                    log.info(`Read sensor value: value=<${value}>` +
-                             ` updatedAt=<${new Date(updatedAt).toLocaleString()}>`);
+                    debug(() => `Read sensor value: value=<${value}>` +
+                                ` updatedAt=<${new Date(updatedAt).toLocaleString()}>`);
                     return Promise.resolve(value);
                 }
                 retryRemaining--;
@@ -485,6 +487,14 @@ class SmalrubotS1 extends Smalrubot {
             [PORT_A5]: {
                 value: '0',
                 updatedAt: nowMilliseconds
+            },
+            [PORT_A6]: {
+                value: '0',
+                updatedAt: nowMilliseconds
+            },
+            [PORT_A7]: {
+                value: '0',
+                updatedAt: nowMilliseconds
             }
         };
     }
@@ -593,6 +603,8 @@ class SmalrubotS1 extends Smalrubot {
             .then(() => this.initSensorPort(PORT_A2, PIDTOUCHSENSOR))
             .then(() => this.initSensorPort(PORT_A4, PIDIRPHOTOREFLECTOR))
             .then(() => this.initSensorPort(PORT_A5, PIDIRPHOTOREFLECTOR))
+            .then(() => this.initSensorPort(PORT_A6, PIDLIGHTSENSOR))
+            .then(() => this.initSensorPort(PORT_A7, PIDSOUNDSENSOR))
             .then(() => {
                 this.setConnectionState('connected');
             });
@@ -633,6 +645,17 @@ class SmalrubotS1 extends Smalrubot {
         this.dcMotorPowerRatios[position] = speedRatio;
     }
 
+    setArmCalibration (degree) {
+        debug(() => `setArmCalibration: degree=<${degree}>`);
+
+        if (degree > 15) {
+            degree = 15;
+        } else if (degree < -15) {
+            degree = -15;
+        }
+        return this.writeCommand('set_servomotor_calibration', SERVO_MOTOR_PORT, degree);
+    }
+
     action (direction) {
         debug(() => `action: direction=<${direction}>`);
 
@@ -671,7 +694,7 @@ class SmalrubotS1 extends Smalrubot {
                 return Promise.resolve();
             })
             .then(() => this.writeCommand('dc_motor_control', PORT_M1, leftValue))
-            .then(() => this.writeCommand('dc_motor_control', PORT_M2, rightValue));
+            .then(() => this.writeCommand('dc_motor_control', PORT_M2, rightValue))
     }
 
     bendArm (degree) {
@@ -711,6 +734,14 @@ class SmalrubotS1 extends Smalrubot {
         case 'right':
             commandName = 'get_ir_photoreflector_value';
             pin = PORT_A5;
+            break;
+        case 'light':
+            commandName = 'get_light_sensor_value';
+            pin = PORT_A6;
+            break;
+        case 'sound':
+            commandName = 'get_sound_sensor_value';
+            pin = PORT_A7;
             break;
         }
 
@@ -884,6 +915,22 @@ class Scratch3SmalrubotS1Blocks {
                     description: 'label for "touch" element in position picker for Smalrubot S1 extension'
                 }),
                 value: 'touch'
+            },
+            {
+                text: formatMessage({
+                    id: 'smalrubotS1.positionsMenu.light',
+                    default: 'light',
+                    description: 'label for "light" element in position picker for Smalrubot S1 extension'
+                }),
+                value: 'light'
+            },
+            {
+                text: formatMessage({
+                    id: 'smalrubotS1.positionsMenu.sound',
+                    default: 'sound',
+                    description: 'label for "sound" element in position picker for Smalrubot S1 extension'
+                }),
+                value: 'sound'
             }
         ];
     }
@@ -1057,7 +1104,22 @@ class Scratch3SmalrubotS1Blocks {
                         },
                         SPEED: {
                             type: ArgumentType.NUMBER,
-                            defaultValue: 100
+                            defaultValue: DEFAULT_DC_MOTOR_POWER_RATIO
+                        }
+                    }
+                },
+                {
+                    opcode: 'setArmCalibration',
+                    text: formatMessage({
+                        id: 'smalrubotS1.setArmCalibration',
+                        default: 'Adjust arm [DEGREE] degrees',
+                        description: 'setArmCalibration block text'
+                    }),
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        DEGREE: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 0
                         }
                     }
                 }
@@ -1232,6 +1294,21 @@ class Scratch3SmalrubotS1Blocks {
         } catch (error) {
             log.error(error);
         }
+    }
+
+    setArmCalibration (args) {
+        try {
+            debug(() => `setArmCalibration: args=<${JSON.stringify(args, null, 2)}>`);
+
+            if (!this.smalrubot) {
+                return Promise.resolve();
+            }
+
+            return this.smalrubot.setArmCalibration(Cast.toNumber(args.DEGREE));
+        } catch (error) {
+            log.error(error);
+        }
+        return Promise.resolve();
     }
 
     isConnected () {

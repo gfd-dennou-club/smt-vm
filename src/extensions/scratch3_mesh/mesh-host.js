@@ -1,10 +1,8 @@
-const debugMode = true;
-
 const MeshService = require('./mesh-service');
 
 const log = require('../../util/log');
 const debugLogger = require('../../util/debug-logger');
-const debug = debugLogger(debugMode);
+const debug = debugLogger(process.env.DEBUG);
 
 class MeshHost extends MeshService {
     constructor (blocks, meshId, domain) {
