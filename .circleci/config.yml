@@ -22,6 +22,8 @@ commands:
 jobs:
   build_no_release:
     executor: node/default # defaults to LTS
+    environment:
+        NODE_OPTIONS: --openssl-legacy-provider
     steps:
       - checkout
       - node/install-packages
@@ -30,6 +32,8 @@ jobs:
       - deploy_gh_pages
   build_and_release:
     executor: node/default # defaults to LTS
+    environment:
+        NODE_OPTIONS: --openssl-legacy-provider
     steps:
       - checkout
       - node/install-packages
