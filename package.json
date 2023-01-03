@@ -4,11 +4,10 @@
   "description": "Virtual Machine for Scratch 3.0",
   "author": "Massachusetts Institute of Technology",
   "license": "BSD-3-Clause",
-  "homepage": "https://github.com/LLK/scratch-vm#readme",
+  "homepage": "https://github.com/smalruby/scratch-vm#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/LLK/scratch-vm.git",
-    "sha": "37a019c1fc1e45648419be35980c20daec736fc8"
+    "url": "https://github.com/smalruby/scratch-vm.git"
   },
   "main": "./dist/node/scratch-vm.js",
   "browser": "./src/index.js",
