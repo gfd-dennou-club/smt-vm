@@ -11,13 +11,16 @@ const blockIconURI = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNv
 const menuIconURI = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCFET0NUWVBFIHN2ZyBQVUJMSUMgIi0vL1czQy8vRFREIFNWRyAxLjAvL0VOIiAiaHR0cDovL3d3dy53My5vcmcvVFIvMjAwMS9SRUMtU1ZHLTIwMDEwOTA0L0RURC9zdmcxMC5kdGQiPgo8c3ZnIHZlcnNpb249IjEuMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB3aWR0aD0iNDBweCIgaGVpZ2h0PSI0MHB4IiB2aWV3Qm94PSIwIDAgNDAgNDAiIHByZXNlcnZlQXNwZWN0UmF0aW89InhNaWRZTWlkIG1lZXQiPgogPGcgZmlsbD0iIzAwMDAwMCI+CiAgPHBhdGggZD0iTTEwLjUwIDM3Ljc1IGwwIC0yLjI1IC0yIDAgLTIgMCAwIC0yIGMwIC0xLjgwIDAuMTAgLTIgMS4zMCAtMiAyLjQwIDAgMi43MCAtMC45MCAyLjcwIC03LjcwIDAgLTMuODUgMC4yMCAtNi4zMCAwLjUwIC02LjMwIDAuMzAgMCAwLjUwIC0xLjM1IDAuNTAgLTMgMCAtMS42NSAwLjIwIC0zIDAuNTAgLTMgMC4zMCAwIDAuNTAgLTAuMjAgMC41MCAtMC41MCAwIC0wLjMwIC0xLjUwIC0wLjUwIC0zLjUwIC0wLjUwIGwtMy41MCAwIDAgLTIgMCAtMiA5LjUwIDAgOS41MCAwIDAgMiAwIDIgLTMuMzAgMCBjLTMuNjUgMCAtNC43MCAwLjYwIC00LjcwIDIuNzAgMCAwLjcwIC0wLjIwIDEuMzAgLTAuNTAgMS4zMCAtMC4zMCAwIC0wLjUwIDEuNTAgLTAuNTAgMy41MCAwIDIgLTAuMjAgMy41MCAtMC41MCAzLjUwIC0wLjMwIDAgLTAuNTAgMS44NSAtMC41MCA0LjUwIDAgNC4xNSAwLjA1IDQuNTAgMSA0LjUwIDAuNTUgMCAxIC0wLjIwIDEgLTAuNTAgMCAtMC4zMCAxLjUwIC0wLjUwIDMuNTAgLTAuNTAgbDMuNTAgMCAwIDIgMCAyIC0yIDAgYy0xLjEwIDAgLTIgMC4yNSAtMiAwLjUwIDAgMC4zMCAtMS4xMCAwLjUwIC0yLjUwIDAuNTAgLTIuMTUgMCAtMi41MCAwLjE1IC0yLjUwIDEgMCAwLjgwIDAuMzUgMSAxLjUwIDEgMS40MCAwIDEuNTAgMC4xNSAxLjUwIDEuNzUgbDAgMS43NSAtMy41MCAwIC0zLjUwIDAgMCAtMi4yNXoiLz4KIDwvZz4KIDxnIGZpbGw9IiNmZmZmZmYiPgogIDxwYXRoIGQ9Ik0wIDIwIGwwIC0yMCAyMCAwIDIwIDAgMCAyMCAwIDIwIC0xMiAwIGMtMTEuNjUgMCAtMTIgLTAuMDUgLTEyIC0xIDAgLTAuNTUgLTAuMjAgLTEgLTAuNDAgLTEgLTAuMjAgMCAtMC43MCAwLjQ1IC0xLjEwIDEgLTEuMjAgMS42NSAtMS41MCAxLjE1IC0xLjUwIC0yLjUwIGwwIC0zLjUwIDIuNTAgMCBjMS40MCAwIDIuNTAgLTAuMjAgMi41MCAtMC41MCAwIC0wLjI1IDAuOTAgLTAuNTAgMiAtMC41MCAxLjEwIDAgMiAtMC4yMCAyIC0wLjUwIDAgLTAuMjUgLTAuOTAgLTAuNTAgLTIgLTAuNTAgLTEuMTAgMCAtMiAwLjI1IC0yIDAuNTAgMCAwLjMwIC0xLjEwIDAuNTAgLTIuNTAgMC41MCBsLTIuNTAgMCAwIC02IGMwIC0zLjY1IDAuMjAgLTYgMC41MCAtNiAwLjMwIDAgMC41MCAtMS41MCAwLjUwIC0zLjUwIDAgLTIgMC4yMCAtMy41MCAwLjUwIC0zLjUwIDAuMzAgMCAwLjUwIC0wLjYwIDAuNTAgLTEuMzAgMCAtMi4xMCAxLjA1IC0yLjcwIDQuNzAgLTIuNzAgMS44NSAwIDMuMzAgLTAuMjAgMy4zMCAtMC41MCAwIC0wLjMwIC0zIC0wLjUwIC04IC0wLjUwIC01IDAgLTggMC4yMCAtOCAwLjUwIDAgMC4zMCAxLjY1IDAuNTAgNCAwLjUwIDIuMzUgMCA0IDAuMjAgNCAwLjUwIDAgMC4zMCAtMC4yMCAwLjUwIC0wLjUwIDAuNTAgLTAuMjUgMCAtMC41MCAwLjcwIC0wLjUwIDEuNTAgMCAwLjg1IC0wLjIwIDEuNTAgLTAuNTAgMS41MCAtMC4zMCAwIC0wLjUwIDEuMzUgLTAuNTAgMyAwIDEuNjUgLTAuMjAgMyAtMC41MCAzIC0wLjMwIDAgLTAuNTAgMi40NSAtMC41MCA2LjMwIDAgNi44MCAtMC4zMCA3LjcwIC0yLjcwIDcuNzAgLTAuNzAgMCAtMS4zMCAwLjI1IC0xLjMwIDAuNTAgMCAwLjMwIDAuNzAgMC41MCAxLjUwIDAuNTAgMC44NSAwIDEuNTAgLTAuMjAgMS41MCAtMC41MCAwIC0wLjI1IDAuMjUgLTAuNTAgMC41MCAtMC41MCAwLjMwIDAgMC41MCAxLjUwIDAuNTAgMy41MCBsMCAzLjUwIC02IDAgLTYgMCAwIC0yMHoiLz4KIDwvZz4KPC9zdmc+';
 
 //メニューで使う配列
-const I2C_UARTMenu1 = {
-    RIGHT: 'hoge',
-    LEFT:  'hero'
+const I2C_PinMenu = {
+    PIN1: '1',
+    PIN2: '2',
+    PIN3: '3',
+    PIN4: '4',
+    PIN5: '5'
 }
-const I2C_UARTMenu2 = {
-    RIGHT: "-1",     //数字の場合も「文字列」扱いしないとエラーが出る
-    LEFT:  "1"
+const UART_PinMenu = {
+    PIN2: '2(txPin=17, rxPin=16)',
+    PIN1: '1'
 }
 
 
@@ -34,36 +37,48 @@ class I2C_UART {
         //this.runtime.on('targetWasCreated', this._onTargetCreated);
     }
 
-    //ドロップボックスメニュー (Menu1) 
-    static get I2C_UARTMenu1 () {
-        return I2C_UARTMenu1;
+    //ドロップボックスメニュー (IC2_PinMenu) 
+    static get I2C_PinMenu () {
+        return I2C_PinMenu;
     }
-    get MENU1 () {
+    get I2C_PIN_MENU () {
         return [
             {
-                text: 'Right_1',
-                value: I2C_UARTMenu1.RIGHT
+                text: '1',
+                value: I2C_PinMenu.PIN1
             },
             {
-                text: 'Left_1',
-                value: I2C_UARTMenu1.LEFT
+                text: '2',
+                value: I2C_PinMenu.PIN2
+            },
+            {
+                text: '3',
+                value: I2C_PinMenu.PIN3
+            },
+            {
+                text: '4',
+                value: I2C_PinMenu.PIN4
+            },
+            {
+                text: '5',
+                value: I2C_PinMenu.PIN5
             }
         ];
     }
 
-    //ドロップボックスメニュー (Menu2) 
-    static get I2C_UARTMenu2 () {
-        return I2C_UARTMenu2;
+    //ドロップボックスメニュー (UART_PinMenu) 
+    static get UART_PinMenu () {
+        return UART_PinMenu;
     }
-    get MENU2 () {
+    get UART_PIN_MENU () {
         return [
             {
-                text: 'Right_2',
-                value: I2C_UARTMenu2.RIGHT
+                text: '2(txPin=17, rxPin=16)',
+                value: UART_PinMenu.PIN2
             },
             {
-                text: 'Left_2',
-                value: I2C_UARTMenu2.LEFT
+                text: '1',
+                value: UART_PinMenu.PIN1
             }
         ];
     }
@@ -80,92 +95,137 @@ class I2C_UART {
             blockIconURI: blockIconURI,
             blocks: [
                 {
-                    opcode: 'command0',
+                    opcode: 'i2c_init',
                     text: formatMessage({
-                        id: 'i2c_uart.command0',
-                        default: 'command0'
+                        id: 'i2c_uart.init',
+                        default: 'i2c_init [TEXT] [NUM1] [NUM2]'
                     }),
                     blockType: BlockType.COMMAND,
+                    arguments: {
+                        TEXT: {
+                            type: ArgumentType.STRING,
+                            menu: 'i2c_pin_menu',
+                            defaultValue: I2C_PinMenu.PIN1
+			            },
+                        NUM1: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 23
+                        },
+			            NUM2: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 22
+                        }
+                    }
                 },
                 {
-                    opcode: 'value0',
+                    opcode: 'i2c_write',
                     text: formatMessage({
-                        id: 'i2c_uart.value0',
-                        default: 'value0'
+                        id: 'i2c_uart.i2c_write',
+                        default: 'i2c_write [TEXT] [NUM1] [NUM2] [NUM3]'
                     }),		    
-                    blockType: BlockType.REPORTER
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        TEXT: {
+                            type: ArgumentType.STRING,
+                            menu: 'i2c_pin_menu',
+                            defaultValue: I2C_PinMenu.PIN1
+			            },
+                        NUM1: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 2
+                        },
+			            NUM2: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 2
+                        },
+                        NUM3: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 2
+                        }
+                    }
                 },		
                 {
-                    opcode: 'flag0',
+                    opcode: 'i2c_read',
                     text: formatMessage({
-                        id: 'i2c_uart.flag0',
-                        default: 'flag0'
+                        id: 'i2c_uart.i2c_read',
+                        default: 'i2c_read [TEXT] [NUM1] [NUM2]'
                     }),		    		    
-                    blockType: BlockType.BOOLEAN
+                    blockType: BlockType.REPORTER,
+                    arguments: {
+                        TEXT: {
+                            type: ArgumentType.STRING,
+                            menu: 'i2c_pin_menu',
+                            defaultValue: I2C_PinMenu.PIN1
+			            },
+                        NUM1: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 3
+                        },
+			            NUM2: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 3
+                        }
+                    }
                 },		
                 {
-                    opcode: 'command1',
+                    opcode: 'uart_init',
                     text: formatMessage({
-                        id: 'i2c_uart.command1',
-                        default: 'command [TEXT] [NUM]',
+                        id: 'i2c_uart.uart_init',
+                        default: 'uart_init [TEXT]',
                     }),		    		    
                     blockType: BlockType.COMMAND,
                     arguments: {
                         TEXT: {
                             type: ArgumentType.STRING,
-                            defaultValue: "hello"
-                        },
-			NUM: {
+                            menu: 'uart_pin_menu',
+                            defaultValue: UART_PinMenu.PIN2
+			            }
+                    }
+                },
+                {
+                    opcode: 'uart_write',
+                    text: formatMessage({
+                        id: 'i2c_uart.uart_write',
+                        default: 'uart_write [TEXT] [NUM]',
+                    }),		    		    
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+			            TEXT: {
+                            type: ArgumentType.STRING,
+                            menu: 'uart_pin_menu',
+                            defaultValue: UART_PinMenu.PIN2
+			            },
+                        NUM: {
                             type: ArgumentType.NUMBER,
-                            defaultValue: 2
+                            defaultValue: 1
                         }
                     }
                 },
                 {
-                    opcode: 'command2',
+                    opcode: 'uart_read',
                     text: formatMessage({
-                        id: 'i2c_uart.command2',
-                        default: 'command [TEXT1]',
+                        id: 'i2c_uart.uart_read',
+                        default: 'uart_read [TEXT1]',
                     }),		    		    
-                    blockType: BlockType.COMMAND,
+                    blockType: BlockType.REPORTER,
                     arguments: {
-			TEXT1: {
-                            type: ArgumentType.STRING,
-                            menu: 'menu1',
-                            defaultValue: I2C_UARTMenu1.RIGHT
-			}
-                    }
-                },
-                {
-                    opcode: 'command3',
-                    text: formatMessage({
-                        id: 'i2c_uart.command3',
-                        default: 'command [TEXT1] [NUM1]',
-                    }),		    		    
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-			TEXT1: {
-                            type: ArgumentType.STRING,
-                            menu: 'menu1',
-                            defaultValue: I2C_UARTMenu1.RIGHT
-			},
-                        NUM1: {
-                            type: ArgumentType.STRING,
-			    menu: 'menu2',
-                            defaultValue: I2C_UARTMenu2.RIGHT
-                        }
+			            TEXT1: {
+                                type: ArgumentType.STRING,
+                                menu: 'uart_pin_menu',
+                                defaultValue: UART_PinMenu.PIN2
+			            }
                     }
                 }
             ],
 	    //ドロップボックスメニューを使う場合は以下に定義が必要
             menus: {
-                menu1: {
+                i2c_pin_menu: {
                     acceptReporters: true,
-                    items: this.MENU1
+                    items: this.I2C_PIN_MENU
                 },
-                menu2: {
+                uart_pin_menu: {
                     acceptReporters: true,
-                    items: this.MENU2
+                    items: this.UART_PIN_MENU
                 },
             }
         };
