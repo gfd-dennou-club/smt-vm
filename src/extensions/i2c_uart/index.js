@@ -19,7 +19,7 @@ const I2C_PinMenu = {
     PIN5: '5'
 }
 const UART_PinMenu = {
-    PIN2: '2(txPin=17, rxPin=16)',
+    PIN2: '2',
     PIN1: '1'
 }
 
@@ -98,7 +98,7 @@ class I2C_UART {
                     opcode: 'i2c_init',
                     text: formatMessage({
                         id: 'i2c_uart.init',
-                        default: 'i2c_init [TEXT] [NUM1] [NUM2]'
+                        default: 'I2C-[TEXT]: Use GPIO [NUM1] [NUM2] (SCL, SDA)'
                     }),
                     blockType: BlockType.COMMAND,
                     arguments: {
@@ -121,7 +121,7 @@ class I2C_UART {
                     opcode: 'i2c_write',
                     text: formatMessage({
                         id: 'i2c_uart.i2c_write',
-                        default: 'i2c_write [TEXT] [NUM1] [NUM2] [NUM3]'
+                        default: 'OUTPUT I2C-[TEXT]: address [NUM1], command [NUM2], value [NUM3]'
                     }),		    
                     blockType: BlockType.COMMAND,
                     arguments: {
@@ -132,15 +132,12 @@ class I2C_UART {
 			            },
                         NUM1: {
                             type: ArgumentType.NUMBER,
-                            defaultValue: 2
                         },
 			            NUM2: {
                             type: ArgumentType.NUMBER,
-                            defaultValue: 2
                         },
                         NUM3: {
                             type: ArgumentType.NUMBER,
-                            defaultValue: 2
                         }
                     }
                 },		
@@ -148,7 +145,7 @@ class I2C_UART {
                     opcode: 'i2c_read',
                     text: formatMessage({
                         id: 'i2c_uart.i2c_read',
-                        default: 'i2c_read [TEXT] [NUM1] [NUM2]'
+                        default: 'INPUT I2C-[TEXT]: address [NUM1], number of bytes [NUM2]'
                     }),		    		    
                     blockType: BlockType.REPORTER,
                     arguments: {
@@ -159,11 +156,10 @@ class I2C_UART {
 			            },
                         NUM1: {
                             type: ArgumentType.NUMBER,
-                            defaultValue: 3
                         },
 			            NUM2: {
                             type: ArgumentType.NUMBER,
-                            defaultValue: 3
+                            defaultValue: 1
                         }
                     }
                 },		
@@ -171,7 +167,7 @@ class I2C_UART {
                     opcode: 'uart_init',
                     text: formatMessage({
                         id: 'i2c_uart.uart_init',
-                        default: 'uart_init [TEXT]',
+                        default: 'Use UART-[TEXT]',
                     }),		    		    
                     blockType: BlockType.COMMAND,
                     arguments: {
@@ -186,18 +182,18 @@ class I2C_UART {
                     opcode: 'uart_write',
                     text: formatMessage({
                         id: 'i2c_uart.uart_write',
-                        default: 'uart_write [TEXT] [NUM]',
+                        default: 'OUTPUT UART-[TEXT1]: [TEXT2]',
                     }),		    		    
                     blockType: BlockType.COMMAND,
                     arguments: {
-			            TEXT: {
+			            TEXT1: {
                             type: ArgumentType.STRING,
                             menu: 'uart_pin_menu',
                             defaultValue: UART_PinMenu.PIN2
 			            },
-                        NUM: {
-                            type: ArgumentType.NUMBER,
-                            defaultValue: 1
+                        TEXT2: {
+                            type: ArgumentType.STRING,
+                            defaultValue: " "
                         }
                     }
                 },
@@ -205,11 +201,11 @@ class I2C_UART {
                     opcode: 'uart_read',
                     text: formatMessage({
                         id: 'i2c_uart.uart_read',
-                        default: 'uart_read [TEXT1]',
+                        default: 'INPUT I2C-[TEXT]',
                     }),		    		    
                     blockType: BlockType.REPORTER,
                     arguments: {
-			            TEXT1: {
+			            TEXT: {
                                 type: ArgumentType.STRING,
                                 menu: 'uart_pin_menu',
                                 defaultValue: UART_PinMenu.PIN2
