@@ -27,7 +27,8 @@ const builtinExtensions = {
     gdxfor: () => require('../extensions/scratch3_gdx_for'),
     mesh: () => require('../extensions/scratch3_mesh'),
     smalrubotS1: () => require('../extensions/scratch3_smalrubot_s1'),
-    sample: () => require('../extensions/sample')
+    sample: () => require('../extensions/sample'),
+    i2c_uart: () => require('../extensions/i2c_uart')
 };
 
 /**
@@ -274,6 +275,7 @@ class ExtensionManager {
      */
     _prepareExtensionInfo (serviceName, extensionInfo) {
         extensionInfo = Object.assign({}, extensionInfo);
+        console.log(extensionInfo)
         if (!/^[a-z0-9]+$/i.test(extensionInfo.id)) {
             throw new Error('Invalid extension id');
         }
