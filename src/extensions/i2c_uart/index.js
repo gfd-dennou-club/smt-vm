@@ -89,7 +89,7 @@ class I2C_UART {
             id: 'i2cuart',
             name: formatMessage({
                 id: 'i2c_uart.name',
-                default: 'I2C_UART'
+                default: 'I2C, UART'
             }),
             menuIconURI: menuIconURI,
             blockIconURI: blockIconURI,
