@@ -97,8 +97,8 @@ class I2C_UART {
                 {
                     opcode: 'i2c_init',
                     text: formatMessage({
-                        id: 'i2c_uart.init',
-                        default: 'I2C-[TEXT]: Use GPIO [NUM1] [NUM2] (SCL, SDA)'
+                        id: 'i2c_uart.i2c_init',
+                        default: 'I2C-[TEXT]: Use GPIO [NUM1], [NUM2] (SCL, SDA)'
                     }),
                     blockType: BlockType.COMMAND,
                     arguments: {
