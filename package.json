@@ -1,20 +1,20 @@
 {
   "name": "scratch-vm",
-  "version": "1.2.54",
+  "version": "2.0.6",
   "description": "Virtual Machine for Scratch 3.0",
   "author": "Massachusetts Institute of Technology",
   "license": "BSD-3-Clause",
-  "homepage": "https://github.com/smalruby/scratch-vm#readme",
+  "homepage": "https://github.com/scratchfoundation/scratch-vm#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/smalruby/scratch-vm.git"
+    "url": "https://github.com/scratchfoundation/scratch-vm.git",
+    "sha": "f4da873adc3d759e7f675f41280ed4735579f595"
   },
   "main": "./dist/node/scratch-vm.js",
   "browser": "./src/index.js",
   "scripts": {
     "build": "npm run docs && webpack --progress --colors --bail",
     "coverage": "tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov",
-    "deploy": "touch playground/.nojekyll && gh-pages -t -d playground -m \"Build for $(git log -n1 --pretty=format:\"%h %s\") [skip ci]\"",
     "docs": "jsdoc -c .jsdoc.json",
     "i18n:src": "mkdirp translations/core && format-message extract --out-file translations/core/en.json src/extensions/**/index.js",
     "i18n:push": "tx-push-src scratch-editor extensions translations/core/en.json",
@@ -38,8 +38,7 @@
     "branches": 60,
     "functions": 70,
     "lines": 70,
-    "statements": 70,
-    "timeout": 300
+    "statements": 70
   },
   "dependencies": {
     "@vernier/godirect": "1.5.0",
@@ -59,6 +58,7 @@
     "scratch-translate-extension-languages": "0.0.20191118205314",
     "skyway-js": "^4.4.1",
     "text-encoding": "0.7.0",
+    "uuid": "8.3.2",
     "worker-loader": "^1.1.1"
   },
   "peerDependencies": {
@@ -80,7 +80,6 @@
     "expose-loader": "0.7.5",
     "file-loader": "2.0.0",
     "format-message-cli": "6.2.0",
-    "gh-pages": "1.2.0",
     "husky": "8.0.1",
     "in-publish": "2.0.1",
     "js-md5": "0.7.3",
@@ -89,15 +88,16 @@
     "lodash.defaultsdeep": "4.6.1",
     "path-exists-cli": "^2.0.0",
     "pngjs": "3.3.3",
-    "scratch-audio": "0.1.0-prerelease.20200528195344",
-    "scratch-blocks": "0.1.0-prerelease.20221024060953",
-    "scratch-l10n": "3.15.20221027032119",
-    "scratch-render": "0.1.0-prerelease.20221024201900",
-    "scratch-render-fonts": "1.0.0-prerelease.20221024190656",
-    "scratch-semantic-release-config": "1.0.5",
-    "scratch-storage": "2.0.2",
+    "scratch-audio": "0.1.0-prerelease.20221123180128",
+    "scratch-blocks": "0.1.0-prerelease.20230527085947",
+    "scratch-l10n": "3.16.20231006032155",
+    "scratch-render": "0.1.0-prerelease.20230913153807",
+    "scratch-render-fonts": "1.0.0-prerelease.20221102164332",
+    "scratch-semantic-release-config": "1.0.8",
+    "scratch-storage": "2.2.1",
     "scratch-svg-renderer": "0.2.0-prerelease.20210727023023",
     "script-loader": "0.7.2",
+    "semantic-release": "19.0.5",
     "stats.js": "0.17.0",
     "tap": "16.2.0",
     "tiny-worker": "2.3.0",
