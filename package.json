@@ -58,7 +58,6 @@
     "scratch-translate-extension-languages": "0.0.20191118205314",
     "skyway-js": "^4.4.1",
     "text-encoding": "0.7.0",
-    "uuid": "8.3.2",
     "worker-loader": "^1.1.1"
   },
   "peerDependencies": {
@@ -94,7 +93,7 @@
     "scratch-render": "0.1.0-prerelease.20230913153807",
     "scratch-render-fonts": "1.0.0-prerelease.20221102164332",
     "scratch-semantic-release-config": "1.0.8",
-    "scratch-storage": "2.2.1",
+    "scratch-storage": "2.1.0",
     "scratch-svg-renderer": "0.2.0-prerelease.20210727023023",
     "script-loader": "0.7.2",
     "semantic-release": "19.0.5",
