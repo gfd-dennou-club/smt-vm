@@ -1,19 +1,70 @@
-const ArgumentType = require('../../extension-support/argument-type');
-const BlockType = require('../../extension-support/block-type');
-const log = require('../../util/log');
-const cast = require('../../util/cast');
-const formatMessage = require('format-message');
-const BLE = require('../../io/ble');
-const Base64Util = require('../../util/base64-util');
+import ArgumentType from '../../extension-support/argument-type';
+import BlockType from '../../extension-support/block-type';
+import Cast from '../../util/cast';
+import log from '../../util/log';
 
-const timeoutPromise = timeout => new Promise(resolve => setTimeout(resolve, timeout));
+import translations from './translations.json';
+
+import BLE from './ble-llk';
+import WebSerial from './serial-web';
 
 /**
- * Icon png to be displayed at the left edge of each extension block, encoded as a data URI.
+ * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
  * @type {string}
  */
 // eslint-disable-next-line max-len
-const blockIconURI = 'data:image/png;base64,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';
+const blockIconURI = 'data:image/png;base64,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';
+
+const uint8ArrayToBase64 = array => window.btoa(String.fromCharCode(...array));
+const base64ToUint8Array = base64 => {
+    const raw = window.atob(base64);
+    return Uint8Array.from(Array.prototype.map.call(raw, x => x.charCodeAt(0)));
+};
+
+
+let formatMessage = messageData => messageData.defaultMessage;
+
+/**
+ * Setup format-message for this extension.
+ */
+const setupTranslations = () => {
+    const localeSetup = formatMessage.setup();
+    if (localeSetup && localeSetup.translations[localeSetup.locale]) {
+        Object.assign(
+            localeSetup.translations[localeSetup.locale],
+            translations[localeSetup.locale]
+        );
+    }
+};
+
+const EXTENSION_ID = 'microbitMore';
+
+/**
+ * URL to get this extension as a module.
+ * When it was loaded as a module, 'extensionURL' will be replaced a URL which is retrieved from.
+ * @type {string}
+ */
+let extensionURL = 'https://microbit-more.github.io/dist/microbitMore.mjs';
+
+/**
+ * Enum for version of the hardware.
+ * @readonly
+ * @enum {number}
+ */
+const MbitMoreHardwareVersion =
+{
+    MICROBIT_V1: 1,
+    MICROBIT_V2: 2
+};
+
+/**
+ * Communication route between Scratch and micro:bit
+ *
+ */
+const CommunicationRoute = {
+    BLE: 0,
+    SERIAL: 1
+};
 
 /**
  * Enum for micro:bit BLE command protocol.
@@ -22,74 +73,273 @@ const blockIconURI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYA
  * @enum {number}
  */
 const BLECommand = {
-    CMD_PIN_CONFIG: 0x80,
-    CMD_DISPLAY_TEXT: 0x81,
-    CMD_DISPLAY_LED: 0x82,
-    CMD_PROTOCOL: 0x90,
-    CMD_PIN: 0x91,
-    CMD_SHARED_DATA: 0x92
+    CMD_CONFIG: 0x00,
+    CMD_PIN: 0x01,
+    CMD_DISPLAY: 0x02,
+    CMD_AUDIO: 0x03,
+    CMD_DATA: 0x04
 };
 
-const MBitMorePinCommand =
+/**
+ * Enum for command about gpio pins.
+ * @readonly
+ * @enum {number}
+ */
+const MbitMorePinCommand =
 {
     SET_OUTPUT: 0x01,
     SET_PWM: 0x02,
     SET_SERVO: 0x03,
     SET_PULL: 0x04,
-    SET_EVENT: 0x05,
-    SET_TOUCH: 0x06
-};
-
-const MBitMorePinMode = {
-    PullNone: 0,
-    PullUp: 1,
-    PullDown: 2
+    SET_EVENT: 0x05
 };
 
 /**
- * Enum for micro:bit BLE command protocol v0.
- * https://github.com/LLK/scratch-microbit-firmware/blob/master/protocol.md
+ * Enum for command about gpio pins.
  * @readonly
  * @enum {number}
  */
-const BLECommandV0 = {
-    CMD_PIN_CONFIG: 0x80,
-    CMD_DISPLAY_TEXT: 0x81,
-    CMD_DISPLAY_LED: 0x82,
-    CMD_PIN_INPUT: 0x90,
-    CMD_PIN_OUTPUT: 0x91,
-    CMD_PIN_PWM: 0x92,
-    CMD_PIN_SERVO: 0x93,
-    CMD_SHARED_DATA_SET: 0x94,
-    CMD_PROTOCOL_SET: 0xA0
+const MbitMoreDisplayCommand =
+{
+    CLEAR: 0x00,
+    TEXT: 0x01,
+    PIXELS_0: 0x02,
+    PIXELS_1: 0x03
 };
 
-const MBitMoreDataFormat = {
-    MIX_01: 0x01,
-    MIX_02: 0x02,
-    MIX_03: 0x03,
-    SHARED_DATA: 0x11,
-    EVENT: 0x12
+/**
+ * Enum for name of pull mode.
+ * @readonly
+ * @enum {number}
+ */
+const MbitMorePullModeName = {
+    NONE: 'NONE',
+    DOWN: 'DOWN',
+    UP: 'UP'
+};
+
+/**
+ * Enum for ID of pull mode.
+ * @readonly
+ * @enum {number}
+ */
+const MbitMorePullModeID = {
+    NONE: 0,
+    DOWN: 1,
+    UP: 2
+};
+
+/**
+ * Enum for data format.
+ * @readonly
+ * @enum {number}
+ */
+const MbitMoreDataFormat = {
+    CONFIG: 0x10, // not used at this version
+    PIN_EVENT: 0x11,
+    ACTION_EVENT: 0x12,
+    DATA_NUMBER: 0x13,
+    DATA_TEXT: 0x14
+};
+
+/**
+ * Enum for action event type.
+ * @readonly
+ * @enum {number}
+ */
+const MbitMoreActionEvent = {
+    BUTTON: 0x01,
+    GESTURE: 0x02
+};
+
+/**
+ * Enum for ID of pin-mode
+ * @readonly
+ * @enum {string}
+ */
+const MbitMorePinMode = {
+    INPUT: 'INPUT',
+    OUTPUT: 'OUTPUT',
+    PWM: 'PWM',
+    SERVO: 'SERVO',
+    TOUCH: 'TOUCH'
+};
+
+/**
+ * Enum for ID of buttons
+ * @readonly
+ * @enum {string}
+ */
+const MbitMoreButtonName = {
+    P0: 'P0',
+    P1: 'P1',
+    P2: 'P2',
+    A: 'A',
+    B: 'B',
+    LOGO: 'LOGO'
+};
+
+/**
+ * Enum for componentID of buttons
+ * @readonly
+ * @enum {string}
+ */
+const MbitMoreButtonID = {
+    1: 'A',
+    2: 'B',
+    100: 'P0',
+    101: 'P1',
+    102: 'P2',
+    121: 'LOGO'
+};
+
+/**
+ * Enum for index of pin for buttons
+ * @readonly
+ * @enum {number}
+ */
+const MbitMoreButtonPinIndex = {
+    P0: 0,
+    P1: 1,
+    P2: 2
+};
+
+/**
+ * Enum for index in data of button state
+ * @readonly
+ * @enum {number}
+ */
+const MbitMoreButtonStateIndex = {
+    P0: 0,
+    P1: 1,
+    P2: 2,
+    A: 3,
+    B: 4,
+    LOGO: 5
+};
+
+/**
+ * Enum for name of event from button
+ * @readonly
+ * @enum {string}
+ */
+const MbitMoreButtonEventName = {
+    DOWN: 'DOWN',
+    UP: 'UP',
+    CLICK: 'CLICK',
+    LONG_CLICK: 'LONG_CLICK',
+    HOLD: 'HOLD',
+    DOUBLE_CLICK: 'DOUBLE_CLICK'
+};
+
+/**
+ * Enum for ID of event from button
+ * @readonly
+ * @enum {string}
+ */
+const MbitMoreButtonEventID = {
+    1: 'DOWN',
+    2: 'UP',
+    3: 'CLICK',
+    4: 'LONG_CLICK',
+    5: 'HOLD',
+    6: 'DOUBLE_CLICK'
+};
+
+/**
+ * Enum for name of gesture.
+ * @readonly
+ * @enum {string}
+ */
+const MbitMoreGestureName =
+{
+    TILT_UP: 'TILT_UP',
+    TILT_DOWN: 'TILT_DOWN',
+    TILT_LEFT: 'TILT_LEFT',
+    TILT_RIGHT: 'TILT_RIGHT',
+    FACE_UP: 'FACE_UP',
+    FACE_DOWN: 'FACE_DOWN',
+    FREEFALL: 'FREEFALL',
+    G3: 'G3',
+    G6: 'G6',
+    G8: 'G8',
+    SHAKE: 'SHAKE'
+};
+
+/**
+ * Enum for ID of gesture.
+ * @readonly
+ * @enum {string}
+ */
+const MbitMoreGestureID =
+{
+    1: 'TILT_UP',
+    2: 'TILT_DOWN',
+    3: 'TILT_LEFT',
+    4: 'TILT_RIGHT',
+    5: 'FACE_UP',
+    6: 'FACE_DOWN',
+    7: 'FREEFALL',
+    8: 'G3',
+    9: 'G6',
+    10: 'G8',
+    11: 'SHAKE'
 };
 
 /**
  * Enum for event type in the micro:bit runtime.
+ * @readonly
+ * @enum {number}
  */
-const MicroBitEventType = {
-    MICROBIT_PIN_EVENT_NONE: 0,
-    MICROBIT_PIN_EVENT_ON_EDGE: 1,
-    MICROBIT_PIN_EVENT_ON_PULSE: 2,
-    MICROBIT_PIN_EVENT_ON_TOUCH: 3
+const MbitMorePinEventType = {
+    NONE: 0,
+    ON_EDGE: 1,
+    ON_PULSE: 2,
+    ON_TOUCH: 3
 };
 
 /**
  * Enum for event value in the micro:bit runtime.
+ * @readonly
+ * @enum {number}
  */
-const MicroBitEvent = {
-    MICROBIT_PIN_EVT_RISE: 2,
-    MICROBIT_PIN_EVT_FALL: 3,
-    MICROBIT_PIN_EVT_PULSE_HI: 4,
-    MICROBIT_PIN_EVT_PULSE_LO: 5
+const MbitMorePinEvent = {
+    RISE: 2,
+    FALL: 3,
+    PULSE_HIGH: 4,
+    PULSE_LOW: 5
+};
+
+/**
+ * Enum for data type of data-sending.
+ * @readonly
+ * @enum {number}
+ */
+const MbitMoreSendingDataType = {
+    NUMBER: 1,
+    TEXT: 2
+};
+
+/**
+ * Enum for sub-command about configurations.
+ * @readonly
+ * @enum {number}
+ */
+const MbitMoreConfig =
+{
+    MIC: 0x01,
+    TOUCH: 0x02
+};
+
+/**
+ * Enum for sub-command about audio.
+ * @readonly
+ * @enum {number}
+ */
+const MbitMoreAudioCommand =
+{
+    STOP_TONE: 0x00,
+    PLAY_TONE: 0x01
 };
 
 /**
@@ -98,11 +348,6 @@ const MicroBitEvent = {
  */
 const BLETimeout = 4500;
 
-/**
- * A time interval to wait (in milliseconds) while a block that sends a BLE message is running.
- * @type {number}
- */
-const BLESendInterval = 100;
 
 /**
  * A string to report to the BLE socket when the micro:bit has stopped receiving data.
@@ -110,36 +355,31 @@ const BLESendInterval = 100;
  */
 const BLEDataStoppedError = 'micro:bit extension stopped receiving data';
 
-/**
- * Enum for micro:bit protocol.
- * https://github.com/LLK/scratch-microbit-firmware/blob/master/protocol.md
- * @readonly
- * @enum {string}
- */
-const MICROBIT_SERVICE = {
-    ID: 0xf005,
-    RX: '5261da01-fa7e-42ab-850b-7c80220097cc',
-    TX: '5261da02-fa7e-42ab-850b-7c80220097cc'
-};
-
-const MBITMORE_SERVICE = {
-    ID: 'a62d574e-1b34-4092-8dee-4151f63b2865',
-    EVENT: 'a62d0001-1b34-4092-8dee-4151f63b2865',
-    IO: 'a62d0002-1b34-4092-8dee-4151f63b2865',
-    ANSLOG_IN: 'a62d0003-1b34-4092-8dee-4151f63b2865',
-    SENSORS: 'a62d0004-1b34-4092-8dee-4151f63b2865',
-    SHARED_DATA: 'a62d0010-1b34-4092-8dee-4151f63b2865'
+const MM_SERVICE = {
+    ID: '0b50f3e4-607f-4151-9091-7d008d6ffc5c',
+    COMMAND_CH: '0b500100-607f-4151-9091-7d008d6ffc5c',
+    STATE_CH: '0b500101-607f-4151-9091-7d008d6ffc5c',
+    MOTION_CH: '0b500102-607f-4151-9091-7d008d6ffc5c',
+    PIN_EVENT_CH: '0b500110-607f-4151-9091-7d008d6ffc5c',
+    ACTION_EVENT_CH: '0b500111-607f-4151-9091-7d008d6ffc5c',
+    ANALOG_IN_CH: [
+        '0b500120-607f-4151-9091-7d008d6ffc5c',
+        '0b500121-607f-4151-9091-7d008d6ffc5c',
+        '0b500122-607f-4151-9091-7d008d6ffc5c'
+    ],
+    MESSAGE_CH: '0b500130-607f-4151-9091-7d008d6ffc5c'
 };
 
 /**
- * Enum for pin mode menu options.
+ * Enum for axis menu options.
  * @readonly
  * @enum {string}
  */
-const PinMode = {
-    PULL_NONE: 'pullNone',
-    PULL_UP: 'pullUp',
-    PULL_DOWN: 'pullDown'
+const AxisSymbol = {
+    X: 'x',
+    Y: 'y',
+    Z: 'z',
+    Absolute: 'absolute'
 };
 
 /**
@@ -165,7 +405,7 @@ class MbitMore {
          * @type {Runtime}
          * @private
          */
-        this._runtime = runtime;
+        this.runtime = runtime;
 
         /**
          * The BluetoothLowEnergy connection socket for reading/writing peripheral data.
@@ -173,83 +413,79 @@ class MbitMore {
          * @private
          */
         this._ble = null;
-        this._runtime.registerPeripheralExtension(extensionId, this);
+        this.runtime.registerPeripheralExtension(extensionId, this);
 
         /**
          * The id of the extension this peripheral belongs to.
          */
         this._extensionId = extensionId;
 
+        this.digitalLevel = {};
+        this.lightLevel = 0;
+        this.temperature = 0;
+        this.soundLevel = 0;
+        this.pitch = 0;
+        this.roll = 0;
+        this.acceleration = {
+            x: 0,
+            y: 0,
+            z: 0
+        };
+        this.compassHeading = 0;
+        this.magneticForce = {
+            x: 0,
+            y: 0,
+            z: 0
+        };
+
+        this.buttonState = {};
+
         /**
-         * The most recently received value for each sensor.
-         * @type {Object.<string, number>}
+         * The most recently received button events for each buttons.
+         * @type {Object}
          * @private
          */
-        this._sensors = {
-            tiltX: 0,
-            tiltY: 0,
-            buttonA: 0,
-            buttonB: 0,
-            touchPins: [0, 0, 0],
-            gestureState: 0,
-            ledMatrixState: new Uint8Array(5),
-            lightLevel: 0,
-            temperature: 0,
-            compassHeading: 0,
-            accelerationX: 0,
-            accelerationY: 0,
-            accelerationZ: 0,
-            accelerationStrength: 0,
-            magneticForceX: 0,
-            magneticForceY: 0,
-            magneticForceZ: 0,
-            magneticStrength: 0,
-            analogValue: {},
-            digitalValue: {},
-            sharedData: [0, 0, 0, 0]
-        };
+        this.buttonEvents = {};
+        Object.keys(MbitMoreButtonStateIndex).forEach(name => {
+            this.buttonEvents[name] = {};
+        });
+
+        /**
+         * The most recently received gesture events.
+         * @type {Object.<number, number>}
+         * @private
+         */
+        this.gestureEvents = {};
+
 
         /**
          * The most recently received events for each pin.
-         * @type {Object.<number>}
+         * @type {Object}
          * @private
          */
-        this._events = {};
+        this._pinEvents = {};
+
+        /**
+         * The most recently received data from micro:bit.
+         * @type {Object}
+         * @private
+         */
+        this.receivedData = {};
 
         this.analogIn = [0, 1, 2];
+        this.analogValue = [];
         this.analogIn.forEach(pinIndex => {
-            this._sensors.analogValue[pinIndex] = 0;
+            this.analogValue[pinIndex] = 0;
         });
+
         this.gpio = [
             0, 1, 2,
             8,
-            13, 14, 15, 16
+            12, 13, 14, 15, 16
         ];
         this.gpio.forEach(pinIndex => {
-            this._sensors.digitalValue[pinIndex] = 0;
+            this.digitalLevel[pinIndex] = 0;
         });
-        this.sharedDataLength = this._sensors.sharedData.length;
-
-        /**
-         * The most recently received value for each gesture.
-         * @type {Object.<string, Object>}
-         * @private
-         */
-        this._gestures = {
-            moving: false,
-            move: {
-                active: false,
-                timeout: false
-            },
-            shake: {
-                active: false,
-                timeout: false
-            },
-            jump: {
-                active: false,
-                timeout: false
-            }
-        };
 
         /**
          * Interval ID for data reading timeout.
@@ -263,445 +499,603 @@ class MbitMore {
          * @type {boolean}
          * @private
          */
-        this._busy = false;
+        this.bleBusy = true;
 
         /**
          * ID for a timeout which is used to clear the busy flag if it has been
          * true for a long time.
          */
-        this._busyTimeoutID = null;
+        this.bleBusyTimeoutID = null;
 
-        this.reset = this.reset.bind(this);
+        this.onDisconnect = this.onDisconnect.bind(this);
         this._onConnect = this._onConnect.bind(this);
-        this._updateMicrobitService = this._updateMicrobitService.bind(this);
-        this._useMbitMoreService = true;
+        this.onNotify = this.onNotify.bind(this);
 
-        this.digitalValuesUpdateInterval = 20; // milli-seconds
-        this.digitalValuesLastUpdated = Date.now();
+        this.stopTone = this.stopTone.bind(this);
+        if (this.runtime) {
+            this.runtime.on('PROJECT_STOP_ALL', this.stopTone);
+        }
 
-        this.analogInUpdateInterval = 200; // milli-seconds
-        this.analogInLastUpdated = Date.now();
+        this.analogInUpdateInterval = 100; // milli-seconds
+        this.analogInLastUpdated = [Date.now(), Date.now(), Date.now()];
 
-        this.sensorsUpdateInterval = 20; // milli-seconds
-        this.sensorsLastUpdated = Date.now();
+        /**
+         * A time interval to wait (in milliseconds) while a block that sends a BLE message is running.
+         * @type {number}
+         */
+        this.sendCommandInterval = 30;
 
-        this.bleReadTimelimit = 500;
+        this.initConfig();
+
+        // keyboard state monitor
+        this.keyState = {};
+        document.body.addEventListener('keydown', e => {
+            this.keyState[e.code] = {
+                key: e.key,
+                code: e.code,
+                alt: e.altKey,
+                ctrl: e.ctrlKey,
+                meta: e.metaKey,
+                shift: e.shiftKey
+            };
+        });
+        document.body.addEventListener('keyup', e => {
+            delete this.keyState[e.code];
+        });
+    }
+
+    /**
+     * Initialize configuration of the micro:bit.
+     */
+    initConfig () {
+        this.config = {};
+        this.config.mic = false;
+        this.config.pinMode = {};
+    }
+
+    /**
+     * Start updating process for micro:bit state and motion.
+     */
+    startUpdater () {
+        if (this.updater) {
+            clearTimeout(this.updater);
+        }
+        if (this.bleAccessWaiting) {
+            this.updater = setTimeout(() => this.startUpdater(), 0);
+            return;
+        }
+        this.updateState()
+            .then(() => this.updateMotion())
+            .finally(() => {
+                this.updater = setTimeout(
+                    () => this.startUpdater(),
+                    this.microbitUpdateInterval
+                );
+            });
+    }
+
+    /**
+     * Stop updating process for micro:bit state and motion.
+     */
+    stopUpdater () {
+        clearTimeout(this.updater);
     }
 
     /**
      * @param {string} text - the text to display.
-     * @return {Promise} - a Promise that resolves when writing to peripheral.
+     * @param {number} delay - The time to delay between characters, in milliseconds.
+     * @param {object} util - utility object provided by the runtime.
+     * @return {?Promise} a Promise that resolves when command sending done or undefined if this process was yield.
      */
-    displayText (text) {
-        const output = new Uint8Array(text.length);
-        for (let i = 0; i < text.length; i++) {
-            output[i] = text.charCodeAt(i);
+    displayText (text, delay, util) {
+        const textLength = Math.min(18, text.length);
+        const textData = new Uint8Array(textLength + 1);
+        for (let i = 0; i < textLength; i++) {
+            textData[i] = text.charCodeAt(i);
         }
-        return this.send(BLECommand.CMD_DISPLAY_TEXT, output);
+        return this.sendCommandSet(
+            [{
+                id: (BLECommand.CMD_DISPLAY << 5) | MbitMoreDisplayCommand.TEXT,
+                message: new Uint8Array([
+                    Math.min(255, (Math.max(0, delay) / 10)),
+                    ...textData
+                ])
+            }],
+            util
+        );
     }
 
     /**
-     * @param {Uint8Array} matrix - the matrix to display.
-     * @return {Promise} - a Promise that resolves when writing to peripheral.
+     * Send display pixcels command to micro:bit.
+     * @param {Array.<Array.<number>>} matrix - pattern to display.
+     * @param {object} util - utility object provided by the runtime.
+     * @return {?Promise} a Promise that resolves when command sending done or undefined if this process was yield.
      */
-    displayMatrix (matrix) {
-        return this.send(BLECommand.CMD_DISPLAY_LED, matrix);
-    }
-
-    setPinMode (pinIndex, mode, util) {
-        if (!this._useMbitMoreService) {
-            switch (mode) {
-            case PinMode.PULL_UP:
-                this.send(BLECommandV0.CMD_PIN_INPUT,
-                    new Uint8Array([pinIndex]), util);
-                break;
-            case PinMode.PULL_DOWN:
-                this.send(BLECommandV0.CMD_PIN_INPUT,
-                    new Uint8Array([pinIndex]), util);
-                break;
-            default:
-                break;
+    displayPixels (matrix, util) {
+        const cmdSet = [
+            {
+                id: (BLECommand.CMD_DISPLAY << 5) | MbitMoreDisplayCommand.PIXELS_0,
+                message: new Uint8Array([
+                    ...matrix[0],
+                    ...matrix[1],
+                    ...matrix[2]
+                ])
+            },
+            {
+                id: (BLECommand.CMD_DISPLAY << 5) | MbitMoreDisplayCommand.PIXELS_1,
+                message: new Uint8Array([
+                    ...matrix[3],
+                    ...matrix[4]
+                ])
             }
-            return;
-        }
-        switch (mode) {
-        case PinMode.PULL_NONE:
-            this.send(BLECommand.CMD_PIN,
-                new Uint8Array([MBitMorePinCommand.SET_PULL, pinIndex, MBitMorePinMode.PullNone]), util);
-            break;
-        case PinMode.PULL_UP:
-            this.send(BLECommand.CMD_PIN,
-                new Uint8Array([MBitMorePinCommand.SET_PULL, pinIndex, MBitMorePinMode.PullUp]), util);
-            break;
-        case PinMode.PULL_DOWN:
-            this.send(BLECommand.CMD_PIN,
-                new Uint8Array([MBitMorePinCommand.SET_PULL, pinIndex, MBitMorePinMode.PullDown]), util);
-            break;
-        default:
-            break;
-        }
-
+        ];
+        return this.sendCommandSet(cmdSet, util);
     }
 
+    /**
+     * Set pull mode to the pin.
+     * @param {number} pinIndex - index of the pin
+     * @param {MbitMorePullModeID} pullMode - pull mode to set
+     * @param {BlockUtility} util - utility object provided from the runtime
+     * @return {?Promise} a Promise that resolves when command sending done or undefined if this process was yield.
+     */
+    setPullMode (pinIndex, pullMode, util) {
+        this.config.pinMode[pinIndex] = MbitMorePinMode.INPUT;
+        return this.sendCommandSet(
+            [{
+                id: (BLECommand.CMD_PIN << 5) | MbitMorePinCommand.SET_PULL,
+                message: new Uint8Array([
+                    pinIndex,
+                    pullMode
+                ])
+            }],
+            util
+        );
+    }
+
+    /**
+     * Set pin to digital output mode on the level.
+     * @param {number} pinIndex - Index of pin.
+     * @param {boolean} level - Value in digital (true = High)
+     * @param {BlockUtility} util - utility object provided by the runtime.
+     * @return {?Promise} a Promise that resolves when command sending done or undefined if this process was yield.
+     */
     setPinOutput (pinIndex, level, util) {
-        if (!this._useMbitMoreService) {
-            this.send(BLECommandV0.CMD_PIN_OUTPUT,
-                new Uint8Array([pinIndex, level]), util);
-            return;
-        }
-        this.send(BLECommand.CMD_PIN,
-            new Uint8Array([MBitMorePinCommand.SET_OUTPUT, pinIndex, level]), util);
+        this.config.pinMode[pinIndex] = MbitMorePinMode.OUTPUT;
+        return this.sendCommandSet(
+            [{
+                id: (BLECommand.CMD_PIN << 5) | MbitMorePinCommand.SET_OUTPUT,
+                message: new Uint8Array(
+                    [
+                        pinIndex,
+                        (level ? 1 : 0)
+                    ]
+                )
+            }],
+            util
+        );
     }
 
+    /**
+     * Set the pin to PWM mode on the level.
+     * @param {number} pinIndex - index of the pin
+     * @param {number} level - value of analog output [0..1024].
+     * @param {BlockUtility} util - utility object provided by the runtime.
+     * @return {?Promise} a Promise that resolves when command sending done or undefined if this process was yield.
+     */
     setPinPWM (pinIndex, level, util) {
+        this.config.pinMode[pinIndex] = MbitMorePinMode.PWM;
         const dataView = new DataView(new ArrayBuffer(2));
         dataView.setUint16(0, level, true);
-        if (!this._useMbitMoreService) {
-            this.send(BLECommandV0.CMD_PIN_PWM,
-                new Uint8Array([
-                    pinIndex,
-                    dataView.getUint8(0),
-                    dataView.getUint8(1)]),
-                util);
-            return;
-        }
-        this.send(BLECommand.CMD_PIN,
-            new Uint8Array([
-                MBitMorePinCommand.SET_PWM,
-                pinIndex,
-                dataView.getUint8(0),
-                dataView.getUint8(1)]),
-            util);
+        return this.sendCommandSet(
+            [{
+                id: (BLECommand.CMD_PIN << 5) | MbitMorePinCommand.SET_PWM,
+                message: new Uint8Array(
+                    [
+                        pinIndex,
+                        dataView.getUint8(0),
+                        dataView.getUint8(1)
+                    ]
+                )
+            }],
+            util
+        );
     }
 
+
+    /**
+     * Set the pin to Servo mode on the angle in the range and center.
+     * @param {number} pinIndex - index of the pin.
+     * @param {number} angle - the level to set on the output pin, in the range 0 - 180.
+     * @param {number} range - the span of possible values. '0' means default(2000).
+     * @param {number} center - the center point from which to calculate the lower and upper bounds.
+     *                          '0' means default(1500).
+     * @param {BlockUtility} util - utility object provided by the runtime.
+     * @return {?Promise} a Promise that resolves when command sending done or undefined if this process was yield.
+     */
     setPinServo (pinIndex, angle, range, center, util) {
+        this.config.pinMode[pinIndex] = MbitMorePinMode.SERVO;
         if (!range || range < 0) range = 0;
         if (!center || center < 0) center = 0;
         const dataView = new DataView(new ArrayBuffer(6));
         dataView.setUint16(0, angle, true);
         dataView.setUint16(2, range, true);
         dataView.setUint16(4, center, true);
-        if (!this._useMbitMoreService) {
-            this.send(BLECommandV0.CMD_PIN_SERVO,
-                new Uint8Array([
-                    pinIndex,
-                    dataView.getUint8(0),
-                    dataView.getUint8(1),
-                    dataView.getUint8(2),
-                    dataView.getUint8(3),
-                    dataView.getUint8(4),
-                    dataView.getUint8(5)]),
-                util);
-            return;
-        }
-        this.send(BLECommand.CMD_PIN,
-            new Uint8Array([
-                MBitMorePinCommand.SET_SERVO,
-                pinIndex,
-                dataView.getUint8(0),
-                dataView.getUint8(1),
-                dataView.getUint8(2),
-                dataView.getUint8(3),
-                dataView.getUint8(4),
-                dataView.getUint8(5)]),
+        return this.sendCommandSet(
+            [{
+                id: (BLECommand.CMD_PIN << 5) | MbitMorePinCommand.SET_SERVO,
+                message: new Uint8Array(
+                    [
+                        pinIndex,
+                        dataView.getUint8(0),
+                        dataView.getUint8(1),
+                        dataView.getUint8(2),
+                        dataView.getUint8(3),
+                        dataView.getUint8(4),
+                        dataView.getUint8(5)
+                    ]
+                )
+            }],
             util);
     }
 
     /**
-     * @return {number} - the latest value received for the tilt sensor's tilt about the X axis.
+     * Read light level from the light sensor.
+     * @param {object} util - utility object provided by the runtime.
+     * @return {number} - value of the light level [0..255].
      */
-    get tiltX () {
-        return this._sensors.tiltX;
-    }
-
-    /**
-     * @return {number} - the latest value received for the tilt sensor's tilt about the Y axis.
-     */
-    get tiltY () {
-        return this._sensors.tiltY;
-    }
-
-    /**
-     * @return {boolean} - the latest value received for the A button.
-     */
-    get buttonA () {
-        return this._sensors.buttonA;
-    }
-
-    /**
-     * @return {boolean} - the latest value received for the B button.
-     */
-    get buttonB () {
-        return this._sensors.buttonB;
-    }
-
-    /**
-     * @return {number} - the latest value received for the motion gesture states.
-     */
-    get gestureState () {
-        return this._sensors.gestureState;
-    }
-
-    /**
-     * @return {Uint8Array} - the current state of the 5x5 LED matrix.
-     */
-    get ledMatrixState () {
-        return this._sensors.ledMatrixState;
+    readLightLevel () {
+        if (!this.isConnected()) {
+            return 0;
+        }
+        return this.lightLevel;
     }
 
     /**
      * Update data of the analog input.
-     * @return {Promise} - a Promise that resolves sensors which updated data of the analog input.
+     * @param {number} pinIndex - index of the pin to get value.
+     * @param {object} util - utility object provided by the runtime.
+     * @return {?Promise} a Promise that resolves value of analog input or undefined if this process was yield.
      */
-    updateAnalogIn () {
-        if ((Date.now() - this.analogInLastUpdated) < this.analogInUpdateInterval) {
-            return Promise.resolve(this._sensors);
+    readAnalogIn (pinIndex, util) {
+        if (!this.isConnected()) {
+            return Promise.resolve(0);
         }
-        const read = this._ble.read(
-            MBITMORE_SERVICE.ID,
-            MBITMORE_SERVICE.ANSLOG_IN,
+        if ((Date.now() - this.analogInLastUpdated[pinIndex]) < this.analogInUpdateInterval) {
+            return Promise.resolve(this.analogValue[pinIndex]);
+        }
+        if (this.bleBusy) {
+            this.bleAccessWaiting = true;
+            if (util) util.yield(); // re-try this call after a while.
+            return; // Do not return Promise.resolve() to re-try.
+        }
+        this.bleBusy = true;
+        this.bleBusyTimeoutID = window.setTimeout(() => {
+            this.bleBusy = false;
+            this.bleAccessWaiting = false;
+        }, 1000);
+        return new Promise(resolve => this._ble.read(
+            MM_SERVICE.ID,
+            MM_SERVICE.ANALOG_IN_CH[pinIndex],
             false)
             .then(result => {
-                const data = Base64Util.base64ToUint8Array(result.message);
-                const dataView = new DataView(data.buffer, 0);
-                const value1 = dataView.getUint16(0, true);
-                const value2 = dataView.getUint16(2, true);
-                const value3 = dataView.getUint16(4, true);
-                // This invalid values will come up sometimes but the cause is unknown.
-                if (value1 === 255 && value2 === 255 && value3 === 255) {
-                    return this._sensors;
+                window.clearTimeout(this.bleBusyTimeoutID);
+                this.bleBusy = false;
+                this.bleAccessWaiting = false;
+                if (!result) {
+                    return resolve(this.analogValue[pinIndex]);
                 }
-                this._sensors.analogValue[this.analogIn[0]] = value1;
-                this._sensors.analogValue[this.analogIn[1]] = value2;
-                this._sensors.analogValue[this.analogIn[2]] = value3;
-                this.analogInLastUpdated = Date.now();
-                return this._sensors;
-            });
-        return Promise.race([read, timeoutPromise(this.bleReadTimelimit).then(() => this._sensors)]);
-    }
-
-    /**
-     * Read analog input from the pin [0, 1, 2].
-     * @param {number} pin - the pin to read.
-     * @return {Promise} - a Promise that resolves analog input value of the pin.
-     */
-    readAnalogIn (pin) {
-        if (!this.isConnected()) {
-            return Promise.resolve(0);
-        }
-        if (!this._useMbitMoreService) {
-            return Promise.resolve(this._sensors.analogValue[pin]);
-        }
-        return this.updateAnalogIn()
-            .then(() => this._sensors.analogValue[pin]);
-    }
-
-    /**
-     * Update data of all sensors.
-     * @return {Promise} - a Promise that resolves sensors which updated data of all sensor.
-     */
-    updateSensors () {
-        if (!this._useMbitMoreService) {
-            return Promise.resolve(this._sensors);
-        }
-        if ((Date.now() - this.sensorsLastUpdated) < this.sensorsUpdateInterval) {
-            return Promise.resolve(this._sensors);
-        }
-        const read = this._ble.read(
-            MBITMORE_SERVICE.ID,
-            MBITMORE_SERVICE.SENSORS,
-            false)
-            .then(result => {
-                const data = Base64Util.base64ToUint8Array(result.message);
+                const data = base64ToUint8Array(result.message);
                 const dataView = new DataView(data.buffer, 0);
-                // Accelerometer
-                this._sensors.accelerationX = 1000 * dataView.getInt16(0, true) / G;
-                this._sensors.accelerationY = 1000 * dataView.getInt16(2, true) / G;
-                this._sensors.accelerationZ = 1000 * dataView.getInt16(4, true) / G;
-                this._sensors.accelerationStrength = Math.round(
-                    Math.sqrt(
-                        (this._sensors.accelerationX ** 2) +
-                        (this._sensors.accelerationY ** 2) +
-                        (this._sensors.accelerationZ ** 2)
-                    )
-                );
-                this._sensors.pitch = Math.round(dataView.getInt16(6, true) * 180 / Math.PI / 1000);
-                this._sensors.roll = Math.round(dataView.getInt16(8, true) * 180 / Math.PI / 1000);
-                // Magnetometer
-                this._sensors.compassHeading = dataView.getUint16(10, true);
-                this._sensors.magneticForceX = dataView.getInt16(12, true);
-                this._sensors.magneticForceY = dataView.getInt16(14, true);
-                this._sensors.magneticForceZ = dataView.getInt16(16, true);
-                this._sensors.magneticStrength = Math.round(
-                    Math.sqrt(
-                        (this._sensors.magneticForceX ** 2) +
-                        (this._sensors.magneticForceY ** 2) +
-                        (this._sensors.magneticForceZ ** 2)
-                    )
-                );
-                // Light sensor
-                this._sensors.lightLevel = dataView.getUint8(18);
-                this._sensors.temperature = dataView.getUint8(19) - 128;
-                this.sensorsLastUpdated = Date.now();
-                return this._sensors;
-            });
-        return Promise.race([read, timeoutPromise(this.bleReadTimelimit).then(() => this._sensors)]);
+                this.analogValue[pinIndex] = dataView.getUint16(0, true);
+                this.analogInLastUpdated = Date.now();
+                resolve(this.analogValue[pinIndex]);
+            })
+        );
     }
 
     /**
-     * Read light level from the light sensor.
-     * @return {Promise} - a Promise that resolves light level.
+     * Update data of digital level, light level, temperature, sound level.
+     * @return {Promise} - a Promise that resolves updated data holder.
      */
-    readLightLevel () {
-        if (!this.isConnected()) {
-            return Promise.resolve(0);
+    updateState () {
+        if (!this.isConnected()) return Promise.resolve(this);
+        if (this.bleBusy) {
+            return Promise.resolve(this);
         }
-        return this.updateSensors()
-            .then(() => this._sensors.lightLevel);
+        this.bleBusy = true;
+        this.bleBusyTimeoutID = window.setTimeout(() => {
+            this.bleBusy = false;
+        }, 1000);
+        return new Promise(resolve => {
+            this._ble.read(
+                MM_SERVICE.ID,
+                MM_SERVICE.STATE_CH,
+                false)
+                .then(result => {
+                    window.clearTimeout(this.bleBusyTimeoutID);
+                    this.bleBusy = false;
+                    if (!result) return resolve(this);
+                    const data = base64ToUint8Array(result.message);
+                    const dataView = new DataView(data.buffer, 0);
+                    // Digital Input
+                    const gpioData = dataView.getUint32(0, true);
+                    for (let i = 0; i < this.gpio.length; i++) {
+                        this.digitalLevel[this.gpio[i]] = (gpioData >> this.gpio[i]) & 1;
+                    }
+                    Object.keys(MbitMoreButtonStateIndex).forEach(
+                        name => {
+                            this.buttonState[name] = (gpioData >> (24 + MbitMoreButtonStateIndex[name])) & 1;
+                        });
+                    this.lightLevel = dataView.getUint8(4);
+                    this.temperature = dataView.getUint8(5) - 128;
+                    this.soundLevel = dataView.getUint8(6);
+                    this.resetConnectionTimeout();
+                    resolve(this);
+                });
+        });
     }
 
     /**
      * Read temperature (integer in celsius) from the micro:bit cpu.
-     * @return {Promise} - a Promise that resolves temperature.
+     * @return {number} - degrees of temperature [centigrade].
      */
     readTemperature () {
         if (!this.isConnected()) {
-            return Promise.resolve(0);
+            return 0;
         }
-        return this.updateSensors()
-            .then(() => this._sensors.temperature);
+        return this.temperature;
+    }
+
+    /**
+     * Configure microphone.
+     * @param {boolean} use - true to use microphone.
+     * @param {object} util - utility object provided by the runtime.
+     * @return {?Promise} - a Promise that resolves state of the microphone or undefined if the process was yield.
+     */
+    configMic (use, util) {
+        use = (use === true);
+        if (!this.isConnected()) {
+            return Promise.resolve(false);
+        }
+        if (this.config.mic === use) {
+            return Promise.resolve(this.config.mic);
+        }
+        const sendPromise = this.sendCommandSet(
+            [{
+                id: (BLECommand.CMD_CONFIG << 5) | MbitMoreConfig.MIC,
+                message: new Uint8Array([(use ? 1 : 0)]) // use microphone
+            }],
+            util
+        );
+        if (sendPromise) {
+            return sendPromise
+                .then(() => {
+                    this.config.mic = use;
+                    return this.config.mic;
+                });
+        }
+        return;
+    }
+
+    /**
+     * Play tone on the speaker.
+     * @param {number} frequency - wave frequency to play [Hz]
+     * @param {number} volume laudness of tone [%]
+     * @param {object} util - utility object provided by the runtime.
+     * @return {?Promise} - a Promise that resolves to send command or undefined if this process was yield.
+     */
+    playTone (frequency, volume, util) {
+        if (!this.isConnected()) {
+            return Promise.resolve();
+        }
+        const frequencyData = new DataView(new ArrayBuffer(4));
+        frequencyData.setUint32(0, Math.round(1000000 / frequency), true);
+        volume = Math.round(volume * 0xff / 100);
+        return this.sendCommandSet(
+            [{
+                id: (BLECommand.CMD_AUDIO << 5) | MbitMoreAudioCommand.PLAY_TONE,
+                message: new Uint8Array([
+                    frequencyData.getUint8(0),
+                    frequencyData.getUint8(1),
+                    frequencyData.getUint8(2),
+                    frequencyData.getUint8(3),
+                    volume
+                ])
+            }],
+            util
+        );
+    }
+
+    /**
+     * Stop playing tone on the speaker.
+     * @param {object} util - utility object provided by the runtime.
+     * @return {?Promise} - a Promise that resolves to send command or undefined if this process was yield.
+     */
+    stopTone (util) {
+        if (!this.isConnected()) {
+            return Promise.resolve();
+        }
+        return this.sendCommandSet(
+            [{
+                id: (BLECommand.CMD_AUDIO << 5) | MbitMoreAudioCommand.STOP_TONE,
+                message: new Uint8Array([])
+            }],
+            util
+        );
+    }
+
+    /**
+     * Read sound level.
+     * @return {number} - level of loudness (0 .. 255).
+     */
+    readSoundLevel () {
+        if (!this.isConnected()) {
+            return 0;
+        }
+        return this.soundLevel;
+    }
+
+    /**
+     * Update data of acceleration, magnetic force.
+     * @return {Promise} - a Promise that resolves updated data holder.
+     */
+    updateMotion () {
+        if (!this.isConnected()) return Promise.resolve(this);
+        if (this.bleBusy) {
+            return Promise.resolve(this);
+        }
+        this.bleBusy = true;
+        this.bleBusyTimeoutID = window.setTimeout(() => {
+            this.bleBusy = false;
+        }, 1000);
+        return new Promise(resolve => {
+            this._ble.read(
+                MM_SERVICE.ID,
+                MM_SERVICE.MOTION_CH,
+                false)
+                .then(result => {
+                    window.clearTimeout(this.bleBusyTimeoutID);
+                    this.bleBusy = false;
+                    if (!result) return resolve(this);
+                    const data = base64ToUint8Array(result.message);
+                    const dataView = new DataView(data.buffer, 0);
+                    // Accelerometer
+                    this.pitch = Math.round(dataView.getInt16(0, true) * 180 / Math.PI / 1000);
+                    this.roll = Math.round(dataView.getInt16(2, true) * 180 / Math.PI / 1000);
+                    this.acceleration.x = 1000 * dataView.getInt16(4, true) / G;
+                    this.acceleration.y = 1000 * dataView.getInt16(6, true) / G;
+                    this.acceleration.z = 1000 * dataView.getInt16(8, true) / G;
+                    // Magnetometer
+                    this.compassHeading = dataView.getUint16(10, true);
+                    this.magneticForce.x = dataView.getInt16(12, true);
+                    this.magneticForce.y = dataView.getInt16(14, true);
+                    this.magneticForce.z = dataView.getInt16(16, true);
+                    this.resetConnectionTimeout();
+                    resolve(this);
+                });
+        });
+    }
+
+    /**
+     * Read pitch [degrees] of the micro:bit heading direction.
+     * @return {number} - degree of pitch.
+     */
+    readPitch () {
+        if (!this.isConnected()) {
+            return 0;
+        }
+        return this.pitch;
+    }
+
+    /**
+     * Read roll [degrees] of the micro:bit heading direction.
+     * @return {number} - degree of roll.
+     */
+    readRoll () {
+        if (!this.isConnected()) {
+            return 0;
+        }
+        return this.roll;
+    }
+
+    /**
+     * Read the value of gravitational acceleration [milli-g] for the axis.
+     * @param {AxisSymbol} axis - direction of acceleration.
+     * @return {number} - value of acceleration.
+     */
+    readAcceleration (axis) {
+        if (!this.isConnected()) {
+            return 0;
+        }
+        if (axis === AxisSymbol.Absolute) {
+            return Math.round(
+                Math.sqrt(
+                    (this.acceleration.x ** 2) +
+                            (this.acceleration.y ** 2) +
+                            (this.acceleration.z ** 2)
+                )
+            );
+        }
+        return this.acceleration[axis];
     }
 
     /**
      * Read the angle (degrees) of heading direction from the north.
-     * @return {Promise} - a Promise that resolves compass heading.
+     * @return {number} - degree of compass heading.
      */
     readCompassHeading () {
         if (!this.isConnected()) {
-            return Promise.resolve(0);
+            return 0;
         }
-        return this.updateSensors()
-            .then(() => this._sensors.compassHeading);
+        return this.compassHeading;
+    }
+
+
+    /**
+     * Read value of magnetic force [micro teslas] for the axis.
+     * @param {AxisSymbol} axis - direction of magnetic force.
+     * @return {number} - value of magnetic force.
+     */
+    readMagneticForce (axis) {
+        if (!this.isConnected()) {
+            return 0;
+        }
+        if (axis === AxisSymbol.Absolute) {
+            return Math.round(
+                Math.sqrt(
+                    (this.magneticForce.x ** 2) +
+                            (this.magneticForce.y ** 2) +
+                            (this.magneticForce.z ** 2)
+                )
+            );
+        }
+        return this.magneticForce[axis];
     }
 
     /**
-     * Read magnetic field X [micro teslas].
-     * @return {Promise} - a Promise that resolves magnetic field strength.
+     * Start to scan Bluetooth LE devices to find micro:bit with MicroBit More service.
      */
-    readMagneticForceX () {
-        if (!this.isConnected()) {
-            return Promise.resolve(0);
-        }
-        return this.updateSensors()
-            .then(() => this._sensors.magneticForceX);
+    scanBLE () {
+        const connectorClass = BLE;
+        this._ble = new connectorClass(
+            this.runtime,
+            this._extensionId,
+            {
+                filters: [
+                    {namePrefix: 'BBC micro:bit'},
+                    {services: [MM_SERVICE.ID]}
+                ]
+            },
+            this._onConnect,
+            this.onDisconnect
+        );
     }
 
     /**
-     * Read magnetic field Y [micro teslas].
-     * @return {Promise} - a Promise that resolves magnetic field strength.
+     * Start to scan USB serial devices to find micro:bit v2.
      */
-    readMagneticForceY () {
-        if (!this.isConnected()) {
-            return Promise.resolve(0);
-        }
-        return this.updateSensors()
-            .then(() => this._sensors.magneticForceY);
+    scanSerial () {
+        this._ble = new WebSerial(
+            this.runtime,
+            this._extensionId,
+            {
+                filters: [
+                    {usbVendorId: 0x0d28, usbProductId: 0x0204}
+                ]
+            },
+            this._onConnect,
+            this.onDisconnect
+        );
     }
 
     /**
-     * Read magnetic field X [micro teslas].
-     * @return {Promise} - a Promise that resolves magnetic field strength.
+     * Whether the key is pressed at this moment.
+     * @param {string} key - key in keyboard event
+     * @returns {boolean} - return true when the key is pressed
      */
-    readMagneticForceZ () {
-        if (!this.isConnected()) {
-            return Promise.resolve(0);
-        }
-        return this.updateSensors()
-            .then(() => this._sensors.magneticForceZ);
-    }
-
-    /**
-     * Read magnetic field strength [micro teslas].
-     * @return {Promise} - a Promise that resolves magnetic field strength.
-     */
-    readMagneticStrength () {
-        if (!this.isConnected()) {
-            return Promise.resolve(0);
-        }
-        return this.updateSensors()
-            .then(() => this._sensors.magneticStrength);
-    }
-
-    /**
-     * Read the value of gravitational acceleration [milli-g] for X axis.
-     * @return {Promise} - a Promise that resolves acceleration.
-     */
-    readAccelerationX () {
-        if (!this.isConnected()) {
-            return Promise.resolve(0);
-        }
-        return this.updateSensors()
-            .then(() => this._sensors.accelerationX);
-    }
-
-    /**
-     * Read the value of gravitational acceleration [milli-g] for Y axis.
-     * @return {Promise} - a Promise that resolves acceleration.
-     */
-    readAccelerationY () {
-        if (!this.isConnected()) {
-            return Promise.resolve(0);
-        }
-        return this.updateSensors()
-            .then(() => this._sensors.accelerationY);
-    }
-
-    /**
-     * Read the value of gravitational acceleration [milli-g] for Z axis.
-     * @return {Promise} - a Promise that resolves acceleration.
-     */
-    readAccelerationZ () {
-        if (!this.isConnected()) {
-            return Promise.resolve(0);
-        }
-        return this.updateSensors()
-            .then(() => this._sensors.accelerationZ);
-    }
-
-    /**
-     * Read acceleration strength [milli-g].
-     * @return {Promise} - a Promise that resolves acceleration strength.
-     */
-    readAccelerationStrength () {
-        if (!this.isConnected()) {
-            return Promise.resolve(0);
-        }
-        return this.updateSensors()
-            .then(() => this._sensors.accelerationStrength);
-    }
-
-    /**
-     * Read pitch [degrees] is 3D space.
-     * @return {Promise} - a Promise that resolves pitch.
-     */
-    readPitch () {
-        if (!this.isConnected()) {
-            return Promise.resolve(0);
-        }
-        return this.updateSensors()
-            .then(() => this._sensors.pitch);
-    }
-
-    /**
-     * Read roll [degrees] is 3D space.
-     * @return {Promise} - a Promise that resolves roll.
-     */
-    readRoll () {
-        if (!this.isConnected()) {
-            return Promise.resolve(0);
-        }
-        return this.updateSensors()
-            .then(() => this._sensors.roll);
+    isKeyPressing (key) {
+        return Object.values(this.keyState).find(state => state.key === key);
     }
 
     /**
@@ -711,12 +1105,14 @@ class MbitMore {
         if (this._ble) {
             this._ble.disconnect();
         }
-        this._ble = new BLE(this._runtime, this._extensionId, {
-            filters: [
-                {services: [MICROBIT_SERVICE.ID]}
-            ],
-            optionalServices: [MBITMORE_SERVICE.ID]
-        }, this._onConnect, this.reset);
+        this.bleBusy = true;
+        if (('serial' in navigator) && this.isKeyPressing('Shift')) {
+            this.scanSerial();
+        } else {
+            this.scanBLE();
+        }
+        // The key state is cleared because the keyup event will be dropped by the browser dialog.
+        this.keyState = {};
     }
 
     /**
@@ -725,12 +1121,7 @@ class MbitMore {
      */
     connect (id) {
         if (this._ble) {
-            this._ble.getServices = () => this._ble.sendRemoteRequest('getServices')
-                .catch(e => {
-                    this._ble._handleRequestError(e);
-                });
             this._ble.connectPeripheral(id);
-            this.peripheralId = id;
         }
     }
 
@@ -741,14 +1132,14 @@ class MbitMore {
         if (this._ble) {
             this._ble.disconnect();
         }
-
-        this.reset();
+        this.onDisconnect();
     }
 
     /**
      * Reset all the state and timeout/interval ids.
      */
-    reset () {
+    onDisconnect () {
+        this.stopUpdater();
         if (this._timeoutID) {
             window.clearTimeout(this._timeoutID);
             this._timeoutID = null;
@@ -768,336 +1159,399 @@ class MbitMore {
     }
 
     /**
-     * Send a message to the peripheral BLE socket.
-     * @param {number} command - the BLE command hex.
-     * @param {Uint8Array} message - the message to write
-     * @param {object} util - utility object provided by the runtime.
+     * Send a command to micro:bit.
+     * @param {object} command command to send.
+     * @param {number} command.id ID of the command.
+     * @param {Uint8Array} command.message Contents of the command.
+     * @return {Promise} a Promise that resolves when the data was sent and after send command interval.
      */
-    send (command, message, util) {
-        if (!this.isConnected()) return;
-        if (this._busy) {
-            if (util) util.yield();
-            return;
-        }
-
-        // Set a busy flag so that while we are sending a message and waiting for
-        // the response, additional messages are ignored.
-        this._busy = true;
-
-        // Set a timeout after which to reset the busy flag. This is used in case
-        // a BLE message was sent for which we never received a response, because
-        // e.g. the peripheral was turned off after the message was sent. We reset
-        // the busy flag after a while so that it is possible to try again later.
-        this._busyTimeoutID = window.setTimeout(() => {
-            this._busy = false;
-        }, 5000);
-
-        const output = new Uint8Array(message.length + 1);
-        output[0] = command; // attach command to beginning of message
-        for (let i = 0; i < message.length; i++) {
-            output[i + 1] = message[i];
-        }
-        const data = Base64Util.uint8ArrayToBase64(output);
-
-        this._ble.write(MICROBIT_SERVICE.ID, MICROBIT_SERVICE.TX, data, 'base64', true).then(
-            () => {
-                this._busy = false;
-                window.clearTimeout(this._busyTimeoutID);
-            }
+    sendCommand (command) {
+        const data = uint8ArrayToBase64(
+            new Uint8Array([
+                command.id,
+                ...command.message
+            ])
         );
+        return new Promise(resolve => {
+            this._ble.write(
+                MM_SERVICE.ID,
+                MM_SERVICE.COMMAND_CH,
+                data,
+                'base64',
+                false
+            );
+            setTimeout(() => resolve(), this.sendCommandInterval);
+        });
+    }
+
+    /**
+     * Send multiple commands sequentially.
+     * @param {Array.<{id: number, message: Uint8Array}>} commands array of command.
+     * @param {BlockUtility} util - utility object provided by the runtime.
+     * @return {?Promise} a Promise that resolves when the all commands was sent.
+     */
+    sendCommandSet (commands, util) {
+        if (!this.isConnected()) return Promise.resolve();
+        if (this.bleBusy) {
+            this.bleAccessWaiting = true;
+            if (util) {
+                util.yield(); // re-try this call after a while.
+            } else {
+                setTimeout(() => this.sendCommandSet(commands, util), 1);
+            }
+            return; // Do not return Promise.resolve() to re-try.
+        }
+        this.bleBusy = true;
+        // Clear busy and BLE access waiting flag when the scratch-link does not respond.
+        this.bleBusyTimeoutID = window.setTimeout(() => {
+            this.bleBusy = false;
+            this.bleAccessWaiting = false;
+        }, 1000);
+        return new Promise(resolve => {
+            commands.reduce((acc, cur) => acc.then(() => this.sendCommand(cur)),
+                Promise.resolve()
+            )
+                .then(() => {
+                    window.clearTimeout(this.bleBusyTimeoutID);
+                })
+                .catch(err => {
+                    log.log(err);
+                    this._ble.handleDisconnectError(err);
+                })
+                .finally(() => {
+                    this.bleBusy = false;
+                    this.bleAccessWaiting = false;
+                    resolve();
+                });
+        });
     }
 
     /**
      * Starts reading data from peripheral after BLE has connected to it.
-     * @private
      */
     _onConnect () {
-        this._ble.getServices()
-            .then(services => {
-                this._ble.startNotifications(MICROBIT_SERVICE.ID, MICROBIT_SERVICE.RX, this._updateMicrobitService);
-                // Workaround for ScratchLink v.1.3.0 MacOS returns service id as distorted format,
-                // such as "0000A62D574E-1B34-4092-8DEE-4151F63B2865-0000-1000-8000-00805f9b34fb".
-                this._useMbitMoreService = typeof services.find(
-                    element => element.toLowerCase().indexOf(MBITMORE_SERVICE.ID) !== -1) !== 'undefined';
-                if (this._useMbitMoreService) {
-                    // Microbit More service is available.
-                    this.send(BLECommand.CMD_PROTOCOL, new Uint8Array([1])); // Set protocol ver.1.
-                    this._ble.startNotifications(
-                        MBITMORE_SERVICE.ID,
-                        MBITMORE_SERVICE.SHARED_DATA,
-                        this._updateMicrobitService);
-                    this._ble.startNotifications(
-                        MBITMORE_SERVICE.ID,
-                        MBITMORE_SERVICE.EVENT,
-                        this._updateMicrobitService);
+        this._ble.read(
+            MM_SERVICE.ID,
+            MM_SERVICE.COMMAND_CH,
+            false)
+            .then(result => {
+                if (!result) {
+                    throw new Error('Config is not readable');
                 }
-            });
-        this._timeoutID = window.setTimeout(
-            () => this._ble.handleDisconnectError(BLEDataStoppedError),
-            BLETimeout
-        );
+                const data = base64ToUint8Array(result.message);
+                const dataView = new DataView(data.buffer, 0);
+                this.hardware = dataView.getUint8(0);
+                this.protocol = dataView.getUint8(1);
+                this.route = dataView.getUint8(2);
+                this._ble.startNotifications(
+                    MM_SERVICE.ID,
+                    MM_SERVICE.ACTION_EVENT_CH,
+                    this.onNotify);
+                this._ble.startNotifications(
+                    MM_SERVICE.ID,
+                    MM_SERVICE.PIN_EVENT_CH,
+                    this.onNotify);
+                if (this.hardware === MbitMoreHardwareVersion.MICROBIT_V1) {
+                    this.microbitUpdateInterval = 100; // milliseconds
+                } else {
+                    this._ble.startNotifications(
+                        MM_SERVICE.ID,
+                        MM_SERVICE.MESSAGE_CH,
+                        this.onNotify);
+                    this.microbitUpdateInterval = 50; // milliseconds
+                }
+                if (this.route === CommunicationRoute.SERIAL) {
+                    this.sendCommandInterval = 100; // milliseconds
+                } else {
+                    this.sendCommandInterval = 30; // milliseconds
+                }
+                this.initConfig();
+                this.bleBusy = false;
+                this.startUpdater();
+                this.resetConnectionTimeout();
+            })
+            .catch(err => this._ble.handleDisconnectError(err));
     }
 
     /**
-     * Process the sensor data from the incoming BLE characteristic.
+     * Process the data from the incoming BLE characteristic.
      * @param {string} msg - the incoming BLE data.
      * @private
      */
-    _updateMicrobitService (msg) {
-        const data = Base64Util.base64ToUint8Array(msg);
+    onNotify (msg) {
+        const data = base64ToUint8Array(msg);
         const dataView = new DataView(data.buffer, 0);
-        const dataFormat = dataView.getInt8(19);
-        if (dataFormat !== MBitMoreDataFormat.IO &&
-            dataFormat !== MBitMoreDataFormat.ANSLOG_IN &&
-            dataFormat !== MBitMoreDataFormat.LIGHT_SENSOR &&
-            dataFormat !== MBitMoreDataFormat.ACCELEROMETER &&
-            dataFormat !== MBitMoreDataFormat.MAGNETOMETER &&
-            dataFormat !== MBitMoreDataFormat.SHARED_DATA &&
-            dataFormat !== MBitMoreDataFormat.EVENT) {
-            // Read original micro:bit data.
-            this._sensors.tiltX = data[1] | (data[0] << 8);
-            if (this._sensors.tiltX > (1 << 15)) this._sensors.tiltX -= (1 << 16);
-            this._sensors.tiltY = data[3] | (data[2] << 8);
-            if (this._sensors.tiltY > (1 << 15)) this._sensors.tiltY -= (1 << 16);
-    
-            this._sensors.buttonA = dataView.getUint8(4);
-            this._sensors.buttonB = dataView.getUint8(5);
-    
-            this._sensors.touchPins[0] = dataView.getUint8(6);
-            this._sensors.touchPins[1] = dataView.getUint8(7);
-            this._sensors.touchPins[2] = dataView.getUint8(8);
-    
-            this._sensors.gestureState = dataView.getUint8(9);
-        }
-
-        switch (dataView.getUint8(19)) {
-        case MBitMoreDataFormat.MIX_01: {
-            this._sensors.analogValue[this.analogIn[0]] = dataView.getUint16(10, true);
-            this._sensors.analogValue[this.analogIn[1]] = dataView.getUint16(12, true);
-            this._sensors.analogValue[this.analogIn[2]] = dataView.getUint16(14, true);
-            this._sensors.compassHeading = dataView.getUint16(16, true);
-            this._sensors.lightLevel = dataView.getUint8(18);
-            break;
-        }
-        case MBitMoreDataFormat.MIX_02: {
-            this._sensors.sharedData[0] = dataView.getInt16(10, true);
-            this._sensors.sharedData[1] = dataView.getInt16(12, true);
-            this._sensors.sharedData[2] = dataView.getInt16(14, true);
-            this._sensors.sharedData[3] = dataView.getInt16(16, true);
-            const gpioData = dataView.getUint8(18);
-            for (let i = 0; i < this.gpio.length; i++) {
-                this._sensors.digitalValue[this.gpio[i]] = (gpioData >> i) & 1;
+        const dataFormat = dataView.getUint8(19);
+        if (dataFormat === MbitMoreDataFormat.ACTION_EVENT) {
+            const actionEventType = dataView.getUint8(0);
+            if (actionEventType === MbitMoreActionEvent.BUTTON) {
+                const buttonName = MbitMoreButtonID[dataView.getUint16(1, true)];
+                const eventName = MbitMoreButtonEventID[dataView.getUint8(3)];
+                this.buttonEvents[buttonName][eventName] = dataView.getUint32(4, true); // Timestamp
+            } else if (actionEventType === MbitMoreActionEvent.GESTURE) {
+                const gestureName = MbitMoreGestureID[dataView.getUint8(1)];
+                this.gestureEvents[gestureName] = dataView.getUint32(2, true); // Timestamp
             }
-            break;
-        }
-        case MBitMoreDataFormat.MIX_03: {
-            this._sensors.magneticStrength = dataView.getUint16(10, true);
-            this._sensors.accelerationX = 1000 * dataView.getInt16(12, true) / G;
-            this._sensors.accelerationY = 1000 * dataView.getInt16(14, true) / G;
-            this._sensors.accelerationZ = 1000 * dataView.getInt16(16, true) / G;
-            break;
-        }
-        case MBitMoreDataFormat.SHARED_DATA: {
-            this._sensors.sharedData[0] = dataView.getInt16(0, true);
-            this._sensors.sharedData[1] = dataView.getInt16(2, true);
-            this._sensors.sharedData[2] = dataView.getInt16(4, true);
-            this._sensors.sharedData[3] = dataView.getInt16(6, true);
-            break;
-        }
-        case MBitMoreDataFormat.EVENT: {
+        } else if (dataFormat === MbitMoreDataFormat.PIN_EVENT) {
             const pinIndex = dataView.getUint8(0);
-            if (!this._events[pinIndex]) {
-                this._events[pinIndex] = {};
+            if (!this._pinEvents[pinIndex]) {
+                this._pinEvents[pinIndex] = {};
             }
-            const event = dataView.getUint16(1, true);
-            this._events[pinIndex][event] = dataView.getUint32(3, true);
-            break;
+            const event = dataView.getUint8(1);
+            this._pinEvents[pinIndex][event] =
+            {
+                value: dataView.getUint32(2, true), // timesamp of the edge or duration of the pulse
+                timestamp: Date.now() // received time
+            };
+        } else if (dataFormat === MbitMoreDataFormat.DATA_NUMBER) {
+            const label = new TextDecoder().decode(data.slice(0, 8).filter(char => (char !== 0)));
+            this.receivedData[label] =
+            {
+                content: dataView.getFloat32(8, true),
+                timestamp: Date.now()
+            };
+        } else if (dataFormat === MbitMoreDataFormat.DATA_TEXT) {
+            const label = new TextDecoder().decode(data.slice(0, 8).filter(char => (char !== 0)));
+            this.receivedData[label] =
+            {
+                content: new TextDecoder().decode(data.slice(8, 20).filter(char => (char !== 0))),
+                timestamp: Date.now()
+            };
         }
-        default:
-            break;
-        }
-        this.resetDisconnectTimeout();
+        this.resetConnectionTimeout();
     }
 
     /**
      * Cancel disconnect timeout and start counting again.
      */
-    resetDisconnectTimeout () {
-        window.clearTimeout(this._timeoutID);
+    resetConnectionTimeout () {
+        if (this._timeoutID) window.clearTimeout(this._timeoutID);
         this._timeoutID = window.setTimeout(() => this._ble.handleDisconnectError(BLEDataStoppedError), BLETimeout);
     }
 
     /**
-     * Return whether the pin is connected to ground or not.
-     * @param {number} pin - the pin to check touch state.
-     * @return {boolean} - true if the pin is connected to GND.
+     * Return whether the pin value is high.
+     * @param {number} pin - the pin to check.
+     * @return {boolean} - whether the pin is high or not.
      */
-    isPinOnGrand (pin) {
-        if (pin > 2) {
-            if (!this._useMbitMoreService) {
-                return this._sensors.digitalValue[pin];
-            }
-            if ((Date.now() - this.digitalValuesLastUpdated) > this.digitalValuesUpdateInterval) {
-                // Return the last value immediately and start update for next check.
-                this.updateDigitalValue().then();
-                this.digitalValuesLastUpdated = Date.now();
-            }
-            return this._sensors.digitalValue[pin] === 0;
-        }
-        return this._sensors.touchPins[pin] !== 0;
-    }
-
-    /**
-     * Update data of the digital input state.
-     * @return {Promise} - Promise that resolves sensors which updated data of the ditital input state.
-     */
-    updateDigitalValue () {
-        const read = this._ble.read(
-            MBITMORE_SERVICE.ID,
-            MBITMORE_SERVICE.IO,
-            false)
-            .then(result => {
-                const data = Base64Util.base64ToUint8Array(result.message);
-                const dataView = new DataView(data.buffer, 0);
-                const gpioData = dataView.getUint32(0, true);
-                for (let i = 0; i < this.gpio.length; i++) {
-                    this._sensors.digitalValue[this.gpio[i]] = (gpioData >> this.gpio[i]) & 1;
-                }
-                this.digitalValuesLastUpdated = Date.now();
-                return this._sensors;
-            });
-        return Promise.race([read, timeoutPromise(this.bleReadTimelimit).then(() => this._sensors)]);
+    isPinHigh (pin) {
+        const level = this.readDigitalLevel(pin);
+        return level === 1;
     }
 
     /**
      * Read digital input from the pin.
      * @param {number} pin - the pin to read.
-     * @return {Promise} - a Promise that resolves digital input value of the pin.
+     * @return {number} - digital input value of the pin [0|1].
      */
-    readDigitalValue (pin) {
+    readDigitalLevel (pin) {
         if (!this.isConnected()) {
-            return Promise.resolve(0);
+            return 0;
         }
-        if (!this._useMbitMoreService) {
-            return Promise.resolve(this._sensors.digitalValue[pin]);
-        }
-        return this.updateDigitalValue()
-            .then(() => this._sensors.digitalValue[pin]);
+        return this.digitalLevel[pin];
     }
 
     /**
-     * Return the value of the shared data.
-     * @param {number} index - the shared data index.
-     * @return {number} - the latest value received for the shared data.
+     * Return whether the button is pressed.
+     * @param {string} buttonName - name of the button
+     * @return {boolean} - true when it is pressed
      */
-    getSharedData (index) {
-        return this._sensors.sharedData[index];
-    }
-
-    setSharedData (sharedDataIndex, sharedDataValue, util) {
-        const dataView = new DataView(new ArrayBuffer(2));
-        dataView.setInt16(0, sharedDataValue, true);
-        const command = this._useMbitMoreService ? BLECommand.CMD_SHARED_DATA : BLECommandV0.CMD_SHARED_DATA_SET;
-        this.send(command,
-            new Uint8Array([
-                sharedDataIndex,
-                dataView.getUint8(0),
-                dataView.getUint8(1)]),
-            util);
-        this._sensors.sharedData[sharedDataIndex] = sharedDataValue;
+    isButtonPressed (buttonName) {
+        if (!this.isConnected()) {
+            return false;
+        }
+        return this.buttonState[buttonName] === 1;
     }
 
     /**
-     * Return the last timestamp of the pin event or 0 when the event is not sent.
+     * Return whether the pin is touch-mode.
+     * @param {number} pinIndex - indesx of the pin
+     * @return {boolean} - true when it is touch-mode
+     */
+    isPinTouchMode (pinIndex) {
+        return this.config.pinMode[pinIndex] === MbitMorePinMode.TOUCH;
+    }
+
+    /**
+     * Configurate touch mode of the pin.
+     * @param {number} pinIndex - index of the pin as a button.
+     * @param {object} util - utility object provided by the runtime.
+     * @return {?Promise} - a Promise that resolves when configured or undefined if the process was yield.
+     */
+    configTouchPin (pinIndex, util) {
+        if (!this.isConnected()) {
+            return Promise.resolve();
+        }
+        if (this.isPinTouchMode(pinIndex)) {
+            return Promise.resolve();
+        }
+        const sendPromise = this.sendCommandSet(
+            [{
+                id: (BLECommand.CMD_CONFIG << 5) | MbitMoreConfig.TOUCH,
+                message: new Uint8Array([
+                    pinIndex,
+                    1
+                ])
+            }],
+            util
+        );
+        if (sendPromise) {
+            return sendPromise
+                .then(() => {
+                    this.config.pinMode[pinIndex] = MbitMorePinMode.TOUCH;
+                });
+        }
+        return;
+    }
+
+    /**
+     * Return whether the touche-pin is touched.
+     * @param {string} buttonName - ID to check.
+     * @return {boolean} - whether the id is high or not.
+     */
+    isTouched (buttonName) {
+        if (!this.isConnected()) {
+            return false;
+        }
+        return this.buttonState[buttonName] === 1;
+    }
+
+    /**
+     * Return the last timestamp of the button event or undefined if the event is not received.
+     * @param {MbitMoreButtonName} buttonName - name of the button to get the event.
+     * @param {MbitMoreButtonEventName} eventName - name of event to get.
+     * @return {?number} Timestamp of the last event or null.
+     */
+    getButtonEventTimestamp (buttonName, eventName) {
+        if (this.buttonEvents[buttonName] && this.buttonEvents[buttonName][eventName]) {
+            return this.buttonEvents[buttonName][eventName];
+        }
+        return null;
+    }
+
+    /**
+     * Return the last timestamp of the gesture event or undefined if the event is not received.
+     * @param {MbitMoreGestureName} gestureName - name of the event.
+     * @return {?number} Timestamp of the last event or null.
+     */
+    getGestureEventTimestamp (gestureName) {
+        if (this.gestureEvents[gestureName]) {
+            return this.gestureEvents[gestureName];
+        }
+        return null;
+    }
+
+    /**
+     * Return the last value of the pin event or undefined if the event was not received.
      * @param {number} pinIndex - index of the pin to get the event.
-     * @param {MicroBitEvent} event - event to get.
-     * @return {number} Timestamp of the last event.
+     * @param {MbitMorePinEvent} event - event to get.
+     * @return {?number} Timestamp of the last event or null.
+     */
+    getPinEventValue (pinIndex, event) {
+        if (this._pinEvents[pinIndex] && this._pinEvents[pinIndex][event]) {
+            return this._pinEvents[pinIndex][event].value;
+        }
+        return null;
+    }
+
+    /**
+     * Return the last timestamp of the pin event or undefined if the event was not received.
+     * @param {number} pinIndex - index of the pin to get the event.
+     * @param {MbitMorePinEvent} event - event to get.
+     * @return {?number} Timestamp of the last event or null.
      */
     getPinEventTimestamp (pinIndex, event) {
-        if (this._events[pinIndex] && this._events[pinIndex][event]) {
-            return this._events[pinIndex][event];
+        if (this._pinEvents[pinIndex] && this._pinEvents[pinIndex][event]) {
+            return this._pinEvents[pinIndex][event].timestamp;
         }
-        return 0;
+        return null;
     }
 
     /**
      * Set event type to be get from the pin.
      * @param {number} pinIndex - Index of the pin to set.
-     * @param {MicroBitEventType} eventType - Event type to set.
-     * @param {object} util - utility object provided by the runtime.
-    */
-    setPinEventType (pinIndex, eventType, util) {
-        this.send(BLECommand.CMD_PIN,
-            new Uint8Array([
-                MBitMorePinCommand.SET_EVENT,
-                pinIndex,
-                eventType]),
+     * @param {MbitMorePinEventType} eventType - Event type to set.
+     * @param {BlockUtility} util - utility object provided by the runtime.
+     * @return {?Promise} a Promise that resolves when command sending done or undefined if this process was yield.
+     */
+    listenPinEventType (pinIndex, eventType, util) {
+        return this.sendCommandSet(
+            [{
+                id: (BLECommand.CMD_PIN << 5) | MbitMorePinCommand.SET_EVENT,
+                message: new Uint8Array([
+                    pinIndex,
+                    eventType
+                ])
+            }],
+            util
+        );
+    }
+
+    /**
+     * Send data to micro:bit.
+     * @param {string} label - label of the data [ascii]
+     * @param {string} content - content of the data [ascii | number]
+     * @param {BlockUtility} util - utility object provided by the runtime.
+     * @return {?Promise} a Promise that resolves when sending done or undefined if this process was yield.
+     */
+    sendData (label, content, util) {
+        const labelData = new Array(8)
+            .fill()
+            .map((_value, index) => label.charCodeAt(index));
+        const contentNumber = Number(content);
+        let contentData;
+        let type;
+        if (Number.isNaN(contentNumber)) {
+            type = MbitMoreSendingDataType.TEXT;
+            contentData = content
+                .split('')
+                .map(ascii => ascii.charCodeAt(0))
+                .slice(0, 11);
+        } else {
+            type = MbitMoreSendingDataType.NUMBER;
+            const dataView = new DataView(new ArrayBuffer(4));
+            dataView.setFloat32(0, contentNumber, true);
+            contentData = [
+                dataView.getUint8(0),
+                dataView.getUint8(1),
+                dataView.getUint8(2),
+                dataView.getUint8(3)
+            ];
+        }
+        return this.sendCommandSet(
+            [{
+                id: ((BLECommand.CMD_DATA << 5) | type),
+                message: new Uint8Array([
+                    ...labelData,
+                    ...contentData])
+            }],
             util);
     }
+
+    /**
+     * Return the last data with the label or undefined if no data received with the label.
+     * @param {string} label - label to get.
+     * @return {?(number | string)} data of the label or null.
+     */
+    getDataLabeled (label) {
+        if (this.receivedData[label]) {
+            return this.receivedData[label].content;
+        }
+        return null;
+    }
+
+    /**
+     * Return the last timestamp of the data or undefined if the data is not received.
+     * @param {string} label - label of the data.
+     * @return {?number} Timestamp of the last data or null.
+     */
+    getDataTimestamp (label) {
+        if (this.receivedData[label]) {
+            return this.receivedData[label].timestamp;
+        }
+        return null;
+    }
 }
-
-/**
- * Enum for tilt sensor direction.
- * @readonly
- * @enum {string}
- */
-const MicroBitTiltDirection = {
-    FRONT: 'front',
-    BACK: 'back',
-    LEFT: 'left',
-    RIGHT: 'right',
-    ANY: 'any'
-};
-
-/**
- * Enum for micro:bit gestures.
- * @readonly
- * @enum {string}
- */
-const MicroBitGestures = {
-    MOVED: 'moved',
-    SHAKEN: 'shaken',
-    JUMPED: 'jumped'
-};
-
-/**
- * Enum for micro:bit buttons.
- * @readonly
- * @enum {string}
- */
-const MicroBitButtons = {
-    A: 'A',
-    B: 'B',
-    ANY: 'any'
-};
-
-/**
- * Enum for micro:bit pin states.
- * @readonly
- * @enum {string}
- */
-const MicroBitPinState = {
-    ON: 'on',
-    OFF: 'off'
-};
-
-const DigitalValue = {
-    LOW: '0',
-    HIGH: '1'
-};
-
-
-/**
- * Enum for axis menu options.
- * @readonly
- * @enum {string}
- */
-const AxisValues = {
-    X: 'x',
-    Y: 'y',
-    Z: 'z',
-    Absolute: 'absolute'
-};
 
 /**
  * Scratch 3.0 blocks to interact with a MicroBit peripheral.
@@ -1105,48 +1559,46 @@ const AxisValues = {
 class MbitMoreBlocks {
 
     /**
+     * A translation object which is used in this class.
+     * @param {FormatObject} formatter - translation object
+     */
+    static set formatMessage (formatter) {
+        formatMessage = formatter;
+        if (formatMessage) setupTranslations();
+    }
+
+    /**
      * @return {string} - the name of this extension.
      */
     static get EXTENSION_NAME () {
-        return 'micro:bit more';
+        return formatMessage({
+            id: 'mbitMore.name',
+            default: 'MicroBit More',
+            description: 'name of the extension'
+        });
     }
 
     /**
      * @return {string} - the ID of this extension.
      */
     static get EXTENSION_ID () {
-        return 'microbitMore';
+        return EXTENSION_ID;
     }
 
     /**
-     * @return {number} - the tilt sensor counts as "tilted" if its tilt angle meets or exceeds this threshold.
+     * URL to get this extension.
+     * @type {string}
      */
-    static get TILT_THRESHOLD () {
-        return 15;
+    static get extensionURL () {
+        return extensionURL;
     }
 
     /**
-     * @return {array} - text and values for each buttons menu element
+     * Set URL to get this extension.
+     * @param {string} url - URL
      */
-    get BUTTONS_MENU () {
-        return [
-            {
-                text: 'A',
-                value: MicroBitButtons.A
-            },
-            {
-                text: 'B',
-                value: MicroBitButtons.B
-            },
-            {
-                text: formatMessage({
-                    id: 'microbit.buttonsMenu.any',
-                    default: 'any',
-                    description: 'label for "any" element in button picker for micro:bit extension'
-                }),
-                value: MicroBitButtons.ANY
-            }
-        ];
+    static set extensionURL (url) {
+        extensionURL = url;
     }
 
     /**
@@ -1156,126 +1608,282 @@ class MbitMoreBlocks {
         return [
             {
                 text: formatMessage({
-                    id: 'microbit.gesturesMenu.moved',
-                    default: 'moved',
-                    description: 'label for moved gesture in gesture picker for micro:bit extension'
+                    id: 'mbitMore.gesturesMenu.tiltUp',
+                    default: 'titl up',
+                    description: 'label for tilt up gesture in gesture picker for microbit more extension'
                 }),
-                value: MicroBitGestures.MOVED
+                value: MbitMoreGestureName.TILT_UP
             },
             {
                 text: formatMessage({
-                    id: 'microbit.gesturesMenu.shaken',
-                    default: 'shaken',
-                    description: 'label for shaken gesture in gesture picker for micro:bit extension'
+                    id: 'mbitMore.gesturesMenu.tiltDown',
+                    default: 'titl down',
+                    description: 'label for tilt down gesture in gesture picker for microbit more extension'
                 }),
-                value: MicroBitGestures.SHAKEN
+                value: MbitMoreGestureName.TILT_DOWN
             },
             {
                 text: formatMessage({
-                    id: 'microbit.gesturesMenu.jumped',
-                    default: 'jumped',
-                    description: 'label for jumped gesture in gesture picker for micro:bit extension'
+                    id: 'mbitMore.gesturesMenu.tiltLeft',
+                    default: 'titl left',
+                    description: 'label for tilt left gesture in gesture picker for microbit more extension'
                 }),
-                value: MicroBitGestures.JUMPED
+                value: MbitMoreGestureName.TILT_LEFT
+            },
+            {
+                text: formatMessage({
+                    id: 'mbitMore.gesturesMenu.tiltRight',
+                    default: 'titl right',
+                    description: 'label for tilt right gesture in gesture picker for microbit more extension'
+                }),
+                value: MbitMoreGestureName.TILT_RIGHT
+            },
+            {
+                text: formatMessage({
+                    id: 'mbitMore.gesturesMenu.faceUp',
+                    default: 'face up',
+                    description: 'label for face up gesture in gesture picker for microbit more extension'
+                }),
+                value: MbitMoreGestureName.FACE_UP
+            },
+            {
+                text: formatMessage({
+                    id: 'mbitMore.gesturesMenu.faceDown',
+                    default: 'face down',
+                    description: 'label for face down gesture in gesture picker for microbit more extension'
+                }),
+                value: MbitMoreGestureName.FACE_DOWN
+            },
+            {
+                text: formatMessage({
+                    id: 'mbitMore.gesturesMenu.freefall',
+                    default: 'freefall',
+                    description: 'label for freefall gesture in gesture picker for microbit more extension'
+                }),
+                value: MbitMoreGestureName.FREEFALL
+            },
+            {
+                text: formatMessage({
+                    id: 'mbitMore.gesturesMenu.g3',
+                    default: '3G',
+                    description: 'label for 3G gesture in gesture picker for microbit more extension'
+                }),
+                value: MbitMoreGestureName.G3
+            },
+            {
+                text: formatMessage({
+                    id: 'mbitMore.gesturesMenu.g6',
+                    default: '6G',
+                    description: 'label for 6G gesture in gesture picker for microbit more extension'
+                }),
+                value: MbitMoreGestureName.G6
+            },
+            {
+                text: formatMessage({
+                    id: 'mbitMore.gesturesMenu.g8',
+                    default: '8G',
+                    description: 'label for 3G gesture in gesture picker for microbit more extension'
+                }),
+                value: MbitMoreGestureName.G8
+            },
+            {
+                text: formatMessage({
+                    id: 'mbitMore.gesturesMenu.shake',
+                    default: 'shake',
+                    description: 'label for shaken gesture in gesture picker for microbit more extension'
+                }),
+                value: MbitMoreGestureName.SHAKE
+            }
+
+        ];
+    }
+
+
+    /**
+     * @return {array} - text and values for each buttons menu element
+     */
+    get BUTTON_ID_MENU () {
+        return [
+            {
+                text: formatMessage({
+                    id: 'mbitMore.buttonIDMenu.a',
+                    default: 'A',
+                    description: 'label for "A" element in button picker for Microbit More extension'
+                }),
+                value: MbitMoreButtonName.A
+            },
+            {
+                text: formatMessage({
+                    id: 'mbitMore.buttonIDMenu.b',
+                    default: 'B',
+                    description: 'label for "B" element in button picker for Microbit More extension'
+                }),
+                value: MbitMoreButtonName.B
             }
         ];
     }
 
     /**
-     * @return {array} - text and values for each pin state menu element
+     * @return {array} - Menu items for button event selector.
      */
-    get PIN_STATE_MENU () {
+    get BUTTON_EVENT_MENU () {
         return [
             {
                 text: formatMessage({
-                    id: 'microbit.pinStateMenu.on',
-                    default: 'on',
-                    description: 'label for on element in pin state picker for micro:bit extension'
+                    id: 'mbitMore.buttonEventMenu.down',
+                    default: 'down',
+                    description: 'label for button down event'
                 }),
-                value: MicroBitPinState.ON
+                value: MbitMoreButtonEventName.DOWN
             },
             {
                 text: formatMessage({
-                    id: 'microbit.pinStateMenu.off',
-                    default: 'off',
-                    description: 'label for off element in pin state picker for micro:bit extension'
+                    id: 'mbitMore.buttonEventMenu.up',
+                    default: 'up',
+                    description: 'label for button up event'
                 }),
-                value: MicroBitPinState.OFF
+                value: MbitMoreButtonEventName.UP
+            },
+            {
+                text: formatMessage({
+                    id: 'mbitMore.buttonEventMenu.click',
+                    default: 'click',
+                    description: 'label for button click event'
+                }),
+                value: MbitMoreButtonEventName.CLICK
+            // },
+            // // These events are not in use because they are unstable in coal-microbit-v2.
+            // {
+            //     text: formatMessage({
+            //         id: 'mbitMore.buttonEventMenu.hold',
+            //         default: 'hold',
+            //         description: 'label for button hold event'
+            //     }),
+            //     value: MbitMoreButtonEventName.HOLD
+            // },
+            // {
+            //     text: formatMessage({
+            //         id: 'mbitMore.buttonEventMenu.longClick',
+            //         default: 'long click',
+            //         description: 'label for button long click event'
+            //     }),
+            //     value: MbitMoreButtonEventName.LONG_CLICK
+            // },
+            // {
+            //     text: formatMessage({
+            //         id: 'mbitMore.buttonEventMenu.doubleClick',
+            //         default: 'double click',
+            //         description: 'label for button double click event'
+            //     }),
+            //     value: MbitMoreButtonEventName.DOUBLE_CLICK
             }
         ];
     }
 
     /**
-     * @return {array} - text and values for each tilt direction menu element
+     * @return {array} - text and values for each buttons menu element
      */
-    get TILT_DIRECTION_MENU () {
+    get TOUCH_ID_MENU () {
         return [
             {
                 text: formatMessage({
-                    id: 'microbit.tiltDirectionMenu.front',
-                    default: 'front',
-                    description: 'label for front element in tilt direction picker for micro:bit extension'
+                    id: 'mbitMore.touchIDMenu.logo',
+                    default: 'LOGO',
+                    description: 'label for "LOGO" element in touch button picker for Microbit More extension'
                 }),
-                value: MicroBitTiltDirection.FRONT
+                value: MbitMoreButtonName.LOGO
             },
             {
-                text: formatMessage({
-                    id: 'microbit.tiltDirectionMenu.back',
-                    default: 'back',
-                    description: 'label for back element in tilt direction picker for micro:bit extension'
-                }),
-                value: MicroBitTiltDirection.BACK
+                text: 'P0',
+                value: MbitMoreButtonName.P0
             },
             {
-                text: formatMessage({
-                    id: 'microbit.tiltDirectionMenu.left',
-                    default: 'left',
-                    description: 'label for left element in tilt direction picker for micro:bit extension'
-                }),
-                value: MicroBitTiltDirection.LEFT
+                text: 'P1',
+                value: MbitMoreButtonName.P1
             },
             {
-                text: formatMessage({
-                    id: 'microbit.tiltDirectionMenu.right',
-                    default: 'right',
-                    description: 'label for right element in tilt direction picker for micro:bit extension'
-                }),
-                value: MicroBitTiltDirection.RIGHT
+                text: 'P2',
+                value: MbitMoreButtonName.P2
             }
         ];
     }
 
     /**
-     * @return {array} - text and values for each tilt direction (plus "any") menu element
+     * @return {array} - Menu items for touch event selector.
      */
-    get TILT_DIRECTION_ANY_MENU () {
+    get TOUCH_EVENT_MENU () {
         return [
-            ...this.TILT_DIRECTION_MENU,
             {
                 text: formatMessage({
-                    id: 'microbit.tiltDirectionMenu.any',
-                    default: 'any',
-                    description: 'label for any direction element in tilt direction picker for micro:bit extension'
+                    id: 'mbitMore.touchEventMenu.touched',
+                    default: 'touched',
+                    description: 'label for touched event'
                 }),
-                value: MicroBitTiltDirection.ANY
+                value: MbitMoreButtonEventName.DOWN
+            },
+            {
+                text: formatMessage({
+                    id: 'mbitMore.touchEventMenu.released',
+                    default: 'released',
+                    description: 'label for released event'
+                }),
+                value: MbitMoreButtonEventName.UP
+            },
+            {
+                text: formatMessage({
+                    id: 'mbitMore.touchEventMenu.tapped',
+                    default: 'tapped',
+                    description: 'label for tapped event'
+                }),
+                value: MbitMoreButtonEventName.CLICK
+            // },
+            // // These events are not in use because they are unstable in coal-microbit-v2.
+            // {
+            //     text: formatMessage({
+            //         id: 'mbitMore.touchEventMenu.hold',
+            //         default: 'hold',
+            //         description: 'label for hold event in touch'
+            //     }),
+            //     value: MbitMoreButtonEventName.HOLD
+            // },
+            // {
+            //     text: formatMessage({
+            //         id: 'mbitMore.touchEventMenu.longTapped',
+            //         default: 'long tapped',
+            //         description: 'label for long click event in touch'
+            //     }),
+            //     value: MbitMoreButtonEventName.LONG_CLICK
+            // },
+            // {
+            //     text: formatMessage({
+            //         id: 'mbitMore.touchEventMenu.doubleTapped',
+            //         default: 'double tapped',
+            //         description: 'label for double click event in touch'
+            //     }),
+            //     value: MbitMoreButtonEventName.DOUBLE_CLICK
             }
         ];
     }
 
-    get ANALOG_IN_MENU () {
-        return this._peripheral.analogIn.map(pinIndex => pinIndex.toString());
+    get ANALOG_IN_PINS_MENU () {
+        return this._peripheral.analogIn.map(
+            pinIndex =>
+                Object.create({
+                    text: `P${pinIndex.toString()}`,
+                    value: pinIndex.toString()
+                })
+        );
     }
 
-    get SHARED_DATA_INDEX_MENU () {
-        const menu = [];
-        for (let i = 0; i < this._peripheral.sharedDataLength; i++) {
-            menu.push(i.toString());
-        }
-        return menu;
-    }
 
     get GPIO_MENU () {
-        return this._peripheral.gpio.map(pinIndex => pinIndex.toString());
+        return this._peripheral.gpio.map(
+            pinIndex =>
+                Object.create({
+                    text: `P${pinIndex.toString()}`,
+                    value: pinIndex.toString()
+                })
+        );
     }
 
     get DIGITAL_VALUE_MENU () {
@@ -1283,18 +1891,19 @@ class MbitMoreBlocks {
             {
                 text: formatMessage({
                     id: 'mbitMore.digitalValueMenu.Low',
-                    default: '0',
+                    default: 'Low',
                     description: 'label for low value in digital output menu for microbit more extension'
                 }),
-                value: DigitalValue.LOW
+                value: 'false'
             },
             {
                 text: formatMessage({
                     id: 'mbitMore.digitalValueMenu.High',
-                    default: '1',
+                    default: 'High',
                     description: 'label for high value in digital output menu for microbit more extension'
                 }),
-                value: DigitalValue.HIGH}
+                value: 'true'
+            }
         ];
     }
 
@@ -1306,7 +1915,7 @@ class MbitMoreBlocks {
                     default: 'x',
                     description: 'label of X axis.'
                 }),
-                value: AxisValues.X
+                value: AxisSymbol.X
             },
             {
                 text: formatMessage({
@@ -1314,7 +1923,7 @@ class MbitMoreBlocks {
                     default: 'y',
                     description: 'label of Y axis.'
                 }),
-                value: AxisValues.Y
+                value: AxisSymbol.Y
             },
             {
                 text: formatMessage({
@@ -1322,7 +1931,7 @@ class MbitMoreBlocks {
                     default: 'z',
                     description: 'label of Z axis.'
                 }),
-                value: AxisValues.Z
+                value: AxisSymbol.Z
             },
             {
                 text: formatMessage({
@@ -1330,7 +1939,7 @@ class MbitMoreBlocks {
                     default: 'absolute',
                     description: 'label of absolute value.'
                 }),
-                value: AxisValues.Absolute
+                value: AxisSymbol.Absolute
             }
         ];
     }
@@ -1346,7 +1955,7 @@ class MbitMoreBlocks {
                     default: 'pull none',
                     description: 'label for pullNone mode'
                 }),
-                value: PinMode.PULL_NONE
+                value: MbitMorePullModeName.NONE
             },
             {
                 text: formatMessage({
@@ -1354,7 +1963,7 @@ class MbitMoreBlocks {
                     default: 'pull up',
                     description: 'label for pullUp mode'
                 }),
-                value: PinMode.PULL_UP
+                value: MbitMorePullModeName.UP
             },
             {
                 text: formatMessage({
@@ -1362,7 +1971,7 @@ class MbitMoreBlocks {
                     default: 'pull down',
                     description: 'label for pullDown mode'
                 }),
-                value: PinMode.PULL_DOWN
+                value: MbitMorePullModeName.DOWN
             }
         ];
     }
@@ -1378,7 +1987,7 @@ class MbitMoreBlocks {
                     default: 'low pulse',
                     description: 'label for low pulse event'
                 }),
-                value: MicroBitEvent.MICROBIT_PIN_EVT_PULSE_LO
+                value: 'PULSE_LOW'
             },
             {
                 text: formatMessage({
@@ -1386,7 +1995,7 @@ class MbitMoreBlocks {
                     default: 'high pulse',
                     description: 'label for high pulse event'
                 }),
-                value: MicroBitEvent.MICROBIT_PIN_EVT_PULSE_HI
+                value: 'PULSE_HIGH'
             },
             {
                 text: formatMessage({
@@ -1394,7 +2003,7 @@ class MbitMoreBlocks {
                     default: 'fall',
                     description: 'label for fall event'
                 }),
-                value: MicroBitEvent.MICROBIT_PIN_EVT_FALL
+                value: 'FALL'
             },
             {
                 text: formatMessage({
@@ -1402,7 +2011,7 @@ class MbitMoreBlocks {
                     default: 'rise',
                     description: 'label for rise event'
                 }),
-                value: MicroBitEvent.MICROBIT_PIN_EVT_RISE
+                value: 'RISE'
             }
         ];
     }
@@ -1418,7 +2027,7 @@ class MbitMoreBlocks {
                     default: 'low pulse',
                     description: 'label for low pulse event'
                 }),
-                value: MicroBitEvent.MICROBIT_PIN_EVT_PULSE_LO
+                value: 'PULSE_LOW'
             },
             {
                 text: formatMessage({
@@ -1426,7 +2035,7 @@ class MbitMoreBlocks {
                     default: 'high pulse',
                     description: 'label for high pulse event'
                 }),
-                value: MicroBitEvent.MICROBIT_PIN_EVT_PULSE_HI
+                value: 'PULSE_HIGH'
             },
             {
                 text: formatMessage({
@@ -1434,7 +2043,7 @@ class MbitMoreBlocks {
                     default: 'fall',
                     description: 'label for fall event'
                 }),
-                value: MicroBitEvent.MICROBIT_PIN_EVT_FALL
+                value: 'FALL'
             },
             {
                 text: formatMessage({
@@ -1442,7 +2051,7 @@ class MbitMoreBlocks {
                     default: 'rise',
                     description: 'label for rise event'
                 }),
-                value: MicroBitEvent.MICROBIT_PIN_EVT_RISE
+                value: 'RISE'
             }
         ];
     }
@@ -1458,7 +2067,7 @@ class MbitMoreBlocks {
                     default: 'none',
                     description: 'label for remove event listener'
                 }),
-                value: MicroBitEventType.MICROBIT_PIN_EVENT_NONE
+                value: 'NONE'
             },
             {
                 text: formatMessage({
@@ -1466,7 +2075,7 @@ class MbitMoreBlocks {
                     default: 'pulse',
                     description: 'label for pulse event type'
                 }),
-                value: MicroBitEventType.MICROBIT_PIN_EVENT_ON_PULSE
+                value: 'ON_PULSE'
             },
             {
                 text: formatMessage({
@@ -1474,7 +2083,7 @@ class MbitMoreBlocks {
                     default: 'edge',
                     description: 'label for edge event type'
                 }),
-                value: MicroBitEventType.MICROBIT_PIN_EVENT_ON_EDGE
+                value: 'ON_EDGE'
             }
         ];
     }
@@ -1514,56 +2123,138 @@ class MbitMoreBlocks {
          */
         this.runtime = runtime;
 
+        if (runtime.formatMessage) {
+            // Replace 'formatMessage' to a formatter which is used in the runtime.
+            formatMessage = runtime.formatMessage;
+        }
         // Create a new MicroBit peripheral instance
         this._peripheral = new MbitMore(this.runtime, MbitMoreBlocks.EXTENSION_ID);
 
         /**
-         * Event holder of pin events.
-         * @type {object.<number>}
+         * The previous timestamps of button events.
+         * @type {Object.<number, Object.<number, number>>}
          */
-        this.lastEvents = {};
+        this.prevButtonEvents = {};
+
+        /**
+         * The previous timestamps of gesture events.
+         * @type {Object.<number, number>}
+         */
+        this.prevGestureEvents = {};
+
+        /**
+         * The previous timestamps of pin events.
+         * @type {Object.<number, Object.<number, number>>}
+         */
+        this.prevPinEvents = {};
+
+        /**
+         * The previous timestamps of messages.
+         * @type {Object.<number, Object>}
+         */
+        this.prevReceivedData = {};
     }
 
     /**
      * @returns {object} metadata for this extension and its blocks.
      */
     getInfo () {
-        this.setupTranslations();
+        setupTranslations();
         return {
             id: MbitMoreBlocks.EXTENSION_ID,
             name: MbitMoreBlocks.EXTENSION_NAME,
+            extensionURL: MbitMoreBlocks.extensionURL,
             blockIconURI: blockIconURI,
             showStatusButton: true,
             blocks: [
                 {
-                    opcode: 'whenButtonPressed',
+                    opcode: 'whenConnectionChanged',
                     text: formatMessage({
-                        id: 'microbit.whenButtonPressed',
-                        default: 'when [BTN] button pressed',
-                        description: 'when the selected button on the micro:bit is pressed'
+                        id: 'mbitMore.whenConnectionChanged',
+                        default: 'when micro:bit [STATE]',
+                        description: 'when a micro:bit connection state changed'
                     }),
                     blockType: BlockType.HAT,
                     arguments: {
-                        BTN: {
+                        STATE: {
                             type: ArgumentType.STRING,
-                            menu: 'buttons',
-                            defaultValue: MicroBitButtons.A
+                            menu: 'connectionStateMenu',
+                            defaultValue: 'connected'
+                        }
+                    }
+                },
+                '---',
+                {
+                    opcode: 'whenButtonEvent',
+                    text: formatMessage({
+                        id: 'mbitMore.whenButtonEvent',
+                        default: 'when button [NAME] is [EVENT]',
+                        description: 'when the selected button on the micro:bit get the selected event'
+                    }),
+                    blockType: BlockType.HAT,
+                    arguments: {
+                        NAME: {
+                            type: ArgumentType.STRING,
+                            menu: 'buttonIDMenu',
+                            defaultValue: MbitMoreButtonName.A
+                        },
+                        EVENT: {
+                            type: ArgumentType.STRING,
+                            menu: 'buttonEventMenu',
+                            defaultValue: MbitMoreButtonEventName.DOWN
                         }
                     }
                 },
                 {
                     opcode: 'isButtonPressed',
                     text: formatMessage({
-                        id: 'microbit.isButtonPressed',
-                        default: '[BTN] button pressed?',
+                        id: 'mbitMore.isButtonPressed',
+                        default: 'button [NAME] pressed?',
                         description: 'is the selected button on the micro:bit pressed?'
                     }),
                     blockType: BlockType.BOOLEAN,
                     arguments: {
-                        BTN: {
+                        NAME: {
                             type: ArgumentType.STRING,
-                            menu: 'buttons',
-                            defaultValue: MicroBitButtons.A
+                            menu: 'buttonIDMenu',
+                            defaultValue: MbitMoreButtonName.A
+                        }
+                    }
+                },
+                {
+                    opcode: 'whenTouchEvent',
+                    text: formatMessage({
+                        id: 'mbitMore.whenTouchEvent',
+                        default: 'when pin [NAME] is [EVENT]',
+                        description: 'when the selected touch pin on the micro:bit is touched'
+                    }),
+                    blockType: BlockType.HAT,
+                    arguments: {
+                        NAME: {
+                            type: ArgumentType.STRING,
+                            menu: 'touchIDMenu',
+                            defaultValue: MbitMoreButtonName.LOGO
+                        },
+                        EVENT: {
+                            type: ArgumentType.STRING,
+                            menu: 'touchEventMenu',
+                            defaultValue: MbitMoreButtonEventName.DOWN
+                        }
+                    }
+                },
+                {
+                    opcode: 'isPinTouched',
+                    text: formatMessage({
+                        id: 'mbitMore.isPinTouched',
+                        default: 'pin [NAME] is touched?',
+                        description: 'is the selected pin is touched?'
+                    }),
+                    blockType: BlockType.BOOLEAN,
+                    arguments: {
+                        NAME: {
+                            type: ArgumentType.STRING,
+                            menu: 'touchIDMenu',
+                            defaultValue: MbitMoreButtonName.LOGO
                         }
                     }
                 },
@@ -1571,7 +2262,7 @@ class MbitMoreBlocks {
                 {
                     opcode: 'whenGesture',
                     text: formatMessage({
-                        id: 'microbit.whenGesture',
+                        id: 'mbitMore.whenGesture',
                         default: 'when [GESTURE]',
                         description: 'when the selected gesture is detected by the micro:bit'
                     }),
@@ -1580,16 +2271,16 @@ class MbitMoreBlocks {
                         GESTURE: {
                             type: ArgumentType.STRING,
                             menu: 'gestures',
-                            defaultValue: MicroBitGestures.MOVED
+                            defaultValue: MbitMoreGestureName.SHAKE
                         }
                     }
                 },
                 '---',
                 {
-                    opcode: 'displaySymbol',
+                    opcode: 'displayMatrix',
                     text: formatMessage({
-                        id: 'microbit.displaySymbol',
-                        default: 'display [MATRIX]',
+                        id: 'mbitMore.displayMatrix',
+                        default: 'display pattern [MATRIX] ',
                         description: 'display a pattern on the micro:bit display'
                     }),
                     blockType: BlockType.COMMAND,
@@ -1603,118 +2294,30 @@ class MbitMoreBlocks {
                 {
                     opcode: 'displayText',
                     text: formatMessage({
-                        id: 'microbit.displayText',
-                        default: 'display text [TEXT]',
+                        id: 'mbitMore.displayText',
+                        default: 'display text [TEXT] delay [DELAY] ms',
                         description: 'display text on the micro:bit display'
                     }),
                     blockType: BlockType.COMMAND,
                     arguments: {
                         TEXT: {
                             type: ArgumentType.STRING,
-                            defaultValue: formatMessage({
-                                id: 'microbit.defaultTextToDisplay',
-                                default: 'Hello!',
-                                description: `default text to display.
-                                IMPORTANT - the micro:bit only supports letters a-z, A-Z.
-                                Please substitute a default word in your language
-                                that can be written with those characters,
-                                substitute non-accented characters or leave it as "Hello!".
-                                Check the micro:bit site documentation for details`
-                            })
+                            defaultValue: 'Hello!'
+                        },
+                        DELAY: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 120
                         }
                     }
                 },
                 {
                     opcode: 'displayClear',
                     text: formatMessage({
-                        id: 'microbit.clearDisplay',
+                        id: 'mbitMore.clearDisplay',
                         default: 'clear display',
                         description: 'display nothing on the micro:bit display'
                     }),
                     blockType: BlockType.COMMAND
-                },
-                '---',
-                {
-                    opcode: 'whenTilted',
-                    text: formatMessage({
-                        id: 'microbit.whenTilted',
-                        default: 'when tilted [DIRECTION]',
-                        description: 'when the micro:bit is tilted in a direction'
-                    }),
-                    blockType: BlockType.HAT,
-                    arguments: {
-                        DIRECTION: {
-                            type: ArgumentType.STRING,
-                            menu: 'tiltDirectionAny',
-                            defaultValue: MicroBitTiltDirection.ANY
-                        }
-                    }
-                },
-                {
-                    opcode: 'isTilted',
-                    text: formatMessage({
-                        id: 'microbit.isTilted',
-                        default: 'tilted [DIRECTION]?',
-                        description: 'is the micro:bit is tilted in a direction?'
-                    }),
-                    blockType: BlockType.BOOLEAN,
-                    arguments: {
-                        DIRECTION: {
-                            type: ArgumentType.STRING,
-                            menu: 'tiltDirectionAny',
-                            defaultValue: MicroBitTiltDirection.ANY
-                        }
-                    }
-                },
-                {
-                    opcode: 'getTiltAngle',
-                    text: formatMessage({
-                        id: 'microbit.tiltAngle',
-                        default: 'tilt angle [DIRECTION]',
-                        description: 'how much the micro:bit is tilted in a direction'
-                    }),
-                    blockType: BlockType.REPORTER,
-                    arguments: {
-                        DIRECTION: {
-                            type: ArgumentType.STRING,
-                            menu: 'tiltDirection',
-                            defaultValue: MicroBitTiltDirection.FRONT
-                        }
-                    }
-                },
-                '---',
-                {
-                    opcode: 'whenPinConnected',
-                    text: formatMessage({
-                        id: 'microbit.whenPinConnected',
-                        default: 'when pin [PIN] connected',
-                        description: 'when the pin detects a connection to Earth/Ground'
-
-                    }),
-                    blockType: BlockType.HAT,
-                    arguments: {
-                        PIN: {
-                            type: ArgumentType.STRING,
-                            menu: 'gpio',
-                            defaultValue: '0'
-                        }
-                    }
-                },
-                {
-                    opcode: 'isPinConnected',
-                    text: formatMessage({
-                        id: 'mbitMore.isPinConnected',
-                        default: '[PIN] pin connected?',
-                        description: 'is the selected pin connected to Earth/Ground?'
-                    }),
-                    blockType: BlockType.BOOLEAN,
-                    arguments: {
-                        PIN: {
-                            type: ArgumentType.STRING,
-                            menu: 'gpio',
-                            defaultValue: '0'
-                        }
-                    }
                 },
                 '---',
                 {
@@ -1763,6 +2366,15 @@ class MbitMoreBlocks {
                     blockType: BlockType.REPORTER
                 },
                 {
+                    opcode: 'getSoundLevel',
+                    text: formatMessage({
+                        id: 'mbitMore.soundLevel',
+                        default: 'sound level',
+                        description: 'level of the sound from microphone on micro:bit'
+                    }),
+                    blockType: BlockType.REPORTER
+                },
+                {
                     opcode: 'getMagneticForce',
                     text: formatMessage({
                         id: 'mbitMore.magneticForce',
@@ -1774,11 +2386,7 @@ class MbitMoreBlocks {
                         AXIS: {
                             type: ArgumentType.STRING,
                             menu: 'axis',
-                            defaultValue: formatMessage({
-                                id: 'mbitMore.axisMenu.absolute',
-                                default: 'absolute',
-                                description: 'label of absolute value.'
-                            })
+                            defaultValue: AxisSymbol.Absolute
                         }
                     }
                 },
@@ -1794,7 +2402,7 @@ class MbitMoreBlocks {
                         AXIS: {
                             type: ArgumentType.STRING,
                             menu: 'axis',
-                            defaultValue: AxisValues.X
+                            defaultValue: AxisSymbol.X
                         }
                     }
                 },
@@ -1810,31 +2418,15 @@ class MbitMoreBlocks {
                     arguments: {
                         PIN: {
                             type: ArgumentType.STRING,
-                            menu: 'analogIn',
+                            menu: 'analogInPins',
                             defaultValue: '0'
                         }
                     }
                 },
                 {
-                    opcode: 'getDigitalValue',
+                    opcode: 'setPullMode',
                     text: formatMessage({
-                        id: 'mbitMore.digitalValue',
-                        default: 'digital value of pin [PIN]',
-                        description: 'digital input value of the pin'
-                    }),
-                    blockType: BlockType.REPORTER,
-                    arguments: {
-                        PIN: {
-                            type: ArgumentType.STRING,
-                            menu: 'gpio',
-                            defaultValue: '0'
-                        }
-                    }
-                },
-                {
-                    opcode: 'setPinMode',
-                    text: formatMessage({
-                        id: 'mbitMore.setPinMode',
+                        id: 'mbitMore.setPullMode',
                         default: 'set pin [PIN] to input [MODE]',
                         description: 'set a pin into the mode'
                     }),
@@ -1848,17 +2440,33 @@ class MbitMoreBlocks {
                         MODE: {
                             type: ArgumentType.STRING,
                             menu: 'pinMode',
-                            defaultValue: PinMode.PULL_UP
+                            defaultValue: MbitMorePullModeName.UP
+                        }
+                    }
+                },
+                {
+                    opcode: 'isPinHigh',
+                    text: formatMessage({
+                        id: 'mbitMore.isPinHigh',
+                        default: '[PIN] pin is high?',
+                        description: 'is the selected pin high as digital?'
+                    }),
+                    blockType: BlockType.BOOLEAN,
+                    arguments: {
+                        PIN: {
+                            type: ArgumentType.STRING,
+                            menu: 'gpio',
+                            defaultValue: '0'
                         }
                     }
                 },
                 '---',
                 {
-                    opcode: 'setOutput',
+                    opcode: 'setDigitalOut',
                     text: formatMessage({
-                        id: 'mbitMore.setOutput',
+                        id: 'mbitMore.setDigitalOut',
                         default: 'set [PIN] Digital [LEVEL]',
-                        description: 'set pin to Digtal Output mode and the level(0 or 1)'
+                        description: 'set pin to Digital Output mode and the level(High = true)'
                     }),
                     blockType: BlockType.COMMAND,
                     arguments: {
@@ -1869,16 +2477,16 @@ class MbitMoreBlocks {
                         },
                         LEVEL: {
                             type: ArgumentType.STRING,
-                            menu: 'digitalValue',
-                            defaultValue: DigitalValue.LOW
+                            menu: 'digitalValueMenu',
+                            defaultValue: 'false'
                         }
                     }
                 },
                 {
-                    opcode: 'setPWM',
+                    opcode: 'setAnalogOut',
                     text: formatMessage({
-                        id: 'mbitMore.setPWM',
-                        default: 'set [PIN] PWM [LEVEL]',
+                        id: 'mbitMore.setAnalogOut',
+                        default: 'set [PIN] analog [LEVEL] %',
                         description: 'set pin to PWM mode and the level(0 to 1023)'
                     }),
                     blockType: BlockType.COMMAND,
@@ -1922,20 +2530,48 @@ class MbitMoreBlocks {
                         }
                     }
                 },
+                {
+                    opcode: 'playTone',
+                    text: formatMessage({
+                        id: 'mbitMore.playTone',
+                        default: 'play tone [FREQ] Hz volume [VOL] %',
+                        description: 'play tone on the speaker'
+                    }),
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        FREQ: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 440
+                        },
+                        VOL: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 100
+                        }
+                    }
+                },
+                {
+                    opcode: 'stopTone',
+                    text: formatMessage({
+                        id: 'mbitMore.stopTone',
+                        default: 'stop tone',
+                        description: 'stop tone on the speaker'
+                    }),
+                    blockType: BlockType.COMMAND
+                },
                 '---',
                 {
-                    opcode: 'setPinEventType',
+                    opcode: 'listenPinEventType',
                     text: formatMessage({
-                        id: 'mbitMore.setPinEventType',
-                        default: 'catch event [EVENT_TYPE] on [PIN]',
+                        id: 'mbitMore.listenPinEventType',
+                        default: 'listen [EVENT_TYPE] event on [PIN]',
                         description: 'listen the event on the pin'
                     }),
                     blockType: BlockType.COMMAND,
                     arguments: {
                         EVENT_TYPE: {
-                            type: ArgumentType.NUMBER,
+                            type: ArgumentType.STRING,
                             menu: 'pinEventTypeMenu',
-                            defaultValue: this.PIN_EVENT_TYPE_MENU[0].value
+                            defaultValue: 'NONE'
                         },
                         PIN: {
                             type: ArgumentType.STRING,
@@ -1955,9 +2591,9 @@ class MbitMoreBlocks {
                     blockType: BlockType.HAT,
                     arguments: {
                         EVENT: {
-                            type: ArgumentType.NUMBER,
+                            type: ArgumentType.STRING,
                             menu: 'pinEventMenu',
-                            defaultValue: MicroBitEvent.MICROBIT_PIN_EVT_PULSE_LO
+                            defaultValue: 'PULSE_LOW'
                         },
                         PIN: {
                             type: ArgumentType.STRING,
@@ -1967,18 +2603,18 @@ class MbitMoreBlocks {
                     }
                 },
                 {
-                    opcode: 'getPinEventTimestamp',
+                    opcode: 'getPinEventValue',
                     text: formatMessage({
-                        id: 'mbitMore.getPinEventTimestamp',
-                        default: 'timestamp of [EVENT] at [PIN]',
-                        description: 'value of the timestamp of the event'
+                        id: 'mbitMore.getPinEventValue',
+                        default: 'value of [EVENT] at [PIN]',
+                        description: 'value of the value of the event (timestamp of the edge or duration of the pulse)'
                     }),
                     blockType: BlockType.REPORTER,
                     arguments: {
                         EVENT: {
-                            type: ArgumentType.NUMBER,
+                            type: ArgumentType.STRING,
                             menu: 'pinEventTimestampMenu',
-                            defaultValue: MicroBitEvent.MICROBIT_PIN_EVT_PULSE_LO
+                            defaultValue: 'PULSE_LOW'
                         },
                         PIN: {
                             type: ArgumentType.STRING,
@@ -1989,98 +2625,90 @@ class MbitMoreBlocks {
                 },
                 '---',
                 {
-                    opcode: 'getSharedData',
+                    opcode: 'whenDataReceived',
                     text: formatMessage({
-                        id: 'mbitMore.getSharedData',
-                        default: 'shared data [INDEX]',
-                        description: 'value of the shared data'
-                    }),
-                    blockType: BlockType.REPORTER,
-                    arguments: {
-                        INDEX: {
-                            type: ArgumentType.STRING,
-                            menu: 'sharedDataIndex',
-                            defaultValue: '0'
-                        }
-                    }
-                },
-                {
-                    opcode: 'setSharedData',
-                    text: formatMessage({
-                        id: 'mbitMore.setSharedData',
-                        default: 'shared data [INDEX] to [VALUE]',
-                        description: 'set value into the shared data'
-                    }),
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-                        INDEX: {
-                            type: ArgumentType.STRING,
-                            menu: 'sharedDataIndex',
-                            defaultValue: '0'
-                        },
-                        VALUE: {
-                            type: ArgumentType.NUMBER,
-                            defaultValue: 0
-                        }
-                    }
-                },
-                '---',
-                {
-                    opcode: 'whenConnectionChanged',
-                    text: formatMessage({
-                        id: 'mbitMore.whenConnectionChanged',
-                        default: 'when micro:bit [STATE]',
-                        description: 'when a micro:bit connection state changed'
+                        id: 'mbitMore.whenDataReceived',
+                        default: 'when data with label [LABEL] received from micro:bit',
+                        description: 'when the data which has the label received'
                     }),
                     blockType: BlockType.HAT,
                     arguments: {
-                        STATE: {
+                        LABEL: {
                             type: ArgumentType.STRING,
-                            menu: 'connectionStateMenu',
-                            defaultValue: 'connected'
+                            defaultValue: 'label-01'
+                        }
+                    }
+                },
+                {
+                    opcode: 'getDataLabeled',
+                    text: formatMessage({
+                        id: 'mbitMore.getDataLabeled',
+                        default: 'data of label [LABEL]',
+                        description: 'the last data which has the label'
+                    }),
+                    blockType: BlockType.REPORTER,
+                    arguments: {
+                        LABEL: {
+                            type: ArgumentType.STRING,
+                            defaultValue: 'label-01'
+                        }
+                    }
+                },
+                {
+                    opcode: 'sendData',
+                    text: formatMessage({
+                        id: 'mbitMore.sendData',
+                        default: 'send data [DATA] with label [LABEL] to micro:bit',
+                        description: 'send data content with label to micro:bit'
+                    }),
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        LABEL: {
+                            type: ArgumentType.STRING,
+                            defaultValue: 'label-01'
+                        },
+                        DATA: {
+                            type: ArgumentType.STRING,
+                            defaultValue: 'data'
                         }
                     }
                 }
             ],
             menus: {
-                buttons: {
-                    acceptReporters: true,
-                    items: this.BUTTONS_MENU
+                buttonIDMenu: {
+                    acceptReporters: false,
+                    items: this.BUTTON_ID_MENU
+                },
+                buttonEventMenu: {
+                    acceptReporters: false,
+                    items: this.BUTTON_EVENT_MENU
+                },
+                touchIDMenu: {
+                    acceptReporters: false,
+                    items: this.TOUCH_ID_MENU
+                },
+                touchEventMenu: {
+                    acceptReporters: false,
+                    items: this.TOUCH_EVENT_MENU
                 },
                 gestures: {
-                    acceptReporters: true,
+                    acceptReporters: false,
                     items: this.GESTURES_MENU
                 },
-                pinState: {
-                    acceptReporters: true,
-                    items: this.PIN_STATE_MENU
+                analogInPins: {
+                    acceptReporters: false,
+                    items: this.ANALOG_IN_PINS_MENU
                 },
-                tiltDirection: {
-                    acceptReporters: true,
-                    items: this.TILT_DIRECTION_MENU
-                },
-                tiltDirectionAny: {
-                    acceptReporters: true,
-                    items: this.TILT_DIRECTION_ANY_MENU
-                },
-                analogIn: {
-                    acceptReporters: true,
-                    items: this.ANALOG_IN_MENU
-                },
-                digitalValue: {
+                digitalValueMenu: {
                     acceptReporters: true,
                     items: this.DIGITAL_VALUE_MENU
                 },
-                sharedDataIndex: {
-                    acceptReporters: true,
-                    items: this.SHARED_DATA_INDEX_MENU
-                },
                 gpio: {
-                    acceptReporters: true,
+                    acceptReporters: false,
                     items: this.GPIO_MENU
                 },
                 axis: {
-                    acceptReporters: true,
+                    acceptReporters: false,
                     items: this.AXIS_MENU
                 },
                 pinMode: {
@@ -2103,102 +2731,199 @@ class MbitMoreBlocks {
                     acceptReporters: false,
                     items: this.CONNECTION_STATE_MENU
                 }
-            }
+            },
+            translationMap: translations
         };
     }
 
     /**
-     * Test whether the A or B button is pressed
-     * @param {object} args - the block's arguments.
-     * @return {boolean} - true if the button is pressed.
+     * Update the previous occured time of all button events.
      */
-    whenButtonPressed (args) {
-        if (args.BTN === 'any') {
-            return this._peripheral.buttonA | this._peripheral.buttonB;
-        } else if (args.BTN === 'A') {
-            return this._peripheral.buttonA;
-        } else if (args.BTN === 'B') {
-            return this._peripheral.buttonB;
-        }
-        return false;
-    }
-
-    /**
-     * Test whether the A or B button is pressed
-     * @param {object} args - the block's arguments.
-     * @return {boolean} - true if the button is pressed.
-     */
-    isButtonPressed (args) {
-        if (args.BTN === 'any') {
-            return (this._peripheral.buttonA | this._peripheral.buttonB) !== 0;
-        } else if (args.BTN === 'A') {
-            return this._peripheral.buttonA !== 0;
-        } else if (args.BTN === 'B') {
-            return this._peripheral.buttonB !== 0;
-        }
-        return false;
-    }
-
-    /**
-     * Test whether the micro:bit is moving
-     * @param {object} args - the block's arguments.
-     * @return {boolean} - true if the micro:bit is moving.
-     */
-    whenGesture (args) {
-        const gesture = cast.toString(args.GESTURE);
-        if (gesture === 'moved') {
-            return (this._peripheral.gestureState >> 2) & 1;
-        } else if (gesture === 'shaken') {
-            return this._peripheral.gestureState & 1;
-        } else if (gesture === 'jumped') {
-            return (this._peripheral.gestureState >> 1) & 1;
-        }
-        return false;
-    }
-
-    /**
-     * Display a predefined symbol on the 5x5 LED matrix.
-     * @param {object} args - the block's arguments.
-     * @return {Promise} - a Promise that resolves after a tick.
-     */
-    displaySymbol (args) {
-        const symbol = cast.toString(args.MATRIX).replace(/\s/g, '');
-        const reducer = (accumulator, c, index) => {
-            const value = (c === '0') ? accumulator : accumulator + Math.pow(2, index);
-            return value;
-        };
-        const hex = symbol.split('').reduce(reducer, 0);
-        if (hex !== null) {
-            this._peripheral.ledMatrixState[0] = hex & 0x1F;
-            this._peripheral.ledMatrixState[1] = (hex >> 5) & 0x1F;
-            this._peripheral.ledMatrixState[2] = (hex >> 10) & 0x1F;
-            this._peripheral.ledMatrixState[3] = (hex >> 15) & 0x1F;
-            this._peripheral.ledMatrixState[4] = (hex >> 20) & 0x1F;
-            this._peripheral.displayMatrix(this._peripheral.ledMatrixState);
-        }
-
-        return new Promise(resolve => {
-            setTimeout(() => {
-                resolve();
-            }, BLESendInterval);
+    updatePrevButtonEvents () {
+        this.prevButtonEvents = {};
+        Object.entries(this._peripheral.buttonEvents).forEach(([componentID, events]) => {
+            this.prevButtonEvents[componentID] = {};
+            Object.entries(events).forEach(([eventName, timestamp]) => {
+                this.prevButtonEvents[componentID][eventName] = timestamp;
+            });
         });
     }
 
     /**
-     * Display text on the 5x5 LED matrix.
+     * Test whether the event raised at the button.
      * @param {object} args - the block's arguments.
-     * @return {Promise} - a Promise that resolves after the text is done printing.
-     * Note the limit is 19 characters
+     * @param {string} args.NAME - name of the button.
+     * @param {string} args.EVENT - name of event to catch.
+     * @return {boolean} - true if the event raised.
+     */
+    whenButtonEvent (args) {
+        if (!this.updateLastButtonEventTimer) {
+            this.updateLastButtonEventTimer = setTimeout(() => {
+                this.updatePrevButtonEvents();
+                this.updateLastButtonEventTimer = null;
+            }, this.runtime.currentStepTime);
+        }
+        const buttonName = args.NAME;
+        const eventName = args.EVENT;
+        const lastTimestamp =
+            this._peripheral.getButtonEventTimestamp(buttonName, eventName);
+        if (lastTimestamp === null) return false;
+        if (!this.prevButtonEvents[buttonName]) return true;
+        return lastTimestamp !== this.prevButtonEvents[buttonName][eventName];
+    }
+
+    /**
+     * Test whether the A or B button is pressed
+     * @param {object} args - the block's arguments.
+     * @param {string} args.NAME - name of the button.
+     * @param {object} util - utility object provided by the runtime.
+     * @return {boolean} - whether the button is pressed or not.
+     */
+    isButtonPressed (args) {
+        const buttonName = args.NAME;
+        return this._peripheral.isButtonPressed(buttonName);
+    }
+
+
+    /**
+     * Test whether the touch event raised at the pin.
+     * @param {object} args - the block's arguments.
+     * @param {string} args.NAME - name of the pin to catch.
+     * @param {string} args.EVENT - event to catch.
+     * @param {object} util - utility object provided by the runtime.
+     * @return {boolean|Promise<boolean>|undefined} - true if the event raised or promise that or undefinde if yield.
+     */
+    whenTouchEvent (args, util) {
+        const buttonName = args.NAME;
+        if (buttonName === MbitMoreButtonName.LOGO) {
+            return this.whenButtonEvent(args);
+        }
+        if (this._peripheral.isPinTouchMode(MbitMoreButtonPinIndex[buttonName])) {
+            return this.whenButtonEvent(args);
+        }
+        const configPromise = this._peripheral.configTouchPin(MbitMoreButtonPinIndex[buttonName], util);
+        if (!configPromise) return; // This thread was yielded.
+        return configPromise.then(() => this.whenButtonEvent(args));
+    }
+
+    /**
+     * Test whether the touch-pin is touched.
+     * @param {object} args - the block's arguments.
+     * @param {string} args.NAME - name of the pin.
+     * @param {object} util - utility object provided by the runtime.
+     * @return {boolean|Promise<boolean>|undefined} - true if touched or promise that or undefinde if yield.
+     */
+    isPinTouched (args, util) {
+        const buttonName = args.NAME;
+        if (buttonName === MbitMoreButtonName.LOGO) {
+            return this._peripheral.isTouched(buttonName);
+        }
+        if (this._peripheral.isPinTouchMode(MbitMoreButtonPinIndex[buttonName])) {
+            return this._peripheral.isTouched(buttonName);
+        }
+        const configPromise = this._peripheral.configTouchPin(MbitMoreButtonPinIndex[buttonName], util);
+        if (!configPromise) return; // This thread was yielded.
+        return configPromise.then(() => this._peripheral.isTouched(buttonName));
+    }
+
+    /**
+     * Update the last occured time of all gesture events.
+     */
+    updatePrevGestureEvents () {
+        this.prevGestureEvents = {};
+        Object.entries(this._peripheral.gestureEvents).forEach(([gestureName, timestamp]) => {
+            this.prevGestureEvents[gestureName] = timestamp;
+        });
+    }
+
+    /**
+     * Test whether the gesture event raised.
+     * @param {object} args - the block's arguments.
+     * @param {string} args.GESTURE - name of the gesture.
+     * @return {boolean} - true if the event raised.
+     */
+    whenGesture (args) {
+        if (!this.updateLastGestureEventTimer) {
+            this.updateLastGestureEventTimer = setTimeout(() => {
+                this.updatePrevGestureEvents();
+                this.updateLastGestureEventTimer = null;
+            }, this.runtime.currentStepTime);
+        }
+        const gestureName = args.GESTURE;
+        const lastTimestamp =
+            this._peripheral.getGestureEventTimestamp(gestureName);
+        if (lastTimestamp === null) return false;
+        if (!this.prevGestureEvents[gestureName]) return true;
+        return lastTimestamp !== this.prevGestureEvents[gestureName];
+    }
+
+    /**
+     * Display pixcel pattern on the 5x5 LED matrix with brightness and write mode.
+     * @param {object} args - the block's arguments.
+     * @param {string} args.MATRIX - the pattern of the pixels.
+     * @param {object} util - utility object provided by the runtime.
+     * @return {?Promise} - a Promise that resolves after a tick or undefinde if yield.
+     */
+    displayMatrix (args, util) {
+        const matrixString = Cast.toString(args.MATRIX)
+            .replace(/[０-９，]/g, ws => String.fromCharCode(ws.charCodeAt(0) - 0xFEE0)); // zenkaku to hankaku
+        let matrixData;
+        if (matrixString.includes(',')) {
+            // comma separated values
+            matrixData = matrixString.split(/[,\n]/);
+        } else if (/[ \t]\d*[ \t]/g.test(matrixString)) {
+            // space|tab separated values
+            matrixData = matrixString.split(/\s/g);
+        } else {
+            // 0|1 pattern.
+            matrixData = matrixString.replace(/\s/g, '')
+                .split('');
+            matrixData = matrixData.map(level => ((level === '0') ? 0 : 100));
+        }
+        matrixData = matrixData.map(brightness =>
+            (Math.max(0,
+                Math.min(100,
+                    Number(brightness)) * 255 / 100))); // percent to 8bits value
+        const matrix = [];
+        for (let line = 0; line < 5; line++) {
+            matrix[line] = [];
+            for (let col = 0; col < 5; col++) {
+                matrix[line][col] = matrixData[(line * 5) + col];
+            }
+        }
+        return this._peripheral.displayPixels(matrix, util);
+    }
+
+    /**
+     * Display text on the 5x5 LED matrix.
+     * Displayable character is ascii and non-ascii is replaced to '?'.
+     * @param {object} args - the block's arguments.
+     * @param {string} args.TEXT - The contents to display.
+     * @param {number} args.DELAY - The time to delay between characters, in milliseconds.
+     * @param {object} util - utility object provided by the runtime.
+     * @return {Promise} - a Promise that resolves after the text is done printing or undefinde if yield.
+     * Note the limit is 18 characters
      * The print time is calculated by multiplying the number of horizontal pixels
      * by the default scroll delay of 120ms.
      * The number of horizontal pixels = 6px for each character in the string,
      * 1px before the string, and 5px after the string.
      */
-    displayText (args) {
-        const text = String(args.TEXT).substring(0, 19);
-        if (text.length > 0) this._peripheral.displayText(text);
-        const yieldDelay = 120 * ((6 * text.length) + 6);
-
+    displayText (args, util) {
+        // zenkaku to hankaku
+        const text = Cast.toString(args.TEXT)
+            .replace(/[Ａ-Ｚａ-ｚ０-９！-～]/g, ws => String.fromCharCode(ws.charCodeAt(0) - 0xFEE0))
+            .replace(/”/g, '"')
+            .replace(/’/g, "'")
+            .replace(/‘/g, '`')
+            .replace(/￥/g, '\\')
+            // eslint-disable-next-line no-irregular-whitespace
+            .replace(/　/g, ' ')
+            .replace(/〜/g, '~');
+        let delay = parseInt(args.DELAY, 10);
+        delay = isNaN(delay) ? 120 : delay; // Use default delay if NaN.
+        const resultPromise = this._peripheral.displayText(text, delay, util);
+        if (!resultPromise) return; // This thread was yielded.
+        const yieldDelay = delay * ((6 * text.length) + 6);
         return new Promise(resolve => {
             setTimeout(() => {
                 resolve();
@@ -2208,133 +2933,71 @@ class MbitMoreBlocks {
 
     /**
      * Turn all 5x5 matrix LEDs off.
-     * @return {Promise} - a Promise that resolves after a tick.
-     */
-    displayClear () {
-        for (let i = 0; i < 5; i++) {
-            this._peripheral.ledMatrixState[i] = 0;
-        }
-        this._peripheral.displayMatrix(this._peripheral.ledMatrixState);
-
-        return new Promise(resolve => {
-            setTimeout(() => {
-                resolve();
-            }, BLESendInterval);
-        });
-    }
-
-    /**
-     * Test whether the tilt sensor is currently tilted.
      * @param {object} args - the block's arguments.
-     * @property {TiltDirection} DIRECTION - the tilt direction to test (front, back, left, right, or any).
-     * @return {boolean} - true if the tilt sensor is tilted past a threshold in the specified direction.
+     * @param {object} util - utility object provided by the runtime.
+     * @return {Promise} - a Promise that resolves after a tick or undefinde if yield.
      */
-    whenTilted (args) {
-        return this._isTilted(args.DIRECTION);
+    displayClear (args, util) {
+        const matrix = [
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0]
+        ];
+        return this._peripheral.displayPixels(matrix, util);
     }
 
     /**
-     * Test whether the tilt sensor is currently tilted.
+     * Test the selected pin is high as digital.
      * @param {object} args - the block's arguments.
-     * @property {TiltDirection} DIRECTION - the tilt direction to test (front, back, left, right, or any).
-     * @return {boolean} - true if the tilt sensor is tilted past a threshold in the specified direction.
+     * @param {number} args.PIN - pin ID.
+     * @return {boolean} - true if the pin is high.
      */
-    isTilted (args) {
-        return this._isTilted(args.DIRECTION);
-    }
-
-    /**
-     * @param {object} args - the block's arguments.
-     * @property {TiltDirection} DIRECTION - the direction (front, back, left, right) to check.
-     * @return {number} - the tilt sensor's angle in the specified direction.
-     * Note that getTiltAngle(front) = -getTiltAngle(back) and getTiltAngle(left) = -getTiltAngle(right).
-     */
-    getTiltAngle (args) {
-        return this._getTiltAngle(args.DIRECTION);
-    }
-
-    /**
-     * Test whether the tilt sensor is currently tilted.
-     * @param {TiltDirection} direction - the tilt direction to test (front, back, left, right, or any).
-     * @return {boolean} - true if the tilt sensor is tilted past a threshold in the specified direction.
-     * @private
-     */
-    _isTilted (direction) {
-        switch (direction) {
-        case MicroBitTiltDirection.ANY:
-            return (Math.abs(this._peripheral.tiltX / 10) >= MbitMoreBlocks.TILT_THRESHOLD) ||
-                (Math.abs(this._peripheral.tiltY / 10) >= MbitMoreBlocks.TILT_THRESHOLD);
-        default:
-            return this._getTiltAngle(direction) >= MbitMoreBlocks.TILT_THRESHOLD;
-        }
-    }
-
-    /**
-     * @param {TiltDirection} direction - the direction (front, back, left, right) to check.
-     * @return {number} - the tilt sensor's angle in the specified direction.
-     * Note that getTiltAngle(front) = -getTiltAngle(back) and getTiltAngle(left) = -getTiltAngle(right).
-     * @private
-     */
-    _getTiltAngle (direction) {
-        switch (direction) {
-        case MicroBitTiltDirection.FRONT:
-            return Math.round(this._peripheral.tiltY / -10);
-        case MicroBitTiltDirection.BACK:
-            return Math.round(this._peripheral.tiltY / 10);
-        case MicroBitTiltDirection.LEFT:
-            return Math.round(this._peripheral.tiltX / -10);
-        case MicroBitTiltDirection.RIGHT:
-            return Math.round(this._peripheral.tiltX / 10);
-        default:
-            log.warn(`Unknown tilt direction in _getTiltAngle: ${direction}`);
-        }
-    }
-
-    /**
-     * @param {object} args - the block's arguments.
-     * @return {boolean} - the touch pin state.
-     * @private
-     */
-    whenPinConnected (args) {
-        const pin = parseInt(args.PIN, 10);
-        if (isNaN(pin)) return;
-        if (!this.GPIO_MENU.includes(pin.toString())) return false;
-        return this._peripheral.isPinOnGrand(pin);
-    }
-
-    // Mbit More extended functions
-
-    /**
-     * Test the selected pin is connected to the ground.
-     * @param {object} args - the block's arguments.
-     * @return {boolean} - true if the pin is connected.
-     */
-    isPinConnected (args) {
-        const pin = parseInt(args.PIN, 10);
-        if (isNaN(pin)) return false;
-        if (!this.GPIO_MENU.includes(pin.toString())) return false;
-        return this._peripheral.isPinOnGrand(pin);
+    isPinHigh (args) {
+        return this._peripheral.isPinHigh(parseInt(args.PIN, 10));
     }
 
     /**
      * Get amount of light (0 - 255) on the LEDs.
-     * @return {Promise} - a Promise that resolves light level.
+     * @param {object} args - the block's arguments.
+     * @return {number} - light level.
      */
     getLightLevel () {
-        return this._peripheral.readLightLevel();
+        const level = this._peripheral.readLightLevel();
+        return Math.round(level * 1000 / 255) / 10;
     }
 
     /**
      * Get temperature (integer in celsius) of micro:bit.
-     * @return {Promise} - a Promise that resolves temperature.
+     * @param {object} args - the block's arguments.
+     * @return {number} - value of temperature [centigrade].
      */
     getTemperature () {
         return this._peripheral.readTemperature();
     }
 
     /**
+     * Get loudness of the sound from microphone on micro:bit.
+     * @param {object} args - the block's arguments.
+     * @param {object} util - utility object provided by the runtime.
+     * @return {Promise} - a Promise that resolves digital input value of the pin or undefinde if yield.
+     */
+    getSoundLevel (args, util) {
+        const resultPromise = this._peripheral.configMic(true, util);
+        if (!resultPromise) return; // This thread was yielded.
+        return resultPromise
+            .then(micState => {
+                if (micState) {
+                    return Math.round(this._peripheral.readSoundLevel() * 1000 / 255) / 10;
+                }
+                return 0;
+            });
+    }
+
+    /**
      * Return angle from the north to the micro:bit heading direction.
-     * @return {Promise} - a Promise that resolves compass heading angle from the north (0 - 359 degrees).
+     * @return {number} - degree of compass heading angle from the north (0 - 359 degrees).
      */
     getCompassHeading () {
         return this._peripheral.readCompassHeading();
@@ -2343,115 +3006,108 @@ class MbitMoreBlocks {
     /**
      * Return analog value of the pin.
      * @param {object} args - the block's arguments.
-     * @return {Promise} - a Promise that resolves analog input value of the pin.
+     * @param {number} args.PIN - pin ID.
+     * @param {object} util - utility object provided by the runtime.
+     * @return {?Promise} a Promise that resolves analog input value of the pin or undefined if this process was yield.
      */
-    getAnalogValue (args) {
-        const pin = parseInt(args.PIN, 10);
-        if (isNaN(pin)) return 0;
-        if (pin < 0 || pin > 2) return 0;
-        return this._peripheral.readAnalogIn(pin);
+    getAnalogValue (args, util) {
+        const pinIndex = parseInt(args.PIN, 10);
+        const resultPromise = this._peripheral.readAnalogIn(pinIndex, util);
+        if (!resultPromise) return;
+        return resultPromise.then(level => Math.round(level * 100 * 10 / 1024) / 10);
     }
 
     /**
      * Return digital value of the pin.
      * @param {object} args - the block's arguments.
-     * @return {Promise} - a Promise that resolves digital input value of the pin.
+     * @param {number} args.PIN - pin ID.
+     * @return {number} - digital input value of the pin.
      */
     getDigitalValue (args) {
-        const pin = parseInt(args.PIN, 10);
-        if (isNaN(pin)) return 0;
-        if (!this.GPIO_MENU.includes(pin.toString())) return 0;
-        return (this._peripheral.readDigitalValue(pin));
+        return this._peripheral.readDigitalLevel(parseInt(args.PIN, 10));
     }
 
     /**
-     * Return value of the shared data.
+     * Send data with label.
      * @param {object} args - the block's arguments.
-     * @property {string} args.INDEX - index of the shared data.
-     * @return {number} - analog value of the shared data.
-     */
-    getSharedData (args) {
-        const sharedDataIndex = parseInt(args.INDEX, 10);
-        if (Number.isNaN(sharedDataIndex)) return 0;
-        if (!this.SHARED_DATA_INDEX_MENU.includes(sharedDataIndex.toString())) return 0;
-        return this._peripheral.getSharedData(sharedDataIndex);
-    }
-
-    /**
-     * Set the shared data value.
-     * @param {object} args - the block's arguments.
-     * @property {string} args.INDEX - index of the shared data.
+     * @property {string} args.LABEL - label of the data.
+     * @property {string} args.DATA - content of the data.
      * @param {object} util - utility object provided by the runtime.
-     * @return {undefined}
+     * @return {?Promise} - a Promise that resolves when the process was done or undefined if this process was yield.
      */
-    setSharedData (args, util) {
-        const sharedDataIndex = parseInt(args.INDEX, 10);
-        if (Number.isNaN(sharedDataIndex)) return;
-        if (!this.SHARED_DATA_INDEX_MENU.includes(sharedDataIndex.toString())) return;
-        const sharedDataValue = parseInt(args.VALUE, 10);
-        if (Number.isNaN(sharedDataValue)) return;
-        this._peripheral.setSharedData(sharedDataIndex, sharedDataValue, util);
+    sendData (args, util) {
+        if (args.LABEL.length <= 0) {
+            return;
+        }
+        return this._peripheral.sendData(args.LABEL, args.DATA, util);
     }
 
     /**
-     * Set mode of the pin.
+     * Set pull mode of the pin.
      * @param {object} args - the block's arguments.
-     * @property {string} args.PIN - index of the pin.
-     * @property {string} args.MODE - mode to set.
-     * @param {object} util - utility object provided by the runtime.
-     * @return {undefined}
+     * @param {number} args.PIN - pin ID.
+     * @param {MbitMorePullModeName} args.MODE - mode to set.
+     * @param {BlockUtility} util - utility object provided by the runtime.
+     * @return {promise | undefined} - a Promise that resolves when the command was sent
+     *                                 or undefined if this process was yield.
      */
-    setPinMode (args, util) {
-        const pin = parseInt(args.PIN, 10);
-        if (isNaN(pin)) return;
-        if (pin < 0 || pin > 20) return;
-        this._peripheral.setPinMode(pin, args.MODE, util);
+    setPullMode (args, util) {
+        return this._peripheral.setPullMode(parseInt(args.PIN, 10), MbitMorePullModeID[args.MODE], util);
     }
 
     /**
      * Set the pin to Output mode and level.
      * @param {object} args - the block's arguments.
+     * @param {number} args.PIN - pin ID.
+     * @param {boolean | string | number} args.LEVEL - value to be set.
      * @param {object} util - utility object provided by the runtime.
-     * @return {undefined}
+     * @return {promise | undefined} - a Promise that resolves when the command was sent
+     *                                 or undefined if this process was yield.
      */
-    setOutput (args, util) {
-        const pin = parseInt(args.PIN, 10);
-        if (isNaN(pin)) return;
-        if (pin < 0 || pin > 20) return;
-        let level = parseInt(args.LEVEL, 10);
-        if (isNaN(level)) return;
-        level = Math.max(0, level);
-        level = Math.min(level, 1);
-        this._peripheral.setPinOutput(pin, level, util);
+    setDigitalOut (args, util) {
+        let level = (args.LEVEL === true);
+        level = level || (args.LEVEL === 'true');
+        if (!level) {
+            const num = Number(args.LEVEL);
+            if (!isNaN(num)) {
+                level = (num > 0);
+            }
+        }
+        return this._peripheral.setPinOutput(parseInt(args.PIN, 10), level, util);
     }
 
     /**
      * Set the pin to PWM mode and level.
      * @param {object} args - the block's arguments.
-     * @param {object} util - utility object provided by the runtime.
-     * @return {undefined}
+     * @param {number} args.PIN - pin ID.
+     * @param {number} args.LEVEL - value[%] for PWM.
+     * @param {BlockUtility} util - utility object provided by the runtime.
+     * @return {promise | undefined} - a Promise that resolves when the command was sent
+     *                                 or undefined if this process was yield.
      */
-    setPWM (args, util) {
-        const pin = parseInt(args.PIN, 10);
-        if (isNaN(pin)) return;
-        if (pin < 0 || pin > 20) return;
-        let level = parseInt(args.LEVEL, 10);
-        if (isNaN(level)) return;
-        level = Math.max(0, level);
-        level = Math.min(level, 1023);
-        this._peripheral.setPinPWM(pin, level, util);
+    setAnalogOut (args, util) {
+        let percent = parseInt(args.LEVEL, 10);
+        if (isNaN(percent)) {
+            return;
+        }
+        percent = Math.max(0, Math.min(percent, 100));
+        const level = Math.round(percent * 1024 / 100);
+        return this._peripheral.setPinPWM(
+            parseInt(args.PIN, 10),
+            level,
+            util
+        );
     }
 
     /**
      * Set the pin to Servo mode and angle.
      * @param {object} args - the block's arguments.
-     * @param {object} util - utility object provided by the runtime.
-     * @return {undefined}
+     * @param {number} args.PIN - pin ID.
+     * @param {BlockUtility} util - utility object provided by the runtime.
+     * @return {promise | undefined} - a Promise that resolves when the command was sent
+     *                                 or undefined if this process was yield.
      */
     setServo (args, util) {
-        const pin = parseInt(args.PIN, 10);
-        if (isNaN(pin)) return;
-        if (pin < 0 || pin > 20) return;
         let angle = parseInt(args.ANGLE, 10);
         if (isNaN(angle)) return;
         angle = Math.max(0, angle);
@@ -2462,149 +3118,211 @@ class MbitMoreBlocks {
         // let center = parseInt(args.CENTER, 10);
         // if (isNaN(center)) range = 0;
         // center = Math.max(0, center);
-        this._peripheral.setPinServo(pin, angle, null, null, util);
+        return this._peripheral.setPinServo(parseInt(args.PIN, 10), angle, null, null, util);
     }
 
     /**
      * Return the value of magnetic force [micro tesla] on axis.
      * @param {object} args - the block's arguments.
-     * @property {AxisValues} AXIS - the axis (X, Y, Z, Absolute).
-     * @return {Promise} -  a Promise that resolves value of magnetic force.
+     * @property {AxisSymbol} AXIS - the axis (X, Y, Z, Absolute).
+     * @return {number} - value of magnetic force.
      */
     getMagneticForce (args) {
-        switch (args.AXIS) {
-        case AxisValues.X:
-        case this.AXIS_MENU.find(item => (item.value === AxisValues.X)).text:
-            return this._peripheral.readMagneticForceX();
-        case AxisValues.Y:
-        case this.AXIS_MENU.find(item => (item.value === AxisValues.Y)).text:
-            return this._peripheral.readMagneticForceY();
-        case AxisValues.Z:
-        case this.AXIS_MENU.find(item => (item.value === AxisValues.Z)).text:
-            return this._peripheral.readMagneticForceZ();
-        case AxisValues.Absolute:
-        case this.AXIS_MENU.find(item => (item.value === AxisValues.Absolute)).text:
-            return this._peripheral.readMagneticStrength();
-        default:
-            log.warn(`Unknown axis in getMagneticForce: ${args.AXIS}`);
-        }
+        return this._peripheral.readMagneticForce(args.AXIS);
     }
 
     /**
      * Return the value of acceleration on the specified axis.
      * @param {object} args - the block's arguments.
-     * @property {AxisValues} AXIS - the axis (X, Y, Z).
-     * @return {Promise} - a Promise that resolves acceleration on the axis [milli-g].
+     * @param {AxisSymbol} args.AXIS - direction to get.
+     * @return {number} - value of acceleration.
      */
     getAcceleration (args) {
-        switch (args.AXIS) {
-        case AxisValues.X:
-        case this.AXIS_MENU.find(item => (item.value === AxisValues.X)).text:
-            return this._peripheral.readAccelerationX();
-        case AxisValues.Y:
-        case this.AXIS_MENU.find(item => (item.value === AxisValues.Y)).text:
-            return this._peripheral.readAccelerationY();
-        case AxisValues.Z:
-        case this.AXIS_MENU.find(item => (item.value === AxisValues.Z)).text:
-            return this._peripheral.readAccelerationZ();
-        case AxisValues.Absolute:
-        case this.AXIS_MENU.find(item => (item.value === AxisValues.Absolute)).text:
-            return this._peripheral.readAccelerationStrength();
-        default:
-            log.warn(`Unknown axis in getAcceleration: ${args.AXIS}`);
-        }
+        return this._peripheral.readAcceleration(args.AXIS);
     }
 
     /**
      * Return pitch [degrees] of the micro:bit heading direction.
-     * @return {Promise} - a Promise that resolves pitch.
+     * @return {number} - degree of pitch.
      */
     getPitch () {
         return this._peripheral.readPitch();
     }
 
     /**
-     * Return roll [degrees] of the micro:bit heading direction.
-     * @return {Promise} - a Promise that resolves roll.
+     * Read roll [degrees] of the micro:bit heading direction.
+     * @return {number} - degree of roll.
      */
     getRoll () {
         return this._peripheral.readRoll();
     }
 
+
+    /**
+     * Play tone on the speaker.
+     * @param {object} args - the block's arguments.
+     * @param {string} args.FREQ - wave frequency to play
+     * @param {string} args.VOL laudness of tone
+     * @param {object} util - utility object provided by the runtime.
+     * @return {promise | undefined} - a Promise that resolves when the command was sent
+     *                                 or undefined if this process was yield.
+     */
+    playTone (args, util) {
+        const frequency = parseFloat(args.FREQ);
+        let volume = parseInt(args.VOL, 10);
+        volume = Math.min(100, (Math.max(0, volume)));
+        return this._peripheral.playTone(frequency, volume, util);
+    }
+
+    /**
+     * Stop playing tone on the speaker.
+     * @param {object} args - the block's arguments.
+     * @param {object} util - utility object provided by the runtime.
+     * @return {promise | undefined} - a Promise that resolves when the command was sent
+     *                                 or undefined if this process was yield.
+     */
+    stopTone (args, util) {
+        return this._peripheral.stopTone(util);
+    }
+
     /**
      * Set listening event type at the pin.
      * @param {object} args - the block's arguments.
-     * @property {string} args.PIN - index of the pin.
-     * @property {string} args.EVENT_TYPE - event to listen.
-     * @param {object} util - utility object provided by the runtime.
-     * @return {Promise} - a Promise that resolves the setting.
+     * @param {number} args.PIN - pin ID.
+     * @param {string} args.EVENT_TYPE - event to listen.
+     * @param {BlockUtility} util - utility object provided by the runtime.
+     * @return {promise | undefined} - a Promise that resolves when the command was sent
+     *                                 or undefined if this process was yield.
     */
-    setPinEventType (args, util) {
-        const pin = parseInt(args.PIN, 10);
-        if (isNaN(pin)) return;
-        if (pin < 0 || pin > 20) return;
-        const eventType = parseInt(args.EVENT_TYPE, 10);
-        if (isNaN(eventType)) return 0;
-        return this._peripheral.setPinEventType(pin, eventType, util);
+    listenPinEventType (args, util) {
+        return this._peripheral.listenPinEventType(parseInt(args.PIN, 10), MbitMorePinEventType[args.EVENT_TYPE], util);
     }
 
     /**
-     * Rerutn timestamp value (micro senonds) of the event.
+     * Rerutn value (timestamp of the edge or duration of the pulse) of the event or 0 when the event is not received.
      * @param {object} args - the block's arguments.
-     * @property {string} args.PIN - index of the pin.
-     * @property {string} args.EVENT - event value to get.
+     * @param {number} args.PIN - pin ID.
+     * @param {string} args.EVENT - event value to get.
      * @param {object} util - utility object provided by the runtime.
-     * @return {number} - timestamp of the event.
+     * @return {number} - timestamp of the event or 0.
      */
-    getPinEventTimestamp (args) {
-        const pinIndex = parseInt(args.PIN, 10);
-        if (isNaN(pinIndex)) return 0;
-        if (pinIndex < 0 || pinIndex > 20) return 0;
-        const event = parseInt(args.EVENT, 10);
-        if (isNaN(event)) return 0;
-        return this._peripheral.getPinEventTimestamp(pinIndex, event);
+    getPinEventValue (args) {
+        const value = this._peripheral.getPinEventValue(parseInt(args.PIN, 10), MbitMorePinEvent[args.EVENT]);
+        return value ? value : 0;
     }
 
     /**
-     * Test whether the event rose at the pin.
+     * Update the previous occured time of all pin events.
+     */
+    updatePrevPinEvents () {
+        this.prevPinEvents = {};
+        Object.entries(this._peripheral._pinEvents).forEach(([pinIndex, events]) => {
+            this.prevPinEvents[pinIndex] = {};
+            Object.entries(events).forEach(([eventID, eventData]) => {
+                this.prevPinEvents[pinIndex][eventID] = {};
+                Object.entries(eventData).forEach(([key, value]) => {
+                    this.prevPinEvents[pinIndex][eventID][key] = value;
+                });
+            });
+        });
+    }
+
+    /**
+     * Return the previous timestamp of the pin event or undefined if the event was not received.
+     * @param {number} pinIndex - index of the pin to get the event.
+     * @param {MbitMorePinEvent} eventID - ID of the event to get.
+     * @return {?number} Timestamp of the previous event or null.
+     */
+    getPrevPinEventTimestamp (pinIndex, eventID) {
+        if (this.prevPinEvents[pinIndex] && this.prevPinEvents[pinIndex][eventID]) {
+            return this.prevPinEvents[pinIndex][eventID].timestamp;
+        }
+        return null;
+    }
+
+    /**
+     * Test whether the event raised at the pin.
      * @param {object} args - the block's arguments.
-     * @property {string} args.EVENT - event to catch.
-     * @return {boolean} - true if the event rose.
+     * @param {number} args.PIN - pin ID.
+     * @param {string} args.EVENT - event to catch.
+     * @return {boolean} - true if the event raised.
      */
     whenPinEvent (args) {
-        const pinIndex = parseInt(args.PIN, 10);
-        if (isNaN(pinIndex)) return false;
-        const event = parseInt(args.EVENT, 10);
-        if (isNaN(event)) return 0;
-        const prevTimestamp = this.getLastEventTimestamp(pinIndex, event);
-        const lastTimestamp = this._peripheral.getPinEventTimestamp(pinIndex, event);
-        this.setLastEventTimestamp(pinIndex, event, lastTimestamp);
-        if (lastTimestamp === 0) return false;
-        return prevTimestamp !== lastTimestamp;
-    }
-
-    /**
-     * Return timestamp of the event at the pin.
-     * @param {number} pinIndex - index of the pin.
-     * @param {number} event - event to get timestamp.
-     * @return {number} - timestamp of the event.
-     */
-    getLastEventTimestamp (pinIndex, event) {
-        if (this.lastEvents[pinIndex] && this.lastEvents[pinIndex][event]) {
-            return this.lastEvents[pinIndex][event];
+        if (!this.updateLastPinEventTimer) {
+            this.updateLastPinEventTimer = setTimeout(() => {
+                this.updatePrevPinEvents();
+                this.updateLastPinEventTimer = null;
+            }, this.runtime.currentStepTime);
         }
-        return 0;
+        const pinIndex = parseInt(args.PIN, 10);
+        const eventID = MbitMorePinEvent[args.EVENT];
+        const lastTimestamp =
+            this._peripheral.getPinEventTimestamp(pinIndex, eventID);
+        if (lastTimestamp === null) return false;
+        const prevTimestamp = this.getPrevPinEventTimestamp(pinIndex, eventID);
+        if (prevTimestamp === null) return true;
+        return lastTimestamp !== prevTimestamp;
     }
 
     /**
-     * Hold timestamp of the event at the pin.
-     * @param {number} pinIndex - index of the pin.
-     * @param {number} event - event to be save.
-     * @param {number} timestamp - timestamp value of the event.
+     * Rerutn the last content of the messge or undefined if the data which has the label is not received.
+     * @param {object} args - the block's arguments.
+     * @param {number} args.LABEL - label of the data.
+     * @return {?(string | number)} - content of the data or empty string when the data was null
      */
-    setLastEventTimestamp (pinIndex, event, timestamp) {
-        if (!this.lastEvents[pinIndex]) this.lastEvents[pinIndex] = {};
-        this.lastEvents[pinIndex][event] = timestamp;
+    getDataLabeled (args) {
+        const data = this._peripheral.getDataLabeled(args.LABEL);
+        if (data === null) {
+            return '';
+        }
+        return data;
+    }
+
+    /**
+     * Update the previous occured time of all received data.
+     */
+    updatePrevReceivedData () {
+        this.prevReceivedData = {};
+        Object.entries(this._peripheral.receivedData).forEach(([label, contentObject]) => {
+            this.prevReceivedData[label] = {};
+            Object.entries(contentObject).forEach(([key, value]) => {
+                this.prevReceivedData[label][key] = value;
+            });
+        });
+    }
+
+    /**
+     * Return the previous timestamp of the data or undefined if the data was not received.
+     * @param {string} label - label of the data.
+     * @return {?number} Timestamp of the previous data or null.
+     */
+    getPrevReceivedDataTimestamp (label) {
+        if (this.prevReceivedData[label]) {
+            return this.prevReceivedData[label].timestamp;
+        }
+        return null;
+    }
+
+    /**
+     * Test whether the data received which had the label.
+     * @param {object} args - the block's arguments.
+     * @param {number} args.LABEL - label of the data.
+     * @return {boolean} - true if the data received.
+     */
+    whenDataReceived (args) {
+        if (!this.updateLastDataTimer) {
+            this.updateLastDataTimer = setTimeout(() => {
+                this.updatePrevReceivedData();
+                this.updateLastDataTimer = null;
+            }, this.runtime.currentStepTime);
+        }
+        const label = args.LABEL;
+        const lastTimestamp =
+            this._peripheral.getDataTimestamp(label);
+        if (lastTimestamp === null) return false;
+        const prevTimestamp = this.getPrevReceivedDataTimestamp(label);
+        if (prevTimestamp === null) return true;
+        return lastTimestamp !== prevTimestamp;
     }
 
     /**
@@ -2617,138 +3335,9 @@ class MbitMoreBlocks {
         const state = (args.STATE === 'connected');
         return (state === this._peripheral.isConnected());
     }
-
-    setupTranslations () {
-        const localeSetup = formatMessage.setup();
-        const extTranslations = {
-            'ja': {
-                'mbitMore.isPinConnected': 'ピン [PIN] がつながった',
-                'mbitMore.lightLevel': '明るさ',
-                'mbitMore.temperature': '温度',
-                'mbitMore.compassHeading': '北からの角度',
-                'mbitMore.magneticForce': '磁力 [AXIS]',
-                'mbitMore.acceleration': '加速度 [AXIS]',
-                'mbitMore.pitch': 'ピッチ',
-                'mbitMore.roll': 'ロール',
-                'mbitMore.analogValue': 'ピン [PIN] のアナログレベル',
-                'mbitMore.digitalValue': 'ピン [PIN] のデジタルレベル',
-                'mbitMore.getSharedData': '共有データ [INDEX]',
-                'mbitMore.setSharedData': '共有データ [INDEX] を [VALUE] にする',
-                'mbitMore.setPinMode': 'ピン [PIN] を [MODE] 入力にする',
-                'mbitMore.setOutput': 'ピン [PIN] をデジタルレベル [LEVEL] にする',
-                'mbitMore.setPWM': 'ピン [PIN] をアナログレベル [LEVEL] にする',
-                'mbitMore.setServo': 'ピン [PIN] をサーボ [ANGLE] 度にする',
-                'mbitMore.digitalValueMenu.Low': '0',
-                'mbitMore.digitalValueMenu.High': '1',
-                'mbitMore.axisMenu.x': 'x',
-                'mbitMore.axisMenu.y': 'y',
-                'mbitMore.axisMenu.z': 'z',
-                'mbitMore.axisMenu.absolute': '大きさ',
-                'mbitMore.pinModeMenu.pullNone': '開放',
-                'mbitMore.pinModeMenu.pullUp': 'プルアップ',
-                'mbitMore.pinModeMenu.pullDown': 'プルダウン',
-                'mbitMore.setPinEventType': 'ピン [PIN] で [EVENT_TYPE] ',
-                'mbitMore.pinEventTypeMenu.none': 'イベントを受けない',
-                'mbitMore.pinEventTypeMenu.edge': 'エッジタイプのイベントを受ける',
-                'mbitMore.pinEventTypeMenu.pulse': 'パルスタイプのイベントを受ける',
-                'mbitMore.whenPinEvent': 'ピン [PIN] で [EVENT] イベントが上がった',
-                'mbitMore.pinEventMenu.rise': 'ライズ',
-                'mbitMore.pinEventMenu.fall': 'フォール',
-                'mbitMore.pinEventMenu.pulseHigh': 'ハイパルス',
-                'mbitMore.pinEventMenu.pulseLow': 'ローパルス',
-                'mbitMore.getPinEventTimestamp': 'ピン [PIN] の [EVENT]',
-                'mbitMore.pinEventTimestampMenu.rise': 'ライズの時刻',
-                'mbitMore.pinEventTimestampMenu.fall': 'フォールの時刻',
-                'mbitMore.pinEventTimestampMenu.pulseHigh': 'ハイパルスの期間',
-                'mbitMore.pinEventTimestampMenu.pulseLow': 'ローパルスの期間',
-                'mbitMore.connectionStateMenu.connected': 'つながった',
-                'mbitMore.connectionStateMenu.disconnected': '切れた',
-                'mbitMore.whenConnectionChanged': 'micro:bit と[STATE]とき'
-            },
-            'ja-Hira': {
-                'mbitMore.isPinConnected': 'ピン [PIN] がつながった',
-                'mbitMore.lightLevel': 'あかるさ',
-                'mbitMore.temperature': 'おんど',
-                'mbitMore.compassHeading': 'きたからのかくど',
-                'mbitMore.magneticForce': 'じりょく [AXIS]',
-                'mbitMore.acceleration': 'かそくど [AXIS]',
-                'mbitMore.pitch': 'ピッチ',
-                'mbitMore.roll': 'ロール',
-                'mbitMore.analogValue': 'ピン [PIN] のアナログレベル',
-                'mbitMore.digitalValue': 'ピン [PIN] のデジタルレベル',
-                'mbitMore.getSharedData': 'きょうゆうデータ [INDEX]',
-                'mbitMore.setSharedData': 'きょうゆうデータ [INDEX] を [VALUE] にする',
-                'mbitMore.setPinMode': 'ピン [PIN] を [MODE] にゅうりょくにする',
-                'mbitMore.setOutput': 'ピン [PIN] をデジタルレベル [LEVEL] にする',
-                'mbitMore.setPWM': 'ピン [PIN] をアナログレベル [LEVEL] にする',
-                'mbitMore.setServo': 'ピン [PIN] をサーボ [ANGLE] どにする',
-                'mbitMore..Low': '0',
-                'mbitMore.digitalValueMenu.High': '1',
-                'mbitMore.axisMenu.x': 'x',
-                'mbitMore.axisMenu.y': 'y',
-                'mbitMore.axisMenu.z': 'z',
-                'mbitMore.axisMenu.absolute': 'おおきさ',
-                'mbitMore.pinModeMenu.pullNone': 'かいほう',
-                'mbitMore.pinModeMenu.pullUp': 'プルアップ',
-                'mbitMore.pinModeMenu.pullDown': 'プルダウン',
-                'mbitMore.setPinEventType': 'ピン [PIN] で [EVENT_TYPE]',
-                'mbitMore.pinEventTypeMenu.none': 'イベントをうけない',
-                'mbitMore.pinEventTypeMenu.edge': 'エッジタイプのイベントをうける',
-                'mbitMore.pinEventTypeMenu.pulse': 'パルスタイプのイベントをうける',
-                'mbitMore.whenPinEvent': 'ピン [PIN] で [EVENT] イベントがあがった',
-                'mbitMore.pinEventMenu.rise': 'ライズ',
-                'mbitMore.pinEventMenu.fall': 'フォール',
-                'mbitMore.pinEventMenu.pulseHigh': 'ハイパルス',
-                'mbitMore.pinEventMenu.pulseLow': 'ローパルス',
-                'mbitMore.getPinEventTimestamp': 'ピン [PIN] の [EVENT]',
-                'mbitMore.pinEventTimestampMenu.rise': 'ライズのじかん',
-                'mbitMore.pinEventTimestampMenu.fall': 'フォールのじかん',
-                'mbitMore.pinEventTimestampMenu.pulseHigh': 'ハイパルスのきかん',
-                'mbitMore.pinEventTimestampMenu.pulseLow': 'ローパルスのきかん',
-                'mbitMore.connectionStateMenu.connected': 'つながった',
-                'mbitMore.connectionStateMenu.disconnected': 'きれた',
-                'mbitMore.whenConnectionChanged': 'micro:bit と[STATE]とき'
-            },
-            'pt-br': {
-                'mbitMore.isPinConnected': 'O Pino[PIN] está conectado?',
-                'mbitMore.lightLevel': 'Intensidade da Luz',
-                'mbitMore.compassHeading': 'Está em direção ao Norte',
-                'mbitMore.magneticForce': 'Força Magnética [AXIS]',
-                'mbitMore.acceleration': 'Aceleração no Eixo[AXIS]',
-                'mbitMore.analogValue': 'Ler Pino Analógico [PIN]',
-                'mbitMore.getSharedData': 'Dados compartilhados [INDEX]',
-                'mbitMore.setSharedData': 'Definir dados compartilhados [INDEX] com valor [VALUE]',
-                'mbitMore.setInput': 'Definir Pino[PIN] como entrada',
-                'mbitMore.setOutput': 'Definir pino digital[PIN] como:[LEVEL]',
-                'mbitMore.setPWM': 'Definir pino PWM[PIN]com[LEVEL]',
-                'mbitMore.setServo': 'Definir Servo no pino [PIN]com ângulo de [ANGLE]॰',
-                'mbitMore.digitalValueMenu.Low': 'desligado',
-                'mbitMore.digitalValueMenu.High': 'ligado'
-            },
-            'pt': {
-                'mbitMore.isPinConnected': 'O Pino[PIN] está conectado?',
-                'mbitMore.lightLevel': 'Intensidade da Luz',
-                'mbitMore.compassHeading': 'Está em direção ao Norte',
-                'mbitMore.magneticForce': 'Força Magnética [AXIS]',
-                'mbitMore.acceleration': 'Aceleração no Eixo[AXIS]',
-                'mbitMore.analogValue': 'Ler Pino Analógico [PIN]',
-                'mbitMore.getSharedData': 'Dados compartilhados [INDEX]',
-                'mbitMore.setSharedData': 'Definir dados compartilhados [INDEX] com valor [VALUE]',
-                'mbitMore.setInput': 'Definir Pino[PIN] como entrada',
-                'mbitMore.setOutput': 'Definir pino digital[PIN] como:[LEVEL]',
-                'mbitMore.setPWM': 'Definir pino PWM[PIN]com[LEVEL]',
-                'mbitMore.setServo': 'Definir Servo no pino [PIN]com ângulo de [ANGLE]॰',
-                'mbitMore.digitalValueMenu.Low': 'desligado',
-                'mbitMore.digitalValueMenu.High': 'ligado'
-            }
-        };
-        for (const locale in extTranslations) {
-            if (!localeSetup.translations[locale]) {
-                localeSetup.translations[locale] = {};
-            }
-            Object.assign(localeSetup.translations[locale], extTranslations[locale]);
-        }
-    }
 }
 
-module.exports = MbitMoreBlocks;
+export {
+    MbitMoreBlocks as default,
+    MbitMoreBlocks as blockClass
+};

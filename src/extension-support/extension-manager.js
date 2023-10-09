@@ -17,7 +17,6 @@ const builtinExtensions = {
     wedo2: () => require('../extensions/scratch3_wedo2'),
     music: () => require('../extensions/scratch3_music'),
     microbit: () => require('../extensions/scratch3_microbit'),
-    microbitMore: () => require('../extensions/microbitMore'),
     text2speech: () => require('../extensions/scratch3_text2speech'),
     translate: () => require('../extensions/scratch3_translate'),
     videoSensing: () => require('../extensions/scratch3_video_sensing'),
@@ -60,6 +59,14 @@ const builtinExtensions = {
  * @property {Function} resolve - function to call on successful worker startup
  * @property {Function} reject - function to call on failed worker startup
  */
+
+builtinExtensions['microbitMore'] = () => {
+    const formatMessage = require('format-message');
+    const ext = require('../extensions/microbitMore/index.js');
+    const blockClass = ext.blockClass;
+    blockClass.formatMessage = formatMessage;
+    return blockClass;
+};
 
 class ExtensionManager {
     constructor (runtime) {
