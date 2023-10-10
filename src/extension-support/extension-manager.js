@@ -60,7 +60,7 @@ const builtinExtensions = {
  * @property {Function} reject - function to call on failed worker startup
  */
 
-builtinExtensions['microbitMore'] = () => {
+builtinExtensions.microbitMore = () => {
     const formatMessage = require('format-message');
     const ext = require('../extensions/microbitMore/index.js');
     const blockClass = ext.blockClass;

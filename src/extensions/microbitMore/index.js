@@ -2878,7 +2878,8 @@ class MbitMoreBlocks {
             // 0|1 pattern.
             matrixData = matrixString.replace(/\s/g, '')
                 .split('');
-            matrixData = matrixData.map(level => ((level === '0') ? 0 : 100));
+            // eslint-disable-next-line no-confusing-arrow
+            matrixData = matrixData.map(level => (level === '0' ? 0 : 100));
         }
         matrixData = matrixData.map(brightness =>
             (Math.max(0,
