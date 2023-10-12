@@ -6,5 +6,11 @@ module.exports = {
     },
     globals: {
         process: true
+    },
+    rules: {
+        'no-warning-comments': [0, {
+            terms: ['todo'],
+            location: 'start'
+        }]
     }
 };
