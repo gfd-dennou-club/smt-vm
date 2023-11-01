@@ -9,7 +9,7 @@ const BlockType = require('./block-type');
 // TODO: change extension spec so that library info, including extension ID, can be collected through static methods
 
 const builtinExtensions = {
-    // This is an example that isn't loaded with the other core blocks,
+    // This is an example that isn't loaed with the other core blocks,
     // but serves as a reference for loading core blocks as extensions.
     coreExample: () => require('../blocks/scratch3_core_example'),
     // These are the non-core built-in extensions.
@@ -26,8 +26,8 @@ const builtinExtensions = {
     boost: () => require('../extensions/scratch3_boost'),
     gdxfor: () => require('../extensions/scratch3_gdx_for'),
     mesh: () => require('../extensions/scratch3_mesh'),
-    smalrubotS1: () => require('../extensions/scratch3_smalrubot_s1'),
-    sample: () => require('../extensions/sample')
+    smalrubotS1: () => require('../extensions/scratch3_smalrubot_s1'),    //末尾にカンマ必要
+    gpiohard: () => require('../extensions/gpiohard') ,
 };
 
 /**
