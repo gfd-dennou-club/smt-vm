@@ -27,7 +27,8 @@ const builtinExtensions = {
     gdxfor: () => require('../extensions/scratch3_gdx_for'),
     mesh: () => require('../extensions/scratch3_mesh'),
     smalrubotS1: () => require('../extensions/scratch3_smalrubot_s1'),
-    sample: () => require('../extensions/sample')
+    sample: () => require('../extensions/sample'),
+    GPIOeasy: () => require('../extensions/GPIO_easy')
 };
 
 /**

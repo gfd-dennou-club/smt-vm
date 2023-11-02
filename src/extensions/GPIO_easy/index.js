@@ -12,18 +12,24 @@ const menuIconURI = 'data:image/svg+xml;base64,PHN2ZyB2ZXJzaW9uPSIxLjEiIHdpZHRoP
 
 //メニューで使う配列
 const SampleMenu1 = {
-    RIGHT: 'hoge',
-    LEFT: 'hero'
+    C: '261',
+    D:  '294',
+    D: '329',
+    E: '349',
+    F: '391',
+    G: '440',
+    A: '493',
+    hiC: '523',
 }
 const SampleMenu2 = {
-    RIGHT: "-1",     //数字の場合も「文字列」扱いしないとエラーが出る
-    LEFT: "1"
+    OFF: "0",     //数字の場合も「文字列」扱いしないとエラーが出る
+    ON:  "1"
 }
 
 
 //クラス定義
-class Sample {
-    constructor(runtime) {
+class GPIOeasy {
+    constructor (runtime) {
         /**
          * The runtime instantiating this block package.
          * @type {Runtime}
@@ -34,180 +40,220 @@ class Sample {
         //this.runtime.on('targetWasCreated', this._onTargetCreated);
     }
 
-    //ドロップボックスメニュー (Menu1) 
-    static get SampleMenu1() {
+    //ドロップボックスメニュー (Menu1)
+    static get SampleMenu1 () {
         return SampleMenu1;
     }
-    get MENU1() {
+    get MENU1 () {
         return [
             {
-                text: 'Right_1',
-                value: SampleMenu1.RIGHT
+                text: 'ド',
+                value: SampleMenu1.C
             },
             {
-                text: 'Left_1',
-                value: SampleMenu1.LEFT
+                text: 'レ',
+                value: SampleMenu1.D
+            },
+            {
+                text: 'ミ',
+                value: SampleMenu1.E
+            },
+            {
+                text: 'ファ',
+                value: SampleMenu1.F
+            },
+            {
+                text: 'ソ',
+                value: SampleMenu1.G
+            },
+            {
+                text: 'ラ',
+                value: SampleMenu1.A
+            },
+            {
+                text: 'シ',
+                value: SampleMenu1.H
+            },
+            {
+                text: '高いド',
+                value: SampleMenu1.hiC
             }
         ];
     }
 
-    //ドロップボックスメニュー (Menu2) 
-    static get SampleMenu2() {
+    //ドロップボックスメニュー (Menu2)
+    static get SampleMenu2 () {
         return SampleMenu2;
     }
-    get MENU2() {
+    get MENU2 () {
         return [
             {
-                text: 'Right_2',
-                value: SampleMenu2.RIGHT
+                text: 'ON',
+                value: SampleMenu2.ON
             },
             {
-                text: 'Left_2',
-                value: SampleMenu2.LEFT
+                text: 'OFF',
+                value: SampleMenu2.OFF
             }
         ];
     }
 
     //ブロック定義
-    getInfo() {
+    getInfo () {
         return {
-            id: 'sample',
-            name: formatMessage({
-                id: 'sample.name',
-                default: 'Sample'
-            }),
+            id: 'GPIOeasy',
+            name: 'GPIOeasy',
             menuIconURI: menuIconURI,
             blockIconURI: blockIconURI,
             blocks: [
                 {
-                    opcode: 'command0',
+                    opcode: 'LED',
                     text: formatMessage({
-                        id: 'sample.command0',
-                        default: 'command0'
-                    }),
-                    blockType: BlockType.COMMAND,
-                },
-                {
-                    opcode: 'value0',
-                    text: formatMessage({
-                        id: 'sample.value0',
-                        default: 'value0'
-                    }),
-                    blockType: BlockType.REPORTER
-                },
-                {
-                    opcode: 'flag0',
-                    text: formatMessage({
-                        id: 'sample.flag0',
-                        default: 'flag0'
-                    }),
-                    blockType: BlockType.BOOLEAN
-                },
-                {
-                    opcode: 'command1',
-                    text: formatMessage({
-                        id: 'sample.command1',
-                        default: 'command [TEXT] [NUM]',
+                        id: 'GPIOeasy.LED',
+                        default: 'LED 1[NUM1] 2[NUM2] 3[NUM3] 4[NUM4] 5[NUM5] 6[NUM6] 7[NUM7] 8[NUM8]'
                     }),
                     blockType: BlockType.COMMAND,
                     arguments: {
-                        TEXT: {
-                            type: ArgumentType.STRING,
-                            defaultValue: "hello"
-                        },
-                        NUM: {
-                            type: ArgumentType.NUMBER,
-                            defaultValue: 2
-                        }
-                    }
-                },
-                {
-                    opcode: 'command2',
-                    text: formatMessage({
-                        id: 'sample.command2',
-                        default: 'command [TEXT1]',
-                    }),
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-                        TEXT1: {
-                            type: ArgumentType.STRING,
-                            menu: 'menu1',
-                            defaultValue: SampleMenu1.RIGHT
-                        }
-                    }
-                },
-                {
-                    opcode: 'command3',
-                    text: formatMessage({
-                        id: 'sample.command3',
-                        default: 'command [TEXT1] [NUM1]',
-                    }),
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-                        TEXT1: {
-                            type: ArgumentType.STRING,
-                            menu: 'menu1',
-                            defaultValue: SampleMenu1.RIGHT
-                        },
                         NUM1: {
                             type: ArgumentType.STRING,
                             menu: 'menu2',
-                            defaultValue: SampleMenu2.RIGHT
+                            defaultValue: SampleMenu1.OFF
+                        },
+                        NUM2: {
+                            type: ArgumentType.STRING,
+                            menu: 'menu2',
+                            defaultValue: SampleMenu1.OFF
+                        },
+                        NUM3: {
+                            type: ArgumentType.STRING,
+                            menu: 'menu2',
+                            defaultValue: SampleMenu1.OFF
+                        },
+                        NUM4: {
+                            type: ArgumentType.STRING,
+                            menu: 'menu2',
+                            defaultValue: SampleMenu1.OFF
+                        },
+                        NUM5: {
+                            type: ArgumentType.STRING,
+                            menu: 'menu2',
+                            defaultValue: SampleMenu1.OFF
+                        },
+                        NUM6: {
+                            type: ArgumentType.STRING,
+                            menu: 'menu2',
+                            defaultValue: SampleMenu1.OFF
+                        },
+                        NUM7: {
+                            type: ArgumentType.STRING,
+                            menu: 'menu2',
+                            defaultValue: SampleMenu1.OFF
+                        },
+                        NUM8: {
+                            type: ArgumentType.STRING,
+                            menu: 'menu2',
+                            defaultValue: SampleMenu1.OFF
                         }
                     }
+                },
+                {
+                    opcode: 'Switch',
+                    text: formatMessage({
+                        id: 'GPIOeasy.switch',
+                        default: 'Switch 1[SWITCH1] 2[SWITCH2] 3[SWITCH3] 4[SWITCH4]'
+                    }),
+                    blockType: BlockType.BOOLEAN,
+                    arguments: {
+                        SWITCH1: {
+                            type: ArgumentType.STRING,
+                            menu: 'menu2',
+                            defaultValue: SampleMenu1.OFF
+                        },
+                        SWITCH2: {
+                            type: ArgumentType.STRING,
+                            menu: 'menu2',
+                            defaultValue: SampleMenu1.OFF
+                        },
+                        SWITCH3: {
+                            type: ArgumentType.STRING,
+                            menu: 'menu2',
+                            defaultValue: SampleMenu1.OFF
+                        },
+                        SWITCH4: {
+                            type: ArgumentType.STRING,
+                            menu: 'menu2',
+                            defaultValue: SampleMenu1.OFF
+                        }
+                    }
+                },
+                {
+                    opcode: 'Sound',
+                    text: formatMessage({
+                        id: 'GPIOeasy.sound',
+                        default: 'Make [SCALE] sound'
+                    }),
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        SCALE: {
+                            type: ArgumentType.STRING,
+                            menu: 'menu1',
+                            defaultValue: SampleMenu1.C
+                        }
+                    }
+                },
+                {
+                    opcode: 'Sound_stop',
+                    text: formatMessage({
+                        id: 'GPIOeasy.sound_stop',
+                        default: 'Stop the sound'
+                    }),
+                    blockType: BlockType.COMMAND   
+                },
+                {
+                    opcode: 'Temperature',
+                    text: formatMessage({
+                        id: 'GPIOeasy.temperature',
+                        default: 'temperature'
+                    }),
+                    blockType: BlockType.REPORTER
                 }
             ],
             //ドロップボックスメニューを使う場合は以下に定義が必要
             menus: {
                 menu1: {
-                    acceptReporters: true,
+                    acceptReporters: false,
                     items: this.MENU1
                 },
                 menu2: {
-                    acceptReporters: true,
+                    acceptReporters: false,
                     items: this.MENU2
                 },
             }
         };
     }
 
-    // command0 ブロック．入力なし
-    command0() {
-        return navigator.userAgent;
-    }
-
-    // value0 ブロック．入力なし
-    value0() {
-        return navigator.userAgent;
-    }
-
-    // flag0 ブロック．入力なし
-    flag0() {
-        return navigator.userAgent;
-    }
-
     // command1 ブロックの入力
-    command1(args) {
+    command1 (args) {
         const text = Cast.toString(args.TEXT);
-        const num = Cast.toString(args.NUM);
+        const num  = Cast.toString(args.NUM);
         log.log(text);
         log.log(num);
     }
 
     //command2 ブロックの入力
-    command2(args) {
+    command2 (args) {
         const text1 = Cast.toString(args.TEXT1);
         log.log(text1);
     }
 
     //command3 ブロックの入力
-    command3(args) {
+    command3 (args) {
         const text1 = Cast.toString(args.TEXT1);
-        const num1 = Cast.toString(args.NUM1);   //toNumber でも挙動は変わらない
+        const num1  = Cast.toString(args.NUM1);   //toNumber でも挙動は変わらない
         log.log(args);
         log.log(text1);
         log.log(num1);
     }
 }
 
-module.exports = Sample
+module.exports = GPIOeasy
