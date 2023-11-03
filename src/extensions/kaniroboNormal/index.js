@@ -11,18 +11,40 @@ const blockIconURI = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBzdGFu
 const menuIconURI = 'data:image/svg+xml;base64,PHN2ZyB2ZXJzaW9uPSIxLjEiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIj48ZyBpZD0iSUQwLjA4NjgyNDQzOTAwMDMzODMyIiB0cmFuc2Zvcm09Im1hdHJpeCgwLjQ5MTU0NjY2MDY2MTY5NzQsIDAsIDAsIDAuNDkxNTQ2NjYwNjYxNjk3NCwgLTY0LjUsIC03Ny4yNSkiPjxwYXRoIGlkPSJJRDAuNTcyMTQ2MjMwMzc3MjU2OSIgZmlsbD0iI0ZGOTQwMCIgc3Ryb2tlPSJub25lIiBkPSJNIDE4OCAxNDEgTCAyNTAgMTQxIEwgMjUwIDIwMyBMIDE4OCAyMDMgTCAxODggMTQxIFogIiB0cmFuc2Zvcm09Im1hdHJpeCgxLjI4NzkwMzMwODg2ODQwODIsIDAsIDAsIDEuMjg3OTAzMzA4ODY4NDA4MiwgLTExMC45LCAtMjQuNCkiLz48cGF0aCBpZD0iSUQwLjYzODMzNjEzNTA3NDQ5NjMiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0ZGRkZGRiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIGQ9Ik0gMTk2IDIwNCBDIDE5NiAyMDQgMTkyLjcwNiAxOTAuMDU4IDE5MyAxODMgQyAxOTMuMDc0IDE4MS4yMzYgMTk1Ljg4NiAxNzguNDU4IDE5NyAxODAgQyAyMDEuNDU1IDE4Ni4xNjggMjAzLjQ0MyAyMDMuNzU0IDIwNiAyMDEgQyAyMDkuMjExIDE5Ny41NDIgMjEwIDE2NiAyMTAgMTY2ICIgdHJhbnNmb3JtPSJtYXRyaXgoMSwgMCwgMCwgMSwgLTU3LCAxNS44KSIvPjxwYXRoIGlkPSJJRDAuNzU4NzMwMzU2NTgxNTA5MSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZGRkZGIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgZD0iTSAyMTUgMTY5IEMgMjE1IDE2OSAyMTguMzY3IDE2OS41MzQgMjIwIDE3MCBDIDIyMC43MTYgMTcwLjIwNSAyMjEuMjc4IDE3MC44MTkgMjIyIDE3MSBDIDIyMi42NDYgMTcxLjE2MiAyMjMuMzY4IDE3MC43ODkgMjI0IDE3MSBDIDIyNC40NDcgMTcxLjE0OSAyMjUgMTcyIDIyNSAxNzIgIiB0cmFuc2Zvcm09Im1hdHJpeCgxLCAwLCAwLCAxLCAtNTcsIDE1LjgpIi8+PHBhdGggaWQ9IklEMC4yNDM2NzMwNzMxMjc4NjU4IiBmaWxsPSJub25lIiBzdHJva2U9IiNGRkZGRkYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBkPSJNIDIyNyAxNTQgQyAyMjcgMTU0IDIxOC41NTUgMTQ3Ljg5MCAyMTcgMTUxIEMgMjEyLjM0NSAxNjAuMzEwIDIxMS4yODkgMTcxLjczMyAyMTMgMTgyIEMgMjEzLjYxMiAxODUuNjcyIDIyMyAxODcgMjIzIDE4NyAiIHRyYW5zZm9ybT0ibWF0cml4KDEsIDAsIDAsIDEsIC01NywgMTUuOCkiLz48cGF0aCBpZD0iSUQwLjc5MzkzOTQ4MTk1NTAyMTYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0ZGRkZGRiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIGQ9Ik0gMTc1IDIwMC41MDAgQyAxNzUgMjAwLjUwMCAxNjkuODA1IDIyMS45MTMgMTcxIDIyMi43NTAgQyAxNzIuMTk1IDIyMy41ODcgMTc4Ljc5NSAyMDUuMjk1IDE4Mi41MDAgMjA1Ljc1MCBDIDE4NS45MjAgMjA2LjE3MCAxODEuODU5IDIyNC41MDAgMTg1LjI1MCAyMjQuNTAwIEMgMTg5LjIxMyAyMjQuNTAwIDE5Ny4yNTAgMjA1Ljc1MCAxOTcuMjUwIDIwNS43NTAgIi8+PC9nPjwvc3ZnPg==';
 
 //メニューで使う配列
-const rubyclubMenu1 = {
-    RIGHT: 'hoge',
-    LEFT:  'hero'
+const KaniroboNormalMenu1 = {
+    FORWARD: 'on',
+    BACKWARD:  'off'
 }
-const rubyclubMenu2 = {
-    RIGHT: "-1",     //数字の場合も「文字列」扱いしないとエラーが出る
-    LEFT:  "1"
+const KaniroboNormalMenu2 = {
+    ONE: "25",     //数字の場合も「文字列」扱いしないとエラーが出る
+    TWO: "32"
+}
+const KaniroboNormalMenu3 = {
+    ENABLE: 'on',
+    DISABLE:  'off'
+}
+const KaniroboNormalMenu4 = {
+    FIRST: "36",
+    SECOND: "34",
+    THIRD: "35",
+    FOURTH: "2"
+}
+const KaniroboNormalMenu5 = {
+    ONE: "26",
+    TWO: "33"
+}
+const KaniroboNormalMenu6 = {
+    ONE: "27",
+    TWO: "14"
 }
 
+const KaniroboNormalMenu7 = {
+    ONE: "3",
+    TWO: "2"
+}
 
 //クラス定義
-class rubyclub {
+class KaniroboNormal {
     constructor (runtime) {
         /**
          * The runtime instantiating this block package.
@@ -35,136 +57,152 @@ class rubyclub {
     }
 
     //ドロップボックスメニュー (Menu1) 
-
-    static get rubyclubMenu1 () {
-        return rubyclubMenu1;
+    static get KaniroboNormalMenu1 () {
+        return KaniroboNormalMenu1;
     }
     get MENU1 () {
         return [
             {
-
-                text: 'LED1',
-                value: 13
+                text: formatMessage({
+                    id: 'KaniroboNormal.Menu1.forward',
+                    default: 'forward',
+                    description: 'label for "forward" element in action picker for KaniroboNormal extention'
+                }),
+                value: 'on'
             },
             {
-                text: 'LED2',
-                value: 12
-            },
-            {
-                text: 'LED3',
-                value: 14
-            },
-            {
-                text: 'LED4',
-                value: 27
-            },
-            {
-                text: 'LED5',
-                value: 26
-            },
-            {
-                text: 'LED6',
-                value: 25
-            },
-            {
-                text: 'LED7',
-                value: 33
-            },
-            {
-                text: 'LED8',
-                value: 32
+                text: formatMessage({
+                    id: 'KaniroboNormal.Menu1.backward',
+                    default: 'backward',
+                    description: 'label for "backward" element in action picker for KaniroboNormal extention'
+                }),
+                value: 'off'
             }
         ];
     }
 
     //ドロップボックスメニュー (Menu2) 
-    static get rubyclubMenu2 () {
-        return rubyclubMenu2;
+    static get KaniroboNormalMenu2 () {
+        return KaniroboNormalMenu2;
     }
     get MENU2 () {
         return [
             {
-                text: 'ON',
-                value: 1
+                text: '1',
+                value: KaniroboNormalMenu2.ONE
             },
             {
-                text: 'OFF',
-                value: 0
+                text: '2',
+                value: KaniroboNormalMenu2.TWO
             }
         ];
     }
 
-    static get rubyclubMenu3 () {
-        return rubyclubMenu3;
+    //ドロップボックスメニュー (Menu3) 
+    static get KaniroboNormalMenu3 () {
+        return KaniroboNormalMenu3;
     }
     get MENU3 () {
         return [
             {
-                text: 'スイッチ1',
-                value: 34
+                text: formatMessage({
+                    id: 'KaniroboNormal.Menu3.enable',
+                    default: 'enable',
+                    description: 'label for "enable" element in action picker for KaniroboNormal extention'
+                }),
+                value: KaniroboNormalMenu3.ENABLE
             },
             {
-                text: 'スイッチ2',
-                value: 35
-            },
-            {
-                text: 'スイッチ3',
-                value: 18
-            },
-            {
-                text: 'スイッチ4',
-                value: 19
+                text: formatMessage({
+                    id: 'KaniroboNormal.Menu3.disable',
+                    default: 'disable',
+                    description: 'label for "disable" element in action picker for KaniroboNormal extention'
+                }),
+                value: KaniroboNormalMenu3.DISABLE
             }
         ];
     }
 
-    static get rubyclubMenu4 () {
-        return rubyclubMenu4;
+    //ドロップボックスメニュー (Menu4) 
+    static get KaniroboNormalMenu4 () {
+        return KaniroboNormalMenu4;
     }
     get MENU4 () {
         return [
             {
-                text: 'ド',
-                value: 262
+                text: '1',
+                value: KaniroboNormalMenu4.FIRST
             },
             {
-                text: 'レ',
-                value: 294
+                text: '2',
+                value: KaniroboNormalMenu4.SECOND
             },
             {
-                text: 'ミ',
-                value: 330
+                text: '3',
+                value: KaniroboNormalMenu4.THIRD
             },
             {
-                text: 'ファ',
-                value: 349
+                text: '4',
+                value: KaniroboNormalMenu4.FOURTH
+            }
+        ];
+    }
+
+    static get KaniroboNormalMenu5 () {
+        return KaniroboNormalMenu5;
+    }
+    get MENU5 () {
+        return [
+            {
+                text: '1',
+                value: KaniroboNormalMenu5.ONE
             },
             {
-                text: 'ソ',
-                value: 392
+                text: '2',
+                value: KaniroboNormalMenu5.TWO
+            }
+        ];
+    }
+
+    static get KaniroboNormalMenu6 () {
+        return KaniroboNormalMenu6;
+    }
+    get MENU6 () {
+        return [
+            {
+                text: '1',
+                value: KaniroboNormalMenu6.ONE
             },
             {
-                text: 'ラ',
-                value: 440
+                text: '2',
+                value: KaniroboNormalMenu6.TWO
+            }
+        ];
+    }
+
+    static get KaniroboNormalMenu7 () {
+        return KaniroboNormalMenu7;
+    }
+    get MENU7 () {
+        return [
+            {
+                text: '1',
+                value: KaniroboNormalMenu6.ONE + KaniroboNormalMenu7.ONE
             },
             {
-                text: 'シ',
-                value: 494
-            },
-            {
-                text: '高いド',
-                value: 524
-            },
+                text: '2',
+                value: KaniroboNormalMenu6.TWO + KaniroboNormalMenu7.TWO
+            }
         ];
     }
 
     //ブロック定義
     getInfo () {
         return {
-            id: 'rubyclub',
+            id: 'kaniroboNormal',
             name: formatMessage({
-                id: 'rubyclub.name',
-                default: 'rubyclub'
+                id: 'kaniroboNormal.name',
+                default: 'KaniroboNormal'
             }),
             menuIconURI: menuIconURI,
             blockIconURI: blockIconURI,
@@ -172,214 +210,194 @@ class rubyclub {
                 {
                     opcode: 'command0',
                     text: formatMessage({
-                        id: 'rubyclub.command0',
-                        default: 'command0'
+                        id: 'kaniroboNormal.command0',
+                        default: 'Initialize motor enable pin'
                     }),
                     blockType: BlockType.COMMAND,
                 },
                 {
-                    opcode: 'value0',
-                    text: formatMessage({
-                        id: 'rubyclub.value0',
-                        default: 'value0'
-                    }),		    
-                    blockType: BlockType.REPORTER
-                },		
-                {
-                    opcode: 'flag0',
-                    text: formatMessage({
-                        id: 'rubyclub.flag0',
-                        default: 'flag0'
-                    }),		    		    
-                    blockType: BlockType.BOOLEAN
-                },		
-                {
                     opcode: 'command1',
                     text: formatMessage({
-                        id: 'rubyclub.command1',
-                        default: 'command [TEXT] [NUM]',
-                    }),		    		    
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-                        TEXT: {
-                            type: ArgumentType.STRING,
-                            defaultValue: "hello"
-                        },
-			            NUM: {
-                            type: ArgumentType.NUMBER,
-                            defaultValue: 2
-                        }
-                    }
-                },
-                {
-                    opcode: 'command2',
-                    text: formatMessage({
-                        id: 'rubyclub.command2',
-                        default: 'command [TEXT1]',
+                        id: 'kaniroboNormal.command1',
+                        default: ' [TEXT1] motor enable pin',
                     }),		    		    
                     blockType: BlockType.COMMAND,
                     arguments: {
 			            TEXT1: {
                             type: ArgumentType.STRING,
-                            menu: 'menu1',
-                            defaultValue: rubyclubMenu1.RIGHT
+                            menu: 'menu3',
+                            defaultValue: KaniroboNormalMenu3.ENABLE
+			            }
+                    }
+                },
+                {
+                    opcode: 'command2',
+                    text: formatMessage({
+                        id: 'kaniroboNormal.command2',
+                        default: 'Initialize motor [TEXT2]',
+                    }),		    		    
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+			            TEXT2: {
+                            type: ArgumentType.STRING,
+                            menu: 'menu2',
+                            defaultValue: KaniroboNormalMenu2.ONE
 			            }
                     }
                 },
                 {
                     opcode: 'command3',
                     text: formatMessage({
-                        id: 'rubyclub.command3',
-                        default: 'command [TEXT1] [NUM1]',
+                        id: 'kaniroboNormal.command3',
+                        default: 'Initialize motor [TEXT5] speed',
                     }),		    		    
                     blockType: BlockType.COMMAND,
                     arguments: {
-			            TEXT1: {
+			            TEXT5: {
                             type: ArgumentType.STRING,
-                            menu: 'menu1',
-                            defaultValue: rubyclubMenu1.RIGHT
+                            menu: 'menu5',
+                            defaultValue: KaniroboNormalMenu5.ONE
+			            }
+                    }
+                },
+                {
+                    opcode: 'command4',
+                    text: formatMessage({
+                        id: 'kaniroboNormal.command4',
+                        default: 'set motor [TEXT2] [TEXT3]',
+                    }),		    		    
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+			            TEXT2: {
+                            type: ArgumentType.STRING,
+                            menu: 'menu2',
+                            defaultValue: KaniroboNormalMenu2.ONE
 			            },
-                        NUM1: {
+                        TEXT3: {
                             type: ArgumentType.STRING,
-			            menu: 'menu2',
-                            defaultValue: rubyclubMenu2.RIGHT
+                            menu: 'menu1',
+                            defaultValue: KaniroboNormalMenu1.RIGHT
                         }
                     }
                 },
-                ///////////////////////////////////////////////////////////////////////////////////////////
-
                 {
-                    opcode: 'r1',
+                    opcode: 'command5',
                     text: formatMessage({
-                        id: 'r1',
-                        default: 'command [TEXT1]',
+                        id: 'kaniroboNormal.command5',
+                        default: 'set motor [TEXT5] speed [NUM]',
                     }),		    		    
                     blockType: BlockType.COMMAND,
                     arguments: {
-	                    TEXT1: {
+			            TEXT5: {
                             type: ArgumentType.STRING,
-                            menu: 'menu1',
-                            defaultValue: 'LED1'
-			            }
-                    }
-                },
-
-                {
-                    opcode: 'r2',
-                    text: formatMessage({
-                        id: 'r2',
-                        default: 'command [TEXT1] [NUM1]',
-                    }),		    		    
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-			            TEXT1: {
-                            type: ArgumentType.STRING,
-                            menu: 'menu1',
-                            defaultValue: 13
-			                    },
-                        NUM1: {
-                            type: ArgumentType.STRING,
-			                menu: 'menu2',
-                            defaultValue: 1
+                            menu: 'menu5',
+                            defaultValue: KaniroboNormalMenu5.ONE
+			            },
+                        NUM: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 500
                         }
                     }
                 },
-
                 {
-                    opcode: 'r3',
+                    opcode: 'command6',
                     text: formatMessage({
-                        id: 'r3',
-                        default: 'command [TEXT1]',
+                        id: 'kaniroboNormal.command6',
+                        default: 'Initialize light sensor [TEXT4]',
                     }),		    		    
                     blockType: BlockType.COMMAND,
                     arguments: {
-	                    TEXT1: {
-                            type: ArgumentType.STRING,
-                            menu: 'menu3',
-                            defaultValue: 34
-			            }
-                    }
-                },
-
-                {
-                    opcode: 'r4',
-                    text: formatMessage({
-                        id: 'r4',
-                        default: 'flag0[TEXT1]'
-                    }),		    		    
-                    blockType: BlockType.BOOLEAN,
-                    arguments: {
-	                    TEXT1: {
-                            type: ArgumentType.STRING,
-                            menu: 'menu3',
-                            defaultValue: 34
-			            }
-                    }
-                },		
-
-                {
-                    opcode: 'r5',
-                    text: formatMessage({
-                        id: 'r5',
-                        default: 'command0'
-                    }),
-                    blockType: BlockType.COMMAND,
-                },
-
-                {
-                    opcode: 'r6',
-                    text: formatMessage({
-                        id: 'r6',
-                        default: 'command [TEXT1]',
-                    }),		    		    
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-			            TEXT1: {
+			            TEXT4: {
                             type: ArgumentType.STRING,
                             menu: 'menu4',
-                            defaultValue: 262
+                            defaultValue: KaniroboNormalMenu4.FIRST
 			            }
                     }
                 },
-
                 {
-                    opcode: 'r7',
+                    opcode: 'value0',
                     text: formatMessage({
-                        id: 'r7',
-                        default: 'command0'
-                    }),
-                    blockType: BlockType.COMMAND,
-                },
-
-                {
-                    opcode: 'r8',
-                    text: formatMessage({
-                        id: 'r8',
-                        default: 'command0'
-                    }),
-                    blockType: BlockType.COMMAND,
-                },
-
-                {
-                    opcode: 'r9',
-                    text: formatMessage({
-                        id: 'r9',
-                        default: 'command0'
-                    }),
-                    blockType: BlockType.COMMAND,
-                },
-
-                {
-                    opcode: 'r10',
-                    text: formatMessage({
-                        id: 'r10',
-                        default: 'value0'
+                        id: 'kaniroboNormal.value0',
+                        default: 'light sensor [TEXT4] value'
                     }),		    
-                    blockType: BlockType.REPORTER
-                },		
-
+                    blockType: BlockType.REPORTER,
+                    arguments: {
+			            TEXT4: {
+                            type: ArgumentType.STRING,
+                            menu: 'menu4',
+                            defaultValue: KaniroboNormalMenu4.FIRST
+			            }
+                    }
+                },
+                {
+                    opcode: 'command7',
+                    text: formatMessage({
+                        id: 'kaniroboNormal.command7',
+                        default: 'Initialize servo motor [TEXT7]',
+                    }),		    		    
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+			            TEXT7: {
+                            type: ArgumentType.STRING,
+                            menu: 'menu7',
+                            defaultValue: KaniroboNormalMenu6.ONE + KaniroboNormalMenu7.ONE
+			            }
+                    }
+                },	
+                {
+                    opcode: 'command8',
+                    text: formatMessage({
+                        id: 'kaniroboNormal.command8',
+                        default: 'Set servo motor frequency [NUM]',
+                    }),		    		    
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+			            TEXT6: {
+                            type: ArgumentType.STRING,
+                            menu: 'menu6',
+                            defaultValue: KaniroboNormalMenu6.ONE
+			            },
+                        NUM: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 50
+                        }
+                    }
+                },	
+                {
+                    opcode: 'command9',
+                    text: formatMessage({
+                        id: 'kaniroboNormal.command9',
+                        default: 'Set servo motor duty [NUM]',
+                    }),		    		    
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+			            TEXT6: {
+                            type: ArgumentType.STRING,
+                            menu: 'menu6',
+                            defaultValue: KaniroboNormalMenu6.RIGHT
+			            },
+                        NUM: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 0
+                        }
+                    }
+                },
+                {
+                    opcode: 'value1',
+                    text: formatMessage({
+                        id: 'kaniroboNormal.value1',
+                        default: 'angle [NUM]'
+                    }),		    
+                    blockType: BlockType.REPORTER,
+                    arguments: {
+                        NUM: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 0
+                        }  
+                    }
+                }
             ],
-	                 //ドロップボックスメニューを使う場合は以下に定義が必要
+	    //ドロップボックスメニューを使う場合は以下に定義が必要
             menus: {
                 menu1: {
                     acceptReporters: true,
@@ -396,9 +414,21 @@ class rubyclub {
                 menu4: {
                     acceptReporters: true,
                     items: this.MENU4
-                }
-            },
-        }
+                },
+                menu5: {
+                    acceptReporters: true,
+                    items: this.MENU5
+                },
+                menu6: {
+                    acceptReporters: true,
+                    items: this.MENU6
+                },
+                menu7: {
+                    acceptReporters: true,
+                    items: this.MENU7
+                },
+            }
+        };
     }
 
     // command0 ブロック．入力なし
@@ -406,80 +436,70 @@ class rubyclub {
         return navigator.userAgent;
     }
     
-    // value0 ブロック．入力なし
-    value0 () {
-        return navigator.userAgent;
+    command1 (args) { 
+        const text1 = Cast.toString(args.TEXT1);
+        log.log(text1);
     }
-    
-    // flag0 ブロック．入力なし
-    flag0 () {
-        return navigator.userAgent;
-    }        
 
-    // command1 ブロックの入力
-    command1 (args) {
-        const text = Cast.toString(args.TEXT);
+    command2 (args) { 
+        const text2 = Cast.toString(args.TEXT2);
+        log.log(text2);
+    }
+
+    command3 (args) { 
+        const text5 = Cast.toString(args.TEXT5);
+        log.log(text5);
+    }
+
+    command4 (args) { 
+        const text2 = Cast.toString(args.TEXT2);
+        const text3  = Cast.toString(args.TEXT3);   //toNumber でも挙動は変わらない
+        log.log(args);
+        log.log(text2);
+        log.log(text3);
+    }
+
+    command5 (args) {
+        const text2 = Cast.toString(args.TEXT2);
         const num  = Cast.toString(args.NUM);
-        log.log(text);
+        log.log(text2);
         log.log(num);
     }
 
-    //command2 ブロックの入力
-    command2 (args) { 
-        const text1 = Cast.toString(args.TEXT1);
-        log.log(text1);
+    command6 (args) { 
+        const text4 = Cast.toString(args.TEXT4);
+        log.log(text4);
     }
 
-    //command3 ブロックの入力
-    command3 (args) { 
-        const text1 = Cast.toString(args.TEXT1);
-        const num1  = Cast.toString(args.NUM1);   //toNumber でも挙動は変わらない
-        log.log(args);
-        log.log(text1);
-        log.log(num1);
+    // value0 
+    value0 () {
+        const text4 = Cast.toString(args.TEXT4);
+        log.log(text4);
     }
 
-    //////////////////////////////////////////////////////////////////////
+    command7 (args) { 
+        const text7 = Cast.toString(args.TEXT7);
+        log.log(text7);
+    }
 
-    r1 (args) { 
-        const text1 = Cast.toString(args.TEXT1);
-        log.log(text1);
+    command8 (args) {
+        const text6 = Cast.toString(args.TEXT6);
+        const num  = Cast.toString(args.NUM);
+        log.log(text6);
+        log.log(num);
     }
-    r2 (args) { 
-        const text1 = Cast.toString(args.TEXT1);
-        const num1  = Cast.toString(args.NUM1);   //toNumber でも挙動は変わらない
-        log.log(args);
-        log.log(text1);
-        log.log(num1);
+
+    command9 (args) {
+        const text6 = Cast.toString(args.TEXT6);
+        const num  = Cast.toString(args.NUM);
+        log.log(text6);
+        log.log(num);
     }
-    r3 (args) { 
-        const text1 = Cast.toString(args.TEXT1);
-        log.log(text1);
-    }
-    r4 () {
-        const text1 = Cast.toString(args.TEXT1);
-        log.log(text1);
-    }      
-    r5 () {
-        return navigator.userAgent;
-    }
-    r6 (args) { 
-        const text1 = Cast.toString(args.TEXT1);
-        log.log(text1);
-    }
-    r7 () {
-        return navigator.userAgent;
-    }
-    r8 () {
-        return navigator.userAgent;
-    }
-    r9 () {
-        return navigator.userAgent;
-    }
-    r10 () {
-        return navigator.userAgent;
+
+    value1 () {
+        const num  = Cast.toString(args.NUM);
+        log.log(num);
     }
 }
 
-module.exports = rubyclub
-
+module.exports = KaniroboNormal
