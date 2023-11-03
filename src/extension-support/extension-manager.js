@@ -29,7 +29,8 @@ const builtinExtensions = {
     smalrubotS1: () => require('../extensions/scratch3_smalrubot_s1'),
     sample: () => require('../extensions/sample'),
     rubyclub:() => require('../extensions/rubyclub'),
-    kaniroboNormal:() => require('../extensions/kaniroboNormal')
+    kaniroboNormal:() => require('../extensions/kaniroboNormal'),
+    i2c_uart: () => require('../extensions/i2c_uart')
 };
 
 /**
