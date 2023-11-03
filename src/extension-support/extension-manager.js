@@ -30,6 +30,7 @@ const builtinExtensions = {
     sample: () => require('../extensions/sample'),
     rubyclub:() => require('../extensions/rubyclub'),
     kaniroboNormal:() => require('../extensions/kaniroboNormal'),
+    GPIOeasy: () => require('../extensions/GPIO_easy')
     gpiohard: () => require('../extensions/gpiohard'),
     i2c_uart: () => require('../extensions/i2c_uart')
 };
