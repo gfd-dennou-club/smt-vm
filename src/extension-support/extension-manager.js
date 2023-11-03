@@ -26,8 +26,12 @@ const builtinExtensions = {
     boost: () => require('../extensions/scratch3_boost'),
     gdxfor: () => require('../extensions/scratch3_gdx_for'),
     mesh: () => require('../extensions/scratch3_mesh'),
-    smalrubotS1: () => require('../extensions/scratch3_smalrubot_s1'),    //末尾にカンマ必要
-    gpiohard: () => require('../extensions/gpiohard') ,
+    smalrubotS1: () => require('../extensions/scratch3_smalrubot_s1'),
+    sample: () => require('../extensions/sample'),
+    rubyclub:() => require('../extensions/rubyclub'),
+    kaniroboNormal:() => require('../extensions/kaniroboNormal'),
+    gpiohard: () => require('../extensions/gpiohard'),
+    i2c_uart: () => require('../extensions/i2c_uart')
 };
 
 /**
