@@ -11,18 +11,18 @@ const blockIconURI = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBzdGFu
 const menuIconURI = 'data:image/svg+xml;base64,PHN2ZyB2ZXJzaW9uPSIxLjEiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIj48ZyBpZD0iSUQwLjA4NjgyNDQzOTAwMDMzODMyIiB0cmFuc2Zvcm09Im1hdHJpeCgwLjQ5MTU0NjY2MDY2MTY5NzQsIDAsIDAsIDAuNDkxNTQ2NjYwNjYxNjk3NCwgLTY0LjUsIC03Ny4yNSkiPjxwYXRoIGlkPSJJRDAuNTcyMTQ2MjMwMzc3MjU2OSIgZmlsbD0iI0ZGOTQwMCIgc3Ryb2tlPSJub25lIiBkPSJNIDE4OCAxNDEgTCAyNTAgMTQxIEwgMjUwIDIwMyBMIDE4OCAyMDMgTCAxODggMTQxIFogIiB0cmFuc2Zvcm09Im1hdHJpeCgxLjI4NzkwMzMwODg2ODQwODIsIDAsIDAsIDEuMjg3OTAzMzA4ODY4NDA4MiwgLTExMC45LCAtMjQuNCkiLz48cGF0aCBpZD0iSUQwLjYzODMzNjEzNTA3NDQ5NjMiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0ZGRkZGRiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIGQ9Ik0gMTk2IDIwNCBDIDE5NiAyMDQgMTkyLjcwNiAxOTAuMDU4IDE5MyAxODMgQyAxOTMuMDc0IDE4MS4yMzYgMTk1Ljg4NiAxNzguNDU4IDE5NyAxODAgQyAyMDEuNDU1IDE4Ni4xNjggMjAzLjQ0MyAyMDMuNzU0IDIwNiAyMDEgQyAyMDkuMjExIDE5Ny41NDIgMjEwIDE2NiAyMTAgMTY2ICIgdHJhbnNmb3JtPSJtYXRyaXgoMSwgMCwgMCwgMSwgLTU3LCAxNS44KSIvPjxwYXRoIGlkPSJJRDAuNzU4NzMwMzU2NTgxNTA5MSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZGRkZGIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgZD0iTSAyMTUgMTY5IEMgMjE1IDE2OSAyMTguMzY3IDE2OS41MzQgMjIwIDE3MCBDIDIyMC43MTYgMTcwLjIwNSAyMjEuMjc4IDE3MC44MTkgMjIyIDE3MSBDIDIyMi42NDYgMTcxLjE2MiAyMjMuMzY4IDE3MC43ODkgMjI0IDE3MSBDIDIyNC40NDcgMTcxLjE0OSAyMjUgMTcyIDIyNSAxNzIgIiB0cmFuc2Zvcm09Im1hdHJpeCgxLCAwLCAwLCAxLCAtNTcsIDE1LjgpIi8+PHBhdGggaWQ9IklEMC4yNDM2NzMwNzMxMjc4NjU4IiBmaWxsPSJub25lIiBzdHJva2U9IiNGRkZGRkYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBkPSJNIDIyNyAxNTQgQyAyMjcgMTU0IDIxOC41NTUgMTQ3Ljg5MCAyMTcgMTUxIEMgMjEyLjM0NSAxNjAuMzEwIDIxMS4yODkgMTcxLjczMyAyMTMgMTgyIEMgMjEzLjYxMiAxODUuNjcyIDIyMyAxODcgMjIzIDE4NyAiIHRyYW5zZm9ybT0ibWF0cml4KDEsIDAsIDAsIDEsIC01NywgMTUuOCkiLz48cGF0aCBpZD0iSUQwLjc5MzkzOTQ4MTk1NTAyMTYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0ZGRkZGRiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIGQ9Ik0gMTc1IDIwMC41MDAgQyAxNzUgMjAwLjUwMCAxNjkuODA1IDIyMS45MTMgMTcxIDIyMi43NTAgQyAxNzIuMTk1IDIyMy41ODcgMTc4Ljc5NSAyMDUuMjk1IDE4Mi41MDAgMjA1Ljc1MCBDIDE4NS45MjAgMjA2LjE3MCAxODEuODU5IDIyNC41MDAgMTg1LjI1MCAyMjQuNTAwIEMgMTg5LjIxMyAyMjQuNTAwIDE5Ny4yNTAgMjA1Ljc1MCAxOTcuMjUwIDIwNS43NTAgIi8+PC9nPjwvc3ZnPg==';
 
 //メニューで使う配列
-const RubyclubMenu1 = {
+const rubyclubMenu1 = {
     RIGHT: 'hoge',
     LEFT:  'hero'
 }
-const RubyclubMenu2 = {
+const rubyclubMenu2 = {
     RIGHT: "-1",     //数字の場合も「文字列」扱いしないとエラーが出る
     LEFT:  "1"
 }
 
 
 //クラス定義
-class Rubyclub {
+class rubyclub {
     constructor (runtime) {
         /**
          * The runtime instantiating this block package.
@@ -35,36 +35,126 @@ class Rubyclub {
     }
 
     //ドロップボックスメニュー (Menu1) 
-    static get RubyclubMenu1 () {
-        return RubyclubMenu1;
+
+    static get rubyclubMenu1 () {
+        return rubyclubMenu1;
     }
     get MENU1 () {
         return [
             {
-                text: 'Right_1',
-                value: RubyclubMenu1.RIGHT
+
+                text: 'LED1',
+                value: 13
             },
             {
-                text: 'Left_1',
-                value: RubyclubMenu1.LEFT
+                text: 'LED2',
+                value: 12
+            },
+            {
+                text: 'LED3',
+                value: 14
+            },
+            {
+                text: 'LED4',
+                value: 27
+            },
+            {
+                text: 'LED5',
+                value: 26
+            },
+            {
+                text: 'LED6',
+                value: 25
+            },
+            {
+                text: 'LED7',
+                value: 33
+            },
+            {
+                text: 'LED8',
+                value: 32
             }
         ];
     }
 
     //ドロップボックスメニュー (Menu2) 
-    static get RubyclubMenu2 () {
-        return RubyclubMenu2;
+    static get rubyclubMenu2 () {
+        return rubyclubMenu2;
     }
     get MENU2 () {
         return [
             {
-                text: 'Right_2',
-                value: RubyclubMenu2.RIGHT
+                text: 'ON',
+                value: 1
             },
             {
-                text: 'Left_2',
-                value: RubyclubMenu2.LEFT
+                text: 'OFF',
+                value: 0
             }
+        ];
+    }
+
+    static get rubyclubMenu3 () {
+        return rubyclubMenu3;
+    }
+    get MENU3 () {
+        return [
+            {
+                text: 'スイッチ1',
+                value: 34
+            },
+            {
+                text: 'スイッチ2',
+                value: 35
+            },
+            {
+                text: 'スイッチ3',
+                value: 18
+            },
+            {
+                text: 'スイッチ4',
+                value: 19
+            }
+        ];
+    }
+
+    static get rubyclubMenu4 () {
+        return rubyclubMenu4;
+    }
+    get MENU4 () {
+        return [
+            {
+                text: 'ド',
+                value: 262
+            },
+            {
+                text: 'レ',
+                value: 294
+            },
+            {
+                text: 'ミ',
+                value: 330
+            },
+            {
+                text: 'ファ',
+                value: 349
+            },
+            {
+                text: 'ソ',
+                value: 392
+            },
+            {
+                text: 'ラ',
+                value: 440
+            },
+            {
+                text: 'シ',
+                value: 494
+            },
+            {
+                text: '高いド',
+                value: 524
+            },
         ];
     }
 
@@ -74,7 +164,7 @@ class Rubyclub {
             id: 'rubyclub',
             name: formatMessage({
                 id: 'rubyclub.name',
-                default: 'Rubyclub'
+                default: 'rubyclub'
             }),
             menuIconURI: menuIconURI,
             blockIconURI: blockIconURI,
@@ -85,7 +175,6 @@ class Rubyclub {
                         id: 'rubyclub.command0',
                         default: 'command0'
                     }),
-                    text: 'command',
                     blockType: BlockType.COMMAND,
                 },
                 {
@@ -133,7 +222,7 @@ class Rubyclub {
 			            TEXT1: {
                             type: ArgumentType.STRING,
                             menu: 'menu1',
-                            defaultValue: RubyclubMenu1.RIGHT
+                            defaultValue: rubyclubMenu1.RIGHT
 			            }
                     }
                 },
@@ -148,17 +237,149 @@ class Rubyclub {
 			            TEXT1: {
                             type: ArgumentType.STRING,
                             menu: 'menu1',
-                            defaultValue: RubyclubMenu1.RIGHT
+                            defaultValue: rubyclubMenu1.RIGHT
 			            },
                         NUM1: {
                             type: ArgumentType.STRING,
-			                menu: 'menu2',
-                            defaultValue: RubyclubMenu2.RIGHT
+			            menu: 'menu2',
+                            defaultValue: rubyclubMenu2.RIGHT
                         }
                     }
-                }
+                },
+                ///////////////////////////////////////////////////////////////////////////////////////////
+
+                {
+                    opcode: 'r1',
+                    text: formatMessage({
+                        id: 'r1',
+                        default: 'command [TEXT1]',
+                    }),		    		    
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+	                    TEXT1: {
+                            type: ArgumentType.STRING,
+                            menu: 'menu1',
+                            defaultValue: 'LED1'
+			            }
+                    }
+                },
+
+                {
+                    opcode: 'r2',
+                    text: formatMessage({
+                        id: 'r2',
+                        default: 'command [TEXT1] [NUM1]',
+                    }),		    		    
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+			            TEXT1: {
+                            type: ArgumentType.STRING,
+                            menu: 'menu1',
+                            defaultValue: 13
+			                    },
+                        NUM1: {
+                            type: ArgumentType.STRING,
+			                menu: 'menu2',
+                            defaultValue: 1
+                        }
+                    }
+                },
+
+                {
+                    opcode: 'r3',
+                    text: formatMessage({
+                        id: 'r3',
+                        default: 'command [TEXT1]',
+                    }),		    		    
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+	                    TEXT1: {
+                            type: ArgumentType.STRING,
+                            menu: 'menu3',
+                            defaultValue: 34
+			            }
+                    }
+                },
+
+                {
+                    opcode: 'r4',
+                    text: formatMessage({
+                        id: 'r4',
+                        default: 'flag0[TEXT1]'
+                    }),		    		    
+                    blockType: BlockType.BOOLEAN,
+                    arguments: {
+	                    TEXT1: {
+                            type: ArgumentType.STRING,
+                            menu: 'menu3',
+                            defaultValue: 34
+			            }
+                    }
+                },		
+
+                {
+                    opcode: 'r5',
+                    text: formatMessage({
+                        id: 'r5',
+                        default: 'command0'
+                    }),
+                    blockType: BlockType.COMMAND,
+                },
+
+                {
+                    opcode: 'r6',
+                    text: formatMessage({
+                        id: 'r6',
+                        default: 'command [TEXT1]',
+                    }),		    		    
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+			            TEXT1: {
+                            type: ArgumentType.STRING,
+                            menu: 'menu4',
+                            defaultValue: 262
+			            }
+                    }
+                },
+
+                {
+                    opcode: 'r7',
+                    text: formatMessage({
+                        id: 'r7',
+                        default: 'command0'
+                    }),
+                    blockType: BlockType.COMMAND,
+                },
+
+                {
+                    opcode: 'r8',
+                    text: formatMessage({
+                        id: 'r8',
+                        default: 'command0'
+                    }),
+                    blockType: BlockType.COMMAND,
+                },
+
+                {
+                    opcode: 'r9',
+                    text: formatMessage({
+                        id: 'r9',
+                        default: 'command0'
+                    }),
+                    blockType: BlockType.COMMAND,
+                },
+
+                {
+                    opcode: 'r10',
+                    text: formatMessage({
+                        id: 'r10',
+                        default: 'value0'
+                    }),		    
+                    blockType: BlockType.REPORTER
+                },		
+
             ],
-	    //ドロップボックスメニューを使う場合は以下に定義が必要
+	                 //ドロップボックスメニューを使う場合は以下に定義が必要
             menus: {
                 menu1: {
                     acceptReporters: true,
@@ -168,8 +389,16 @@ class Rubyclub {
                     acceptReporters: true,
                     items: this.MENU2
                 },
-            }
-        };
+                menu3: {
+                    acceptReporters: true,
+                    items: this.MENU3
+                },
+                menu4: {
+                    acceptReporters: true,
+                    items: this.MENU4
+                }
+            },
+        }
     }
 
     // command0 ブロック．入力なし
@@ -209,6 +438,48 @@ class Rubyclub {
         log.log(text1);
         log.log(num1);
     }
+
+    //////////////////////////////////////////////////////////////////////
+
+    r1 (args) { 
+        const text1 = Cast.toString(args.TEXT1);
+        log.log(text1);
+    }
+    r2 (args) { 
+        const text1 = Cast.toString(args.TEXT1);
+        const num1  = Cast.toString(args.NUM1);   //toNumber でも挙動は変わらない
+        log.log(args);
+        log.log(text1);
+        log.log(num1);
+    }
+    r3 (args) { 
+        const text1 = Cast.toString(args.TEXT1);
+        log.log(text1);
+    }
+    r4 () {
+        const text1 = Cast.toString(args.TEXT1);
+        log.log(text1);
+    }      
+    r5 () {
+        return navigator.userAgent;
+    }
+    r6 (args) { 
+        const text1 = Cast.toString(args.TEXT1);
+        log.log(text1);
+    }
+    r7 () {
+        return navigator.userAgent;
+    }
+    r8 () {
+        return navigator.userAgent;
+    }
+    r9 () {
+        return navigator.userAgent;
+    }
+    r10 () {
+        return navigator.userAgent;
+    }
 }
 
-module.exports = Rubyclub
+module.exports = rubyclub
+
