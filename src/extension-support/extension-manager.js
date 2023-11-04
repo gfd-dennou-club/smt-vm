@@ -17,7 +17,8 @@ const builtinExtensions = {
     kanirobo2: () => require('../extensions/smt_kanirobo2'),
     microcom: () => require('../extensions/smt_microcom'),
     mboard1: () => require('../extensions/smt_mboard1'),
-    mboard2: () => require('../extensions/smt_mboard2')
+    mboard2: () => require('../extensions/smt_mboard2'),
+    tools: () => require('../extensions/smt_tools')
 };
 
 /**
