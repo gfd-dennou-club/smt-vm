@@ -13,26 +13,11 @@ const builtinExtensions = {
     // but serves as a reference for loading core blocks as extensions.
     coreExample: () => require('../blocks/scratch3_core_example'),
     // These are the non-core built-in extensions.
-    pen: () => require('../extensions/scratch3_pen'),
-    wedo2: () => require('../extensions/scratch3_wedo2'),
-    music: () => require('../extensions/scratch3_music'),
-    microbit: () => require('../extensions/scratch3_microbit'),
-    microbitMore: () => require('../extensions/microbitMore'),
-    text2speech: () => require('../extensions/scratch3_text2speech'),
-    translate: () => require('../extensions/scratch3_translate'),
-    videoSensing: () => require('../extensions/scratch3_video_sensing'),
-    ev3: () => require('../extensions/scratch3_ev3'),
-    makeymakey: () => require('../extensions/scratch3_makeymakey'),
-    boost: () => require('../extensions/scratch3_boost'),
-    gdxfor: () => require('../extensions/scratch3_gdx_for'),
-    mesh: () => require('../extensions/scratch3_mesh'),
-    smalrubotS1: () => require('../extensions/scratch3_smalrubot_s1'),
-    sample: () => require('../extensions/sample'),
-    rubyclub:() => require('../extensions/rubyclub'),
-    kaniroboNormal:() => require('../extensions/kaniroboNormal'),
-    GPIOeasy: () => require('../extensions/GPIO_easy')
-    gpiohard: () => require('../extensions/gpiohard'),
-    i2c_uart: () => require('../extensions/i2c_uart')
+//    kanirobo1: () => require('../extensions/smt_kanirobo1'),
+    kanirobo2: () => require('../extensions/smt_kanirobo2'),
+    microcom: () => require('../extensions/smt_microcom'),
+    mboard1: () => require('../extensions/smt_mboard1'),
+    mboard2: () => require('../extensions/smt_mboard2')
 };
 
 /**
