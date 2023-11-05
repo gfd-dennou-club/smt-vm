@@ -26,7 +26,6 @@ const OnOffMenu = {
     ON:  "1"
 }
 
-
 //クラス定義
 class Mboard1 {
     constructor (runtime) {
@@ -126,7 +125,10 @@ class Mboard1 {
     getInfo () {
         return {
             id: 'mboard1',
-            name: 'Mboard1',
+            name: formatMessage({
+                id: 'mboard1.name',
+                default: 'Mboard1'
+            }),
             menuIconURI: menuIconURI,
             blockIconURI: blockIconURI,
             blocks: [
@@ -251,7 +253,7 @@ class Mboard1 {
                 menu2: {
                     acceptReporters: false,
                     items: this.MENU2
-                },
+                }
             }
         };
     }

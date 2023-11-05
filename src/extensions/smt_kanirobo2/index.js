@@ -443,7 +443,7 @@ class Kanirobo2 {
     }
 
     // value0 
-    value0 () {
+    value0 (args) {
         const text = Cast.toString(args.TEXT);
         log.log(text);
     }

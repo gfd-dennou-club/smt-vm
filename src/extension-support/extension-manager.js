@@ -18,7 +18,10 @@ const builtinExtensions = {
     microcom: () => require('../extensions/smt_microcom'),
     mboard1: () => require('../extensions/smt_mboard1'),
     mboard2: () => require('../extensions/smt_mboard2'),
-    tools: () => require('../extensions/smt_tools')
+    mboard3: () => require('../extensions/smt_mboard3'),
+    tools: () => require('../extensions/smt_tools'),
+    sensor: () => require('../extensions/smt_sensor'),
+    m5stack: () => require('../extensions/smt_m5stack')
 };
 
 /**

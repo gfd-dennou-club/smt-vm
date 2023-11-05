@@ -87,7 +87,7 @@ class Microcom {
         return {
             id: 'microcom',
             name:formatMessage({
-                id: 'Microcom.name',
+                id: 'microcom.name',
                 default: 'Microcom'
             }),
             menuIconURI: menuIconURI,
@@ -103,7 +103,7 @@ class Microcom {
                     arguments: {
                         NUM1: {
                             type: ArgumentType.NUMBER,
-                            defaultValue: " "
+                            defaultValue: 13
                         },
                     }
                 },
@@ -117,7 +117,7 @@ class Microcom {
                     arguments: {
                         NUM1: {
                             type: ArgumentType.NUMBER,
-                            defaultValue: " "
+                            defaultValue: 13
                         },                        
                         VALUE: {
                             type: ArgumentType.STRING,
@@ -137,7 +137,7 @@ class Microcom {
                     arguments: {
                         NUM1: {
                             type: ArgumentType.NUMBER,
-                            defaultValue: " "
+                            defaultValue: 34
                         },
                     }
                 },
@@ -151,7 +151,7 @@ class Microcom {
                     arguments: {
                         NUM1: {
                             type: ArgumentType.NUMBER,
-                            defaultValue: " "
+                            defaultValue: 34
                         },
                     }
                 },
@@ -165,7 +165,7 @@ class Microcom {
                     arguments: {
                         NUM1: {
                             type: ArgumentType.NUMBER,
-                            defaultValue: " "
+                            defaultValue: 15
                         },
                     }
                 },
@@ -179,7 +179,7 @@ class Microcom {
                     arguments: {
                         NUM1: {
                             type: ArgumentType.NUMBER,
-                            defaultValue: " "
+                            defaultValue: 15
                         },                        
                         VALUE: {
                             type: ArgumentType.NUMBER,
@@ -198,11 +198,11 @@ class Microcom {
                     arguments: {
                         NUM1: {
                             type: ArgumentType.NUMBER,
-                            defaultValue: " "
+                            defaultValue: 15
                         },                        
                         VALUE: {
                             type: ArgumentType.NUMBER,
-                            defaultValue: " "
+                            defaultValue: 440
                         },
                         
                     }
@@ -217,7 +217,7 @@ class Microcom {
                     arguments: {
                         NUM1: {
                             type: ArgumentType.NUMBER,
-                            defaultValue: " "
+                            defaultValue: 39
                         },
                     }
                 },
@@ -231,7 +231,7 @@ class Microcom {
                     arguments: {                     
                         VALUE: {
                             type: ArgumentType.NUMBER,
-                            defaultValue: " "
+                            defaultValue: 39
                         },
                         
                     }
@@ -258,21 +258,21 @@ class Microcom {
                     opcode: 'i2c_write',
                     text: formatMessage({
                         id: 'microcom.i2c_write',
-                        default: 'OUTPUT I2C: address [NUM1], command [NUM2], value [NUM3]'
+                        default: 'OUTPUT I2C: address 0x[NUM1], command 0x[NUM2], value 0x[NUM3]'
                     }),		    
                     blockType: BlockType.COMMAND,
                     arguments: {
                         NUM1: {
-                            type: ArgumentType.STRING,
-			    defaultValue: "0x00"
+                            type: ArgumentType.NUMBER,
+			    defaultValue: 10
                         },
 			NUM2: {
-                            type: ArgumentType.STRING,
-			    defaultValue: "0x00"
+                            type: ArgumentType.NUMBER,
+			    defaultValue: 40
                         },
                         NUM3: {
-                            type: ArgumentType.STRING,
-			    defaultValue: "0x00"
+                            type: ArgumentType.NUMBER,
+			    defaultValue: 20
                         }
                     }
                 },		
@@ -280,17 +280,17 @@ class Microcom {
                     opcode: 'i2c_read',
                     text: formatMessage({
                         id: 'microcom.i2c_read',
-                        default: 'INPUT I2C: address [NUM1], number of bytes [NUM2]'
+                        default: 'INPUT I2C: address 0x[NUM1], number of bytes [NUM2]'
                     }),		    		    
                     blockType: BlockType.REPORTER,
                     arguments: {
                         NUM1: {
-                            type: ArgumentType.STRING,
-			    defaultValue: "0x00"
+                            type: ArgumentType.NUMBER,
+			    defaultValue: 10
                         },
 			NUM2: {
                             type: ArgumentType.NUMBER,
-                            defaultValue: 1
+                            defaultValue: 8
                         }
                     }
                 },		
@@ -328,7 +328,7 @@ class Microcom {
 			},
                         TEXT2: {
                             type: ArgumentType.STRING,
-                            defaultValue: " "
+                            defaultValue: "xxxxx"
                         }
                     }
                 },
@@ -348,7 +348,7 @@ class Microcom {
                     }
                 }		
             ],
-
+	    
 	    //ドロップボックスメニューを使う場合は以下に定義が必要
             menus: {
 		menu1: {

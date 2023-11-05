@@ -42,6 +42,7 @@ const OnOffMenu = {
     ON:  "1"
 }
 
+
 //クラス定義
 class Mboard2 {
     constructor (runtime) {
@@ -207,7 +208,7 @@ class Mboard2 {
         return {
             id: 'mboard2',
             name: formatMessage({
-                id: 'Mboard2.name',
+                id: 'mboard2.name',
                 default: 'Mboard2'
             }),
             menuIconURI: menuIconURI,
@@ -334,10 +335,10 @@ class Mboard2 {
                         default: 'temperature (on board)'
                     }),		    
                     blockType: BlockType.REPORTER
-                },		
-
+                },
             ],
-	                 //ドロップボックスメニューを使う場合は以下に定義が必要
+
+	    //ドロップボックスメニューを使う場合は以下に定義が必要
             menus: {
                 menu1: {
                     acceptReporters: true,
@@ -355,8 +356,8 @@ class Mboard2 {
                     acceptReporters: true,
                     items: this.MENU4
                 }
-            },
-        }
+            }
+        };
     }
 
     led0(args) { 
@@ -374,7 +375,7 @@ class Mboard2 {
         const text1 = Cast.toString(args.TEXT1);
         log.log(text1);
     }
-    switch1() {
+    switch1(args) {
         const text1 = Cast.toString(args.TEXT1);
         log.log(text1);
     }      
