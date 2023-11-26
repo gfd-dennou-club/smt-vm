@@ -11,33 +11,33 @@ const blockIconURI = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBzdGFu
 const menuIconURI = 'data:image/svg+xml;base64,PHN2ZyB2ZXJzaW9uPSIxLjEiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIj48ZyBpZD0iSUQwLjA4NjgyNDQzOTAwMDMzODMyIiB0cmFuc2Zvcm09Im1hdHJpeCgwLjQ5MTU0NjY2MDY2MTY5NzQsIDAsIDAsIDAuNDkxNTQ2NjYwNjYxNjk3NCwgLTY0LjUsIC03Ny4yNSkiPjxwYXRoIGlkPSJJRDAuNTcyMTQ2MjMwMzc3MjU2OSIgZmlsbD0iI0ZGOTQwMCIgc3Ryb2tlPSJub25lIiBkPSJNIDE4OCAxNDEgTCAyNTAgMTQxIEwgMjUwIDIwMyBMIDE4OCAyMDMgTCAxODggMTQxIFogIiB0cmFuc2Zvcm09Im1hdHJpeCgxLjI4NzkwMzMwODg2ODQwODIsIDAsIDAsIDEuMjg3OTAzMzA4ODY4NDA4MiwgLTExMC45LCAtMjQuNCkiLz48cGF0aCBpZD0iSUQwLjYzODMzNjEzNTA3NDQ5NjMiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0ZGRkZGRiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIGQ9Ik0gMTk2IDIwNCBDIDE5NiAyMDQgMTkyLjcwNiAxOTAuMDU4IDE5MyAxODMgQyAxOTMuMDc0IDE4MS4yMzYgMTk1Ljg4NiAxNzguNDU4IDE5NyAxODAgQyAyMDEuNDU1IDE4Ni4xNjggMjAzLjQ0MyAyMDMuNzU0IDIwNiAyMDEgQyAyMDkuMjExIDE5Ny41NDIgMjEwIDE2NiAyMTAgMTY2ICIgdHJhbnNmb3JtPSJtYXRyaXgoMSwgMCwgMCwgMSwgLTU3LCAxNS44KSIvPjxwYXRoIGlkPSJJRDAuNzU4NzMwMzU2NTgxNTA5MSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZGRkZGIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgZD0iTSAyMTUgMTY5IEMgMjE1IDE2OSAyMTguMzY3IDE2OS41MzQgMjIwIDE3MCBDIDIyMC43MTYgMTcwLjIwNSAyMjEuMjc4IDE3MC44MTkgMjIyIDE3MSBDIDIyMi42NDYgMTcxLjE2MiAyMjMuMzY4IDE3MC43ODkgMjI0IDE3MSBDIDIyNC40NDcgMTcxLjE0OSAyMjUgMTcyIDIyNSAxNzIgIiB0cmFuc2Zvcm09Im1hdHJpeCgxLCAwLCAwLCAxLCAtNTcsIDE1LjgpIi8+PHBhdGggaWQ9IklEMC4yNDM2NzMwNzMxMjc4NjU4IiBmaWxsPSJub25lIiBzdHJva2U9IiNGRkZGRkYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBkPSJNIDIyNyAxNTQgQyAyMjcgMTU0IDIxOC41NTUgMTQ3Ljg5MCAyMTcgMTUxIEMgMjEyLjM0NSAxNjAuMzEwIDIxMS4yODkgMTcxLjczMyAyMTMgMTgyIEMgMjEzLjYxMiAxODUuNjcyIDIyMyAxODcgMjIzIDE4NyAiIHRyYW5zZm9ybT0ibWF0cml4KDEsIDAsIDAsIDEsIC01NywgMTUuOCkiLz48cGF0aCBpZD0iSUQwLjc5MzkzOTQ4MTk1NTAyMTYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0ZGRkZGRiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIGQ9Ik0gMTc1IDIwMC41MDAgQyAxNzUgMjAwLjUwMCAxNjkuODA1IDIyMS45MTMgMTcxIDIyMi43NTAgQyAxNzIuMTk1IDIyMy41ODcgMTc4Ljc5NSAyMDUuMjk1IDE4Mi41MDAgMjA1Ljc1MCBDIDE4NS45MjAgMjA2LjE3MCAxODEuODU5IDIyNC41MDAgMTg1LjI1MCAyMjQuNTAwIEMgMTg5LjIxMyAyMjQuNTAwIDE5Ny4yNTAgMjA1Ljc1MCAxOTcuMjUwIDIwNS43NTAgIi8+PC9nPjwvc3ZnPg==';
 
 //メニューで使う配列
-const Kanirobo1Menu1 = {
-    FORWARD: 'on',
-    BACKWARD:  'off'
+const Kanirobo1v2Menu1 = {
+    FORWARD: '1',
+    BACKWARD:  '0'
 }
-const Kanirobo1Menu2 = {
+const Kanirobo1v2Menu2 = {
     ONE: "1",     //数字の場合も「文字列」扱いしないとエラーが出る
     TWO: "2"
 }
-const Kanirobo1Menu4 = {
+const Kanirobo1v2Menu4 = {
     FIRST: "36",
     SECOND: "34",
     THIRD: "35",
     FOURTH: "2"
 }
-const Kanirobo1Menu6 = {
+const Kanirobo1v2Menu6 = {
     ONE: "27",
     TWO: "14"
 }
-const Kanirobo1Menu7 = {
+const Kanirobo1v2Menu7 = {
     item0: "0",
-    item3: "600",
-    item4: "800",
-    item5: "1000",
+    item1: "600",
+    item2: "800",
+    item3: "1000",
 }
 
 //クラス定義
-class Kanirobo1 {
+class Kanirobo1v2 {
     constructor (runtime) {
         /**
          * The runtime instantiating this block package.
@@ -50,120 +50,112 @@ class Kanirobo1 {
     }
     
     //ドロップボックスメニュー (Menu1) 
-    static get Kanirobo1Menu1 () {
-        return Kanirobo1Menu1;
+    static get Kanirobo1v2Menu1 () {
+        return Kanirobo1v2Menu1;
     }
     get MENU1 () {
         return [
             {
                 text: formatMessage({
-                    id: 'kanirobo1.Menu1.forward',
+                    id: 'kanirobo1v2.Menu1.forward',
                     default: 'forward',
                 }),
-                value: 'on'
+                value: Kanirobo1v2Menu1.FORWARD
             },
             {
                 text: formatMessage({
-                    id: 'kanirobo1.Menu1.backward',
+                    id: 'kanirobo1v2.Menu1.backward',
                     default: 'backward',
                 }),
-                value: 'off'
+                value: Kanirobo1v2Menu1.BACKWARD
             }
         ];
     }
 
     //ドロップボックスメニュー (Menu2) 
-    static get Kanirobo1Menu2 () {
-        return Kanirobo1Menu2;
+    static get Kanirobo1v2Menu2 () {
+        return Kanirobo1v2Menu2;
     }
     get MENU2 () {
         return [
             {
                 text: formatMessage({
-                    id: 'kanirobo1.menu2.right',
+                    id: 'kanirobo1v2.menu2.right',
                     default: 'right',
                 }),
-                value: Kanirobo1Menu2.ONE
+                value: Kanirobo1v2Menu2.ONE
             },
             {
                 text: formatMessage({
-                    id: 'kanirobo1.menu2.left',
+                    id: 'kanirobo1v2.menu2.left',
                     default: 'left',
                 }),
-                value: Kanirobo1Menu2.TWO
+                value: Kanirobo1v2Menu2.TWO
             }
         ];
     }
     
     //ドロップボックスメニュー (Menu4) 
-    static get Kanirobo1Menu4 () {
-        return Kanirobo1Menu4;
+    static get Kanirobo1v2Menu4 () {
+        return Kanirobo1v2Menu4;
     }
     get MENU4 () {
         return [
             {
                 text: '1',
-                value: Kanirobo1Menu4.FIRST
+                value: Kanirobo1v2Menu4.FIRST
             },
             {
                 text: '2',
-                value: Kanirobo1Menu4.SECOND
+                value: Kanirobo1v2Menu4.SECOND
             },
             {
                 text: '3',
-                value: Kanirobo1Menu4.THIRD
+                value: Kanirobo1v2Menu4.THIRD
             },
             {
                 text: '4',
-                value: Kanirobo1Menu4.FOURTH
+                value: Kanirobo1v2Menu4.FOURTH
             }
         ];
     }
 
-    static get Kanirobo1Menu6 () {
-        return Kanirobo1Menu6;
+    static get Kanirobo1v2Menu6 () {
+        return Kanirobo1v2Menu6;
     }
     get MENU6 () {
         return [
             {
                 text: '1',
-                value: Kanirobo1Menu6.ONE
+                value: Kanirobo1v2Menu6.ONE
             },
             {
                 text: '2',
-                value: Kanirobo1Menu6.TWO
+                value: Kanirobo1v2Menu6.TWO
             }
         ];
     }
 
-    static get Kanirobo1Menu7 () {
-        return Kanirobo1Menu7;
+    static get Kanirobo1v2Menu7 () {
+        return Kanirobo1v2Menu7;
     }
     get MENU7 () {
         return [
             {
                 text: '0',
-                value: Kanirobo1Menu7.item0
-            },
-            {
-                text: '200',
-                value: Kanirobo1Menu7.item1
-            },
-            {
-                text: '400',
-                value: Kanirobo1Menu7.item2
+                value: Kanirobo1v2Menu7.item0
             },
             {
                 text: '600',
-                value: Kanirobo1Menu7.item3
+                value: Kanirobo1v2Menu7.item1
             },
             {
                 text: '800',
-                value: Kanirobo1Menu7.item4
+                value: Kanirobo1v2Menu7.item2
             },
             {
                 text: '1000',
-                value: Kanirobo1Menu7.item5
+                value: Kanirobo1v2Menu7.item3
             },
         ];
     }
@@ -171,10 +163,10 @@ class Kanirobo1 {
     //ブロック定義
     getInfo () {
         return {
-            id: 'kanirobo1',
+            id: 'kanirobo1v2',
             name: formatMessage({
-                id: 'kanirobo1.name',
-                default: 'Kanirobo1'
+                id: 'kanirobo1v2.name',
+                default: 'Kanirobo1v2'
             }),
             menuIconURI: menuIconURI,
             blockIconURI: blockIconURI,
@@ -182,7 +174,7 @@ class Kanirobo1 {
                 {
                     opcode: 'motor',
                     text: formatMessage({
-                        id: 'kanirobo1.motor',
+                        id: 'kanirobo1v2.motor',
                         default: 'set motor [TEXT1] [TEXT2] speed [TEXT3]',
                     }),		    		    
                     blockType: BlockType.COMMAND,
@@ -190,24 +182,24 @@ class Kanirobo1 {
 			TEXT1: {
                             type: ArgumentType.STRING,
                             menu: 'menu2',
-                            defaultValue: Kanirobo1Menu2.ONE
+                            defaultValue: Kanirobo1v2Menu2.ONE
 			},
                         TEXT2: {
                             type: ArgumentType.STRING,
                             menu: 'menu1',
-                            defaultValue: Kanirobo1Menu1.FORWARD
+                            defaultValue: Kanirobo1v2Menu1.FORWARD
                         },
                         TEXT3: {
                             type: ArgumentType.NUMBER,
                             menu: 'menu7',
-                            defaultValue: Kanirobo1Menu7.item0
+                            defaultValue: Kanirobo1v2Menu7.item0
                         }			
                     }
                 },
                 {
                     opcode: 'value0',
                     text: formatMessage({
-                        id: 'kanirobo1.value0',
+                        id: 'kanirobo1v2.value0',
                         default: 'light sensor [TEXT] value'
                     }),		    
                     blockType: BlockType.REPORTER,
@@ -215,14 +207,14 @@ class Kanirobo1 {
 			TEXT: {
 			    type: ArgumentType.STRING,
 			    menu: 'menu4',
-                            defaultValue: Kanirobo1Menu4.FIRST
+                            defaultValue: Kanirobo1v2Menu4.FIRST
 			}
                     }
                 },
                 {
                     opcode: 'command9',
                     text: formatMessage({
-                        id: 'kanirobo1.command9',
+                        id: 'kanirobo1v2.command9',
                         default: 'Set servo motor [TEXT] degree [NUM]',
                     }),		    		    
                     blockType: BlockType.COMMAND,
@@ -230,7 +222,7 @@ class Kanirobo1 {
 			TEXT: {
                             type: ArgumentType.STRING,
                             menu: 'menu6',
-                            defaultValue: Kanirobo1Menu6.RIGHT
+                            defaultValue: Kanirobo1v2Menu6.RIGHT
 			},
                         NUM: {
                             type: ArgumentType.NUMBER,
@@ -286,4 +278,4 @@ class Kanirobo1 {
 
 }
 
-module.exports = Kanirobo1
+module.exports = Kanirobo1v2
