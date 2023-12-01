@@ -146,15 +146,15 @@ class Kanirobo1v2 {
                 value: Kanirobo1v2Menu7.item0
             },
             {
-                text: '600',
+                text: '60',
                 value: Kanirobo1v2Menu7.item1
             },
             {
-                text: '800',
+                text: '80',
                 value: Kanirobo1v2Menu7.item2
             },
             {
-                text: '1000',
+                text: '100',
                 value: Kanirobo1v2Menu7.item3
             },
         ];
@@ -175,7 +175,7 @@ class Kanirobo1v2 {
                     opcode: 'motor',
                     text: formatMessage({
                         id: 'kanirobo1v2.motor',
-                        default: 'set motor [TEXT1] [TEXT2] speed [TEXT3]',
+                        default: 'set motor [TEXT1] [TEXT2] speed [TEXT3]%',
                     }),		    		    
                     blockType: BlockType.COMMAND,
                     arguments: {

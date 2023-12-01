@@ -227,7 +227,7 @@ class Kanirobo2 {
                     opcode: 'command3',
                     text: formatMessage({
                         id: 'kanirobo2.command3',
-                        default: 'Initialize motor [TEXT] speed',
+                        default: 'Initialize motor [TEXT] PWM',
                     }),		    		    
                     blockType: BlockType.COMMAND,
                     arguments: {
@@ -262,7 +262,7 @@ class Kanirobo2 {
                     opcode: 'command5',
                     text: formatMessage({
                         id: 'kanirobo2.command5',
-                        default: 'set motor [TEXT] speed [NUM] (0~1023)',
+                        default: 'set motor [TEXT] duty [NUM] (0~1023)',
                     }),		    		    
                     blockType: BlockType.COMMAND,
                     arguments: {
