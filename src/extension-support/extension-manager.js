@@ -13,7 +13,7 @@ const builtinExtensions = {
     // but serves as a reference for loading core blocks as extensions.
     coreExample: () => require('../blocks/scratch3_core_example'),
     // These are the non-core built-in extensions.
-    kanirobo1: () => require('../extensions/smt_kanirobo1'),
+    //kanirobo1: () => require('../extensions/smt_kanirobo1'),
     kanirobo1v2: () => require('../extensions/smt_kanirobo1v2'),
     kanirobo2: () => require('../extensions/smt_kanirobo2'),
     microcom: () => require('../extensions/smt_microcom'),
