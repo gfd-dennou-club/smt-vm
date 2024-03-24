@@ -20,10 +20,10 @@ jobs:
   ci-cd:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: wagoid/commitlint-github-action@v5
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+      - uses: wagoid/commitlint-github-action@5ce82f5d814d4010519d15f0552aec4f17a1e1fe # v5
         if: github.event_name == 'pull_request'
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@1a4442cacd436585916779262731d5b162bc6ec7 # v3
         with:
           cache: 'npm'
           node-version-file: '.nvmrc'
@@ -41,14 +41,3 @@ jobs:
           mkdir -p ./test/results
       - run: npm test
       - run: npm run build
-      - name: Deploy to GH Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: playground
-          full_commit_message: "Build for ${{ github.sha }} ${{ github.event.head_commit.message }}"
-      - name: semantic-release
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx --no -- semantic-release

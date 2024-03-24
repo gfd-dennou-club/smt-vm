@@ -565,7 +565,7 @@ class SmalrubotS1 extends Smalrubot {
         debug(() => 'connect');
 
         if (this.connectionState !== 'scanned') {
-            return Promise.reject('Failed to connect: reason=<Not scan>');
+            return Promise.reject(new Error('Failed to connect: reason=<Not scan>'));
         }
 
         let promise = Promise.resolve();
@@ -683,7 +683,7 @@ class SmalrubotS1 extends Smalrubot {
             rightValue = COAST;
             break;
         default:
-            return Promise.reject(`Could not action: reason=<Invalid direction> direction=<${direction}>`);
+            return Promise.reject(new Error(`Could not action: reason=<Invalid direction> direction=<${direction}>`));
         }
 
         return Promise.resolve()
