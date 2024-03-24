@@ -311,7 +311,7 @@ class Target extends EventEmitter {
      * @param {object} newValue New value for the variable.
      */
     setVariableValue (id, newValue) {
-        if (this.variables.hasOwnProperty(id)) {
+        if (Object.prototype.hasOwnProperty.call(this.variables, id)) {
             const variable = this.variables[id];
             if (variable.id === id) {
                 variable.value = newValue;

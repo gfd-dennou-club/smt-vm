@@ -328,7 +328,7 @@ class Scratch3MeshBlocks {
         log.log('stage.createVariable in mesh');
 
         const stage = this.runtime.getTargetForStage();
-        if (!stage.variables.hasOwnProperty(id)) {
+        if (!Object.prototype.hasOwnProperty.call(stage.variables, id)) {
             this.variableFunctions.stage.createVariable(id, name, type, isCloud);
             if (type === Variable.SCALAR_TYPE) {
                 const variable = stage.variables[id];
@@ -341,7 +341,7 @@ class Scratch3MeshBlocks {
         log.log('stage.setVariableValue in mesh');
 
         const stage = this.runtime.getTargetForStage();
-        if (stage.variables.hasOwnProperty(id)) {
+        if (Object.prototype.hasOwnProperty.call(stage.variables, id)) {
             const variable = stage.variables[id];
             if (variable.id === id) {
                 this.variableFunctions.stage.setVariableValue(id, newValue);
@@ -356,7 +356,7 @@ class Scratch3MeshBlocks {
         log.log('stage.renameVariable in mesh');
 
         const stage = this.runtime.getTargetForStage();
-        if (stage.variables.hasOwnProperty(id)) {
+        if (Object.prototype.hasOwnProperty.call(stage.variables, id)) {
             const variable = stage.variables[id];
             if (variable.id === id) {
                 this.variableFunctions.stage.renameVariable(id, newName);
