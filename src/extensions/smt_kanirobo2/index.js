@@ -212,7 +212,7 @@ class Kanirobo2 {
                     opcode: 'command2',
                     text: formatMessage({
                         id: 'kanirobo2.command2',
-                        default: 'Initialize motor [TEXT]',
+                        default: 'Initialize motor [TEXT] GPIO',
                     }),		    		    
                     blockType: BlockType.COMMAND,
                     arguments: {
@@ -242,7 +242,7 @@ class Kanirobo2 {
                     opcode: 'command4',
                     text: formatMessage({
                         id: 'kanirobo2.command4',
-                        default: 'set motor [TEXT1] [TEXT2]',
+                        default: 'set motor [TEXT1] GPIO [TEXT2]',
                     }),		    		    
                     blockType: BlockType.COMMAND,
                     arguments: {
