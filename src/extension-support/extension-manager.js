@@ -22,7 +22,8 @@ const builtinExtensions = {
     mboard3: () => require('../extensions/smt_mboard3'),
     tools: () => require('../extensions/smt_tools'),
     sensor: () => require('../extensions/smt_sensor'),
-    m5stack: () => require('../extensions/smt_m5stack')
+    m5stack: () => require('../extensions/smt_m5stack'),
+    rboard: () => require('../extensions/smt_rboard'),
 };
 
 /**
