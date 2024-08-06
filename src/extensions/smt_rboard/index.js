@@ -295,6 +295,7 @@ class Rboard {
                         
                     }
                 },
+/*
                 {
                     opcode: 'i2c_init',
                     text: formatMessage({
@@ -303,6 +304,7 @@ class Rboard {
                     }),
                     blockType: BlockType.COMMAND
                 },
+*/		    
                 {
                     opcode: 'i2c_write',
                     text: formatMessage({
