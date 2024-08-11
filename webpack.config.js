@@ -1,7 +1,6 @@
 const path = require('path');
 
 const CopyWebpackPlugin = require('copy-webpack-plugin');
-const webpack = require('webpack');
 
 const ScratchWebpackConfigBuilder = require('scratch-webpack-configuration');
 
@@ -12,6 +11,16 @@ const common = {
 
 const nodeBuilder = new ScratchWebpackConfigBuilder(common)
     .setTarget('node')
+    .merge({
+        entry: {
+            'extension-worker': path.join(__dirname, 'src/extension-support/extension-worker.js')
+        },
+        output: {
+            library: {
+                name: 'VirtualMachine'
+            }
+        }
+    })
     .addModuleRule({
         test: /\.mp3$/,
         type: 'asset'
@@ -20,10 +29,18 @@ const nodeBuilder = new ScratchWebpackConfigBuilder(common)
 const webBuilder = new ScratchWebpackConfigBuilder(common)
     .setTarget('browserslist')
     .merge({
+        entry: {
+            'extension-worker': path.join(__dirname, 'src/extension-support/extension-worker.js')
+        },
         resolve: {
             fallback: {
                 Buffer: require.resolve('buffer/'),
                 stream: require.resolve('stream-browserify')
+            }
+        },
+        output: {
+            library: {
+                name: 'VirtualMachine'
             }
         }
     })
@@ -37,10 +54,7 @@ const webBuilder = new ScratchWebpackConfigBuilder(common)
         options: {
             exposes: 'VirtualMachine'
         }
-    })
-    .addPlugin(new webpack.ProvidePlugin({
-        Buffer: ['buffer', 'Buffer']
-    }));
+    });
 
 const playgroundBuilder = webBuilder.clone()
     .merge({
@@ -54,10 +68,14 @@ const playgroundBuilder = webBuilder.clone()
         },
         entry: {
             'benchmark': './src/playground/benchmark',
-            'video-sensing-extension-debug': './src/extensions/scratch3_video_sensing/debug'
+            'video-sensing-extension-debug': './src/extensions/scratch3_video_sensing/debug',
+            'extension-worker': path.join(__dirname, 'src/extension-support/extension-worker.js')
         },
         output: {
-            path: path.resolve(__dirname, 'playground')
+            path: path.resolve(__dirname, 'playground'),
+            library: {
+                name: 'VirtualMachine'
+            }
         }
     })
     .addModuleRule({
@@ -93,7 +111,7 @@ const playgroundBuilder = webBuilder.clone()
         }
     })
     .addModuleRule({
-        test: require.resolve('scratch-render/src/index.js'),
+        test: require.resolve('scratch-render'),
         loader: 'expose-loader',
         options: {
             exposes: 'ScratchRender'
