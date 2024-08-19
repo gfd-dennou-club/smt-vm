@@ -1,0 +1,28 @@
+{
+  "ja": {
+    "koshien.name": "甲子園",
+    "koshien.itemsMenu.dynamite": "ダイナマイト",
+    "koshien.itemsMenu.bomb": "爆弾",
+    "koshien.targetsMenu.other": "対戦キャラクター",
+    "koshien.targetsMenu.enemy": "妨害キャラクター",
+    "koshien.targetsMenu.goal": "ゴール",
+    "koshien.targetsMenu.player": "プレイヤー",
+    "koshien.coordinatesMenu.x": "x座標",
+    "koshien.coordinatesMenu.y": "y座標",
+    "koshien.connectGame": "プレイヤー名を [NAME] にして、ゲームサーバへ接続する",
+    "koshien.getMapArea": "x座標が [X] 、y座標が [Y] 付近のマップ情報を取得する",
+    "koshien.map": "x座標が [X] y座標が [Y] のマップ情報",
+    "koshien.moveTo": "x座標 [X]、y座標 [Y] に移動する",
+    "koshien.calcRoute": "２点間の最短経路 (始点 x座標 [SRC_X] y座標 [SRC_Y] 、終点 x座標 [DST_X] y座標 [DST_Y] 、通らない座標 リスト [EXCEPT_CELLS]) をリスト [RESULT] に保存する",
+    "koshien.setItem": "[ITEM] をx座標 [X] y座標 [Y] に置く",
+    "koshien.loadMap": "x座標が [X] y座標が [Y] のマップ情報を [LOCATION] から読み込む",
+    "koshien.saveMapAll": "すべてのマップ情報を [LOCATION] に保存する",
+    "koshien.locateObjects": "範囲内の地形・アイテム (中心 x座標 [X] y座標 [Y] 、範囲 [SQ_SIZE] 、地形・アイテム [OBJECTS])をリスト [RESULT] に保存する",
+    "koshien.targetCoordinate": "[TARGET] の [COORDINATE]",
+    "koshien.turnOver": "ターンを終了する",
+    "koshien.coordinateOf": "[WHERE] の [COORDINATE]"
+  },
+  "ja-Hira": {
+    "koshien.name": "こうしえん"
+  }
+}

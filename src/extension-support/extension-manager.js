@@ -68,6 +68,14 @@ builtinExtensions.microbitMore = () => {
     return blockClass;
 };
 
+builtinExtensions.koshien = () => {
+    const formatMessage = require('format-message');
+    const ext = require('../extensions/koshien/index.js');
+    const blockClass = ext.blockClass;
+    blockClass.formatMessage = formatMessage;
+    return blockClass;
+};
+
 class ExtensionManager {
     constructor (runtime) {
         /**
