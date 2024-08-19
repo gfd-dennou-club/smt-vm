@@ -22,8 +22,9 @@ const nodeBuilder = new ScratchWebpackConfigBuilder(common)
         }
     })
     .addModuleRule({
-        test: /\.mp3$/,
-        type: 'asset'
+        test: /\.(svg|png|wav|mp3|gif|jpg)$/,
+        resourceQuery: /^$/, // reject any query string
+        type: 'asset' // let webpack decide on the best type of asset
     });
 
 const webBuilder = new ScratchWebpackConfigBuilder(common)
@@ -45,8 +46,9 @@ const webBuilder = new ScratchWebpackConfigBuilder(common)
         }
     })
     .addModuleRule({
-        test: /\.mp3$/,
-        type: 'asset'
+        test: /\.(svg|png|wav|mp3|gif|jpg)$/,
+        resourceQuery: /^$/, // reject any query string
+        type: 'asset' // let webpack decide on the best type of asset
     })
     .addModuleRule({
         test: require.resolve('./src/index.js'),
