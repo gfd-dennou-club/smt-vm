@@ -77,7 +77,7 @@ const KoshienObjectName = {
     POISON: 'poison',
     SNAKE: 'snake',
     TRAP: 'trap',
-    BOMB: 'bomb',
+    BOMB: 'bomb'
 };
 
 /**
@@ -124,7 +124,7 @@ class KoshienClient {
 
     calcRoute (props) {
         // eslint-disable-next-line no-unused-vars
-        const { src, dst, exceptCells, result } = props;
+        const {src, dst, exceptCells, result} = props;
         return new Promise(resolve => resolve());
     }
 }
@@ -382,7 +382,7 @@ class KoshienBlocks {
                     description: 'label for bomb in object picker for koshien extension'
                 }),
                 value: KoshienObjectName.BOMB
-            },
+            }
         ];
     }
 
@@ -807,7 +807,7 @@ class KoshienBlocks {
      */
     // eslint-disable-next-line no-unused-vars
     calcGoalRoute (args) {
-        return this._client.calcRoute({ result: args.RESULT });
+        return this._client.calcRoute({result: args.RESULT});
     }
 
     /**
@@ -822,7 +822,7 @@ class KoshienBlocks {
     // eslint-disable-next-line no-unused-vars
     calcRoute (args) {
         return this._client.calcRoute(
-            { src: args.SRC, dst: args.DST, exceptCells: args.EXCEPT_CELLS, result: args.RESULT }
+            {src: args.SRC, dst: args.DST, exceptCells: args.EXCEPT_CELLS, result: args.RESULT}
         );
     }
 
@@ -921,40 +921,40 @@ class KoshienBlocks {
      */
     object (args) {
         switch (args.OBJECT) {
-            case KoshienObjectName.UNKNOWN:
-                return -1;
-            case KoshienObjectName.SPACE:
-                return 0;
-            case KoshienObjectName.WALL:
-                return 1;
-            case KoshienObjectName.STOREHOUSE:
-                return 2;
-            case KoshienObjectName.GOAL:
-                return 3;
-            case KoshienObjectName.WATER:
-                return 4;
-            case KoshienObjectName.BREAKABLE_WALL:
-                return 5;
-            case KoshienObjectName.TEA:
-                return 'a';
-            case KoshienObjectName.SWEETS:
-                return 'b';
-            case KoshienObjectName.COIN:
-                return 'c';
-            case KoshienObjectName.DOLPHIN:
-                return 'd';
-            case KoshienObjectName.SWORD:
-                return 'e';
-            case KoshienObjectName.POISON:
-                return 'A';
-            case KoshienObjectName.SNAKE:
-                return 'B';
-            case KoshienObjectName.TRAP:
-                return 'C';
-            case KoshienObjectName.BOMB:
-                return 'D';
-            default:
-                return -1;
+        case KoshienObjectName.UNKNOWN:
+            return -1;
+        case KoshienObjectName.SPACE:
+            return 0;
+        case KoshienObjectName.WALL:
+            return 1;
+        case KoshienObjectName.STOREHOUSE:
+            return 2;
+        case KoshienObjectName.GOAL:
+            return 3;
+        case KoshienObjectName.WATER:
+            return 4;
+        case KoshienObjectName.BREAKABLE_WALL:
+            return 5;
+        case KoshienObjectName.TEA:
+            return 'a';
+        case KoshienObjectName.SWEETS:
+            return 'b';
+        case KoshienObjectName.COIN:
+            return 'c';
+        case KoshienObjectName.DOLPHIN:
+            return 'd';
+        case KoshienObjectName.SWORD:
+            return 'e';
+        case KoshienObjectName.POISON:
+            return 'A';
+        case KoshienObjectName.SNAKE:
+            return 'B';
+        case KoshienObjectName.TRAP:
+            return 'C';
+        case KoshienObjectName.BOMB:
+            return 'D';
+        default:
+            return -1;
         }
     }
 }
