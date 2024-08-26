@@ -600,7 +600,7 @@ class KoshienBlocks {
                         },
                         OBJECTS: {
                             type: ArgumentType.STRING,
-                            defaultValue: 'A B C D'
+                            defaultValue: 'ABCD'
                         },
                         RESULT: {
                             type: ArgumentType.STRING,
