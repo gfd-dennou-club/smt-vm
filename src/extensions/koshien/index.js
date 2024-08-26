@@ -39,6 +39,7 @@ const KoshienItemName = {
  * @enum {string}
  */
 const KoshienCoordinateName = {
+    POSITION: 'position',
     X: 'x',
     Y: 'y'
 };
@@ -53,6 +54,30 @@ const KoshienTargetName = {
     ENEMY: 'enemy',
     GOAL: 'goal',
     PLAYER: 'player'
+};
+
+/**
+ * Enum for object
+ * @readonly
+ * @enum {string}
+ */
+const KoshienObjectName = {
+    UNKNOWN: 'unknown',
+    SPACE: 'space',
+    WALL: 'wall',
+    STOREHOUSE: 'storehouse',
+    GOAL: 'goal',
+    WATER: 'water',
+    BREAKABLE_WALL: 'breakable wall',
+    TEA: 'tea',
+    SWEETS: 'sweets',
+    COIN: 'COIN',
+    DOLPHIN: 'dolphin',
+    SWORD: 'sword',
+    POISON: 'poison',
+    SNAKE: 'snake',
+    TRAP: 'trap',
+    BOMB: 'bomb'
 };
 
 /**
@@ -97,8 +122,9 @@ class KoshienClient {
         return new Promise(resolve => resolve());
     }
 
-    // eslint-disable-next-line no-unused-vars
-    calcRoute (src, dst, exceptCells, path) {
+    calcRoute (props) {
+        // eslint-disable-next-line no-unused-vars
+        const {src, dst, exceptCells, result} = props;
         return new Promise(resolve => resolve());
     }
 }
@@ -214,6 +240,152 @@ class KoshienBlocks {
         ];
     }
 
+    get COORDINATES_AND_POSITION_MENU () {
+        return [
+            {
+                text: formatMessage({
+                    id: 'koshien.coordinatesMenu.position',
+                    default: 'position',
+                    description: 'label for position in coordinate picker for koshien extension'
+                }),
+                value: KoshienCoordinateName.POSITION
+            }
+        ].concat(this.COORDINATES_MENU);
+    }
+
+    get OBJECTS_MENU () {
+        return [
+            {
+                text: formatMessage({
+                    id: 'koshien.objectsMenu.unknown',
+                    default: 'unknown',
+                    description: 'label for unknown in object picker for koshien extension'
+                }),
+                value: KoshienObjectName.UNKNOWN
+            },
+            {
+                text: formatMessage({
+                    id: 'koshien.objectsMenu.space',
+                    default: 'space',
+                    description: 'label for space in object picker for koshien extension'
+                }),
+                value: KoshienObjectName.SPACE
+            },
+            {
+                text: formatMessage({
+                    id: 'koshien.objectsMenu.wall',
+                    default: 'wall',
+                    description: 'label for wall in object picker for koshien extension'
+                }),
+                value: KoshienObjectName.WALL
+            },
+            {
+                text: formatMessage({
+                    id: 'koshien.objectsMenu.storehouse',
+                    default: 'storehouse',
+                    description: 'label for storehouse in object picker for koshien extension'
+                }),
+                value: KoshienObjectName.STOREHOUSE
+            },
+            {
+                text: formatMessage({
+                    id: 'koshien.objectsMenu.goal',
+                    default: 'goal',
+                    description: 'label for goal in object picker for koshien extension'
+                }),
+                value: KoshienObjectName.GOAL
+            },
+            {
+                text: formatMessage({
+                    id: 'koshien.objectsMenu.water',
+                    default: 'water',
+                    description: 'label for water in object picker for koshien extension'
+                }),
+                value: KoshienObjectName.WATER
+            },
+            {
+                text: formatMessage({
+                    id: 'koshien.objectsMenu.breakableWall',
+                    default: 'breakable wall',
+                    description: 'label for breakable_wall in object picker for koshien extension'
+                }),
+                value: KoshienObjectName.BREAKABLE_WALL
+            },
+            {
+                text: formatMessage({
+                    id: 'koshien.objectsMenu.tea',
+                    default: 'tea',
+                    description: 'label for tea in object picker for koshien extension'
+                }),
+                value: KoshienObjectName.TEA
+            },
+            {
+                text: formatMessage({
+                    id: 'koshien.objectsMenu.sweets',
+                    default: 'sweets',
+                    description: 'label for sweets in object picker for koshien extension'
+                }),
+                value: KoshienObjectName.SWEETS
+            },
+            {
+                text: formatMessage({
+                    id: 'koshien.objectsMenu.coin',
+                    default: 'coin',
+                    description: 'label for coin in object picker for koshien extension'
+                }),
+                value: KoshienObjectName.COIN
+            },
+            {
+                text: formatMessage({
+                    id: 'koshien.objectsMenu.dolphin',
+                    default: 'dolphin',
+                    description: 'label for dolphin in object picker for koshien extension'
+                }),
+                value: KoshienObjectName.DOLPHIN
+            },
+            {
+                text: formatMessage({
+                    id: 'koshien.objectsMenu.sword',
+                    default: 'sword',
+                    description: 'label for sword in object picker for koshien extension'
+                }),
+                value: KoshienObjectName.SWORD
+            },
+            {
+                text: formatMessage({
+                    id: 'koshien.objectsMenu.poison',
+                    default: 'poison',
+                    description: 'label for poison in object picker for koshien extension'
+                }),
+                value: KoshienObjectName.POISON
+            },
+            {
+                text: formatMessage({
+                    id: 'koshien.objectsMenu.snake',
+                    default: 'snake',
+                    description: 'label for snake in object picker for koshien extension'
+                }),
+                value: KoshienObjectName.SNAKE
+            },
+            {
+                text: formatMessage({
+                    id: 'koshien.objectsMenu.trap',
+                    default: 'trap',
+                    description: 'label for trap in object picker for koshien extension'
+                }),
+                value: KoshienObjectName.TRAP
+            },
+            {
+                text: formatMessage({
+                    id: 'koshien.objectsMenu.bomb',
+                    default: 'bomb',
+                    description: 'label for bomb in object picker for koshien extension'
+                }),
+                value: KoshienObjectName.BOMB
+            }
+        ];
+    }
+
     /**
      * Construct a set of Koshien blocks.
      * @param {Runtime} runtime - the Scratch 3.0 runtime.
@@ -304,6 +476,23 @@ class KoshienBlocks {
                         POSITION: {
                             type: ArgumentType.STRING,
                             defaultValue: '0:0'
+                        }
+                    },
+                    filter: [TargetType.SPRITE]
+                },
+                {
+                    opcode: 'calcGoalRoute',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'koshien.calcGoalRoute',
+                        default: 'store shortest goal path to list: [RESULT]',
+                        description: 'store shortest path between player and goal to list'
+                    }),
+                    arguments: {
+                        RESULT: {
+                            type: ArgumentType.STRING,
+                            menu: 'listNames',
+                            defaultValue: ' '
                         }
                     },
                     filter: [TargetType.SPRITE]
@@ -411,7 +600,7 @@ class KoshienBlocks {
                         },
                         OBJECTS: {
                             type: ArgumentType.STRING,
-                            defaultValue: 'A B C D'
+                            defaultValue: 'ABCD'
                         },
                         RESULT: {
                             type: ArgumentType.STRING,
@@ -437,8 +626,8 @@ class KoshienBlocks {
                         },
                         COORDINATE: {
                             type: ArgumentType.STRING,
-                            menu: 'coordinateMenu',
-                            defaultValue: KoshienCoordinateName.X
+                            menu: 'coordinateAndPositionMenu',
+                            defaultValue: KoshienCoordinateName.POSITION
                         }
                     },
                     filter: [TargetType.SPRITE]
@@ -495,6 +684,24 @@ class KoshienBlocks {
 
                     },
                     filter: [TargetType.SPRITE]
+                },
+                {
+                    opcode: 'object',
+                    blockType: BlockType.REPORTER,
+                    text: formatMessage({
+                        id: 'koshien.object',
+                        default: '[OBJECT]',
+                        description: 'object of code'
+                    }),
+                    arguments: {
+                        OBJECT: {
+                            type: ArgumentType.STRING,
+                            menu: 'objectMenu',
+                            defaultValue: KoshienObjectName.UNKNOWN
+                        }
+
+                    },
+                    filter: [TargetType.SPRITE]
                 }
             ],
             menus: {
@@ -514,11 +721,18 @@ class KoshienBlocks {
                     acceptReporters: false,
                     items: this.COORDINATES_MENU
                 },
+                coordinateAndPositionMenu: {
+                    acceptReporters: false,
+                    items: this.COORDINATES_AND_POSITION_MENU
+                },
                 targetMenu: {
                     acceptReporters: false,
                     items: this.TARGETS_MENU
+                },
+                objectMenu: {
+                    acceptReporters: false,
+                    items: this.OBJECTS_MENU
                 }
-
             },
             translationMap: translations
         };
@@ -586,6 +800,17 @@ class KoshienBlocks {
     }
 
     /**
+     * shortest path between player and goal
+     * @param {object} args - the block's arguments.
+     * @param {string} args.RESULT - result.
+     * @return {Promise} - promise
+     */
+    // eslint-disable-next-line no-unused-vars
+    calcGoalRoute (args) {
+        return this._client.calcRoute({result: args.RESULT});
+    }
+
+    /**
      * shortest path between two points
      * @param {object} args - the block's arguments.
      * @param {string} args.SRC - src.
@@ -596,8 +821,11 @@ class KoshienBlocks {
      */
     // eslint-disable-next-line no-unused-vars
     calcRoute (args) {
-        return this._client.calcRoute(args.SRC, args.DST, args.EXCEPT_CELLS, args.RESULT);
+        return this._client.calcRoute(
+            {src: args.SRC, dst: args.DST, exceptCells: args.EXCEPT_CELLS, result: args.RESULT}
+        );
     }
+
     /**
      * place an item at position
      * @param {object} args - the block's arguments.
@@ -674,16 +902,60 @@ class KoshienBlocks {
     }
 
     /**
-     * where of coordinate
+     * position of coordinate
      * @param {object} args - the block's arguments.
      * @param {string} args.POSITION - position.
      * @param {string} args.COORDINATE - coordinate.
      * @return {number} - position of x or y
      */
-    // eslint-disable-next-line no-unused-vars
     positionOf (args) {
         const position = args.POSITION.split(':');
         return Number(args.COORDINATE === 'x' ? position[0] : position[1]);
+    }
+
+    /**
+     * object of code
+     * @param {object} args - the block's arguments.
+     * @param {string} args.OBJECT - object.
+     * @return {number} - object of code
+     */
+    object (args) {
+        switch (args.OBJECT) {
+        case KoshienObjectName.UNKNOWN:
+            return -1;
+        case KoshienObjectName.SPACE:
+            return 0;
+        case KoshienObjectName.WALL:
+            return 1;
+        case KoshienObjectName.STOREHOUSE:
+            return 2;
+        case KoshienObjectName.GOAL:
+            return 3;
+        case KoshienObjectName.WATER:
+            return 4;
+        case KoshienObjectName.BREAKABLE_WALL:
+            return 5;
+        case KoshienObjectName.TEA:
+            return 'a';
+        case KoshienObjectName.SWEETS:
+            return 'b';
+        case KoshienObjectName.COIN:
+            return 'c';
+        case KoshienObjectName.DOLPHIN:
+            return 'd';
+        case KoshienObjectName.SWORD:
+            return 'e';
+        case KoshienObjectName.POISON:
+            return 'A';
+        case KoshienObjectName.SNAKE:
+            return 'B';
+        case KoshienObjectName.TRAP:
+            return 'C';
+        case KoshienObjectName.BOMB:
+            return 'D';
+        default:
+            return -1;
+        }
     }
 }
 
