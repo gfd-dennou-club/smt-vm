@@ -419,6 +419,7 @@ class KoshienBlocks {
                 {
                     opcode: 'connectGame',
                     blockType: BlockType.HAT,
+                    isEdgeActivated: false,
                     text: formatMessage({
                         id: 'koshien.connectGame',
                         default: 'connect game server with the player name [NAME]',
