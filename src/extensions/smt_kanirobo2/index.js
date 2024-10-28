@@ -183,31 +183,6 @@ class Kanirobo2 {
             menuIconURI: menuIconURI,
             blockIconURI: blockIconURI,
             blocks: [
-/*
-                {
-                    opcode: 'command0',
-                    text: formatMessage({
-                        id: 'kanirobo2.command0',
-                        default: 'Initialize motor enable pin'
-                    }),
-                    blockType: BlockType.COMMAND,
-                },
-                {
-                    opcode: 'command1',
-                    text: formatMessage({
-                        id: 'kanirobo2.command1',
-                        default: ' [TEXT] motor enable pin',
-                    }),		    		    
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-			TEXT: {
-                            type: ArgumentType.STRING,
-                            menu: 'menu3',
-                            defaultValue: Kanirobo2Menu3.ENABLE
-			}
-                    }
-                },
-*/
                 {
                     opcode: 'command2',
                     text: formatMessage({
@@ -262,7 +237,7 @@ class Kanirobo2 {
                     opcode: 'command5',
                     text: formatMessage({
                         id: 'kanirobo2.command5',
-                        default: 'set motor [TEXT] duty [NUM] (0~1023)',
+                        default: 'set motor [TEXT] duty [NUM] %',
                     }),		    		    
                     blockType: BlockType.COMMAND,
                     arguments: {
@@ -273,7 +248,7 @@ class Kanirobo2 {
 			},
                         NUM: {
                             type: ArgumentType.NUMBER,
-                            defaultValue: 500
+                            defaultValue: 100
                         }
                     }
                 },
@@ -311,22 +286,7 @@ class Kanirobo2 {
                     opcode: 'command7',
                     text: formatMessage({
                         id: 'kanirobo2.command7',
-                        default: 'Initialize servo motor [TEXT]',
-                    }),		    		    
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-			TEXT: {
-                            type: ArgumentType.STRING,
-                            menu: 'menu6',
-                            defaultValue: Kanirobo2Menu6.ONE
-			}
-                    }
-                },	
-                {
-                    opcode: 'command8',
-                    text: formatMessage({
-                        id: 'kanirobo2.command8',
-                        default: 'Set servo motor [TEXT] frequency [NUM]',
+                        default: 'Initialize servo motor [TEXT] (period:[NUM] ms)',
                     }),		    		    
                     blockType: BlockType.COMMAND,
                     arguments: {
@@ -337,10 +297,30 @@ class Kanirobo2 {
 			},
                         NUM: {
                             type: ArgumentType.NUMBER,
-                            defaultValue: 80
-                        }
+                            defaultValue: 20
+                        }			
                     }
                 },	
+                {
+                    opcode: 'command8',
+                    text: formatMessage({
+                        id: 'kanirobo2.command8',
+                        default: 'Set servo motor [TEXT] pulse width [NUM] ms',
+                    }),		    		    
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+			TEXT: {
+                            type: ArgumentType.STRING,
+                            menu: 'menu6',
+                            defaultValue: Kanirobo2Menu6.ONE
+			},
+                        NUM: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 1
+                        }
+                    }
+                }
+/*
                 {
                     opcode: 'command9',
                     text: formatMessage({
@@ -374,6 +354,7 @@ class Kanirobo2 {
                         }  
                     }
                 }
+*/
             ],
 	    //ドロップボックスメニューを使う場合は以下に定義が必要
             menus: {
@@ -452,7 +433,9 @@ class Kanirobo2 {
 
     command7 (args) { 
         const text = Cast.toString(args.TEXT);
+	const num  = Cast.toString(args.NUM);
         log.log(text);
+        log.log(num);	
     }
 
     command8 (args) {
@@ -461,7 +444,7 @@ class Kanirobo2 {
         log.log(text);
         log.log(num);
     }
-
+/*
     command9 (args) {
         const text = Cast.toString(args.TEXT);
         const num  = Cast.toString(args.NUM);
@@ -473,6 +456,7 @@ class Kanirobo2 {
         const num  = Cast.toString(args.NUM);
         log.log(num);
     }
+*/	
 }
 
 module.exports = Kanirobo2
