@@ -102,19 +102,19 @@ class Kanirobo1v2 {
     get MENU4 () {
         return [
             {
-                text: '1',
+                text: 'ひだり1',
                 value: Kanirobo1v2Menu4.FIRST
             },
             {
-                text: '2',
+                text: 'ひだり2',
                 value: Kanirobo1v2Menu4.SECOND
             },
             {
-                text: '3',
+                text: 'みぎ1',
                 value: Kanirobo1v2Menu4.THIRD
             },
             {
-                text: '4',
+                text: 'みぎ2',
                 value: Kanirobo1v2Menu4.FOURTH
             }
         ];
@@ -253,6 +253,7 @@ class Kanirobo1v2 {
                     acceptReporters: true,
                     items: this.MENU7
                 },
+
             }
 	};
     }
