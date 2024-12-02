@@ -97,7 +97,7 @@ class Microcom {
                     opcode :'gpio_output_init',
                     text: formatMessage({
                         id: 'microcom.gpio_output_init',
-                        default:'OUTPUT GPIO: use GPIO[NUM1] (initialize)',
+                        default:'GPIO (output): initialize [NUM1]pin',
                     }),
                     blockType:BlockType.COMMAND,
                     arguments: {
@@ -111,7 +111,7 @@ class Microcom {
                     opcode :'gpio_output',
                     text: formatMessage({
 			id: 'microcom.gpio_output',
-                        default:'OUTPUT GPIO: set GPIO[NUM1] [VALUE]',
+                        default:'GPIO (output): set [NUM1]pin [VALUE]',
                     }),
                     blockType:BlockType.COMMAND,
                     arguments: {
@@ -131,7 +131,7 @@ class Microcom {
                     opcode :'gpio_input_init',
                     text: formatMessage({
                         id: 'microcom.gpio_input_init',
-                        default:'INPUT GPIO: use GPIO[NUM1] (initialize)',
+                        default:'GPIO (input): initialize [NUM1]pin',
                     }),
                     blockType:BlockType.COMMAND,
                     arguments: {
@@ -145,7 +145,7 @@ class Microcom {
                     opcode :'gpio_input',
                     text: formatMessage({
 			id: 'microcom.gpio_input',
-                        default:'INPUT GPIO: GPIO[NUM1]',
+                        default:'GPIO (input): read value from [NUM1]pin',
                     }),
                     blockType:BlockType.REPORTER,
                     arguments: {
@@ -159,7 +159,7 @@ class Microcom {
                     opcode :'pwm_init',
                     text: formatMessage({
                         id: 'microcom.pwm_init',
-                        default:'PWM: use GPIO[NUM1] (initialize)',
+                        default:'PWM: initialize [NUM1]pin (timer: [NUM2], channel: [NUM3], frequency: [NUM4])',
                     }),
                     blockType:BlockType.COMMAND,
                     arguments: {
@@ -167,13 +167,25 @@ class Microcom {
                             type: ArgumentType.NUMBER,
                             defaultValue: 15
                         },
+                        NUM2: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 1
+                        },
+                        NUM3: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 1
+                        },
+                        NUM4: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 1000
+                        },
                     }
                 },
                 {                    
                     opcode :'pwm_duty',
                     text: formatMessage({
                         id: 'microcom.pwm_duty',
-                        default:'PWM: set GPIO[NUM1] duty [VALUE] (0~1023)',
+                        default:'PWM: set [NUM1]pin duty [VALUE] %',
                     }),
                     blockType:BlockType.COMMAND,
                     arguments: {
@@ -183,7 +195,7 @@ class Microcom {
                         },                        
                         VALUE: {
                             type: ArgumentType.NUMBER,
-                            defaultValue: 500
+                            defaultValue: 100
                         },
                         
                     }
@@ -192,7 +204,7 @@ class Microcom {
                     opcode :'pwm_frequency',
                     text: formatMessage({
                         id: 'microcom.pwm_frequency',
-                        default:'PWM: set [NUM1] frequency [VALUE]',
+                        default:'PWM: set [NUM1]pin frequency [VALUE]',
                     }),
                     blockType:BlockType.COMMAND,
                     arguments: {
@@ -207,11 +219,30 @@ class Microcom {
                         
                     }
                 },
+                {
+                    opcode :'pwm_pulse',
+                    text: formatMessage({
+                        id: 'microcom.pwm_pulse',
+                        default:'PWM: set [NUM1]pin pulse [VALUE] us',
+                    }),
+                    blockType:BlockType.COMMAND,
+                    arguments: {
+                        NUM1: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 15
+                        },                        
+                        VALUE: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 1000
+                        },
+                        
+                    }
+                },
                 {                    
                     opcode :'adc_init',
                     text: formatMessage({
                         id: 'microcom.adc_init',
-                        default:'ADC: use GPIO[NUM1] (initialize)',
+                        default:'ADC: initialize [NUM1]pin',
                     }),
                     blockType:BlockType.COMMAND,
                     arguments: {
@@ -225,11 +256,11 @@ class Microcom {
                     opcode :'adc_volt',
                     text: formatMessage({
                         id: 'microcom.adc_volt',
-                        default:'ADC: read value from GPIO[VALUE]',
+                        default:'ADC: read value from [NUM1]pin',
                     }),
                     blockType:BlockType.REPORTER,
                     arguments: {                     
-                        VALUE: {
+                        NUM1: {
                             type: ArgumentType.NUMBER,
                             defaultValue: 39
                         },
@@ -240,7 +271,7 @@ class Microcom {
                     opcode: 'i2c_init',
                     text: formatMessage({
                         id: 'microcom.i2c_init',
-                        default: 'I2C: Use GPIO[NUM1] as SCL and GPIO[NUM2] as SDA (initialize)' 
+                        default: 'I2C: initialize [NUM1]pin as SCL and [NUM2]pin as SDA' 
                     }),
                     blockType: BlockType.COMMAND,
                     arguments: {
@@ -258,7 +289,7 @@ class Microcom {
                     opcode: 'i2c_write',
                     text: formatMessage({
                         id: 'microcom.i2c_write',
-                        default: 'OUTPUT I2C: address 0x[NUM1], command 0x[NUM2], value 0x[NUM3]'
+                        default: 'I2C (output): address 0x[NUM1], command 0x[NUM2], value 0x[NUM3]'
                     }),		    
                     blockType: BlockType.COMMAND,
                     arguments: {
@@ -280,7 +311,7 @@ class Microcom {
                     opcode: 'i2c_read',
                     text: formatMessage({
                         id: 'microcom.i2c_read',
-                        default: 'INPUT I2C: address 0x[NUM1], number of bytes [NUM2]'
+                        default: 'I2C (input): address 0x[NUM1], number of bytes [NUM2]'
                     }),		    		    
                     blockType: BlockType.REPORTER,
                     arguments: {
@@ -298,7 +329,7 @@ class Microcom {
                     opcode: 'uart_init',
                     text: formatMessage({
                         id: 'microcom.uart_init',
-                        default: 'UART: Use UART-[TEXT] Bourate [NUM] (initialize)',
+                        default: 'UART-[TEXT]: initiralize (Bourate: [NUM])',
                     }),		    		    
                     blockType: BlockType.COMMAND,
                     arguments: {
@@ -317,7 +348,7 @@ class Microcom {
                     opcode: 'uart_write',
                     text: formatMessage({
                         id: 'microcom.uart_write',
-                        default: 'OUTPUT UART-[TEXT1]: [TEXT2]',
+                        default: 'UART-[TEXT1] (output): [TEXT2]',
                     }),		    		    
                     blockType: BlockType.COMMAND,
                     arguments: {
@@ -336,7 +367,7 @@ class Microcom {
                     opcode: 'uart_read',
                     text: formatMessage({
                         id: 'microcom.uart_read',
-                        default: 'INPUT UART-[TEXT]',
+                        default: 'UART-[TEXT] (input)',
                     }),		    		    
                     blockType: BlockType.REPORTER,
                     arguments: {
@@ -387,7 +418,13 @@ class Microcom {
 
     pwm_init (args) {
         const num1  = Cast.toString(args.NUM1);
+        const num2  = Cast.toString(args.NUM2);
+        const num3  = Cast.toString(args.NUM3);
+        const num4  = Cast.toString(args.NUM4);
         log.log(num1);
+        log.log(num2);
+        log.log(num3);
+        log.log(num4);
     }
  
     pwm_duty (args) {
@@ -410,8 +447,8 @@ class Microcom {
     }
     
     adc_volt (args) {
-        const val  = Cast.toString(args.VALUE);
-        log.log(val);
+        const num1  = Cast.toString(args.VALUE);
+        log.log(num1);
     }   
     
     i2c_init (args) {

@@ -31,9 +31,14 @@ const Kanirobo1v2Menu6 = {
 }
 const Kanirobo1v2Menu7 = {
     item0: "0",
-    item1: "600",
-    item2: "800",
-    item3: "1000",
+    item1: "60",
+    item2: "80",
+    item3: "100",
+}
+const Kanirobo1v2Menu8 = {
+    deg0:  "1000",
+    deg45: "1500",
+    deg90: "2000",
 }
 
 //クラス定義
@@ -159,6 +164,25 @@ class Kanirobo1v2 {
             },
         ];
     }
+    static get Kanirobo1v2Menu8 () {
+        return Kanirobo1v2Menu8;
+    }
+    get MENU8 () {
+        return [
+            {
+                text: '0',
+                value: Kanirobo1v2Menu8.deg0
+            },
+            {
+                text: '45',
+                value: Kanirobo1v2Menu8.deg45
+            },
+            {
+                text: '90',
+                value: Kanirobo1v2Menu8.deg90
+            },
+        ];
+    }
     
     //ブロック定義
     getInfo () {
@@ -225,8 +249,9 @@ class Kanirobo1v2 {
                             defaultValue: Kanirobo1v2Menu6.RIGHT
 			},
                         NUM: {
-                            type: ArgumentType.NUMBER,
-                            defaultValue: 0
+			    type: ArgumentType.STRING,
+                            menu: 'menu8',
+                            defaultValue: Kanirobo1v2Menu8.deg0
                         }
                     }
                 }
@@ -253,7 +278,10 @@ class Kanirobo1v2 {
                     acceptReporters: true,
                     items: this.MENU7
                 },
-
+                menu8: {
+                    acceptReporters: true,
+                    items: this.MENU8
+                },		
             }
 	};
     }
