@@ -153,7 +153,7 @@ class Rboard {
                     arguments: {
                         NUM1: {
                             type: ArgumentType.STRING,
-			    menu: 'menu3',
+			                menu: 'menu3',
                             defaultValue: LedMenu.led1
                         },
                     }

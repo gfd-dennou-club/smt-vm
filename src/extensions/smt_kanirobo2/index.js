@@ -187,7 +187,7 @@ class Kanirobo2 {
                     opcode: 'command2',
                     text: formatMessage({
                         id: 'kanirobo2.command2',
-                        default: 'Initialize motor [TEXT] GPIO',
+                        default: 'Initialize motor [TEXT] GPIO ',
                     }),		    		    
                     blockType: BlockType.COMMAND,
                     arguments: {
@@ -359,27 +359,27 @@ class Kanirobo2 {
 	    //ドロップボックスメニューを使う場合は以下に定義が必要
             menus: {
                 menu1: {
-                    acceptReporters: true,
+                    acceptReporters: false,
                     items: this.MENU1
                 },
                 menu2: {
-                    acceptReporters: true,
+                    acceptReporters: false,
                     items: this.MENU2
                 },
                 menu3: {
-                    acceptReporters: true,
+                    acceptReporters: false,
                     items: this.MENU3
                 },
                 menu4: {
-                    acceptReporters: true,
+                    acceptReporters: false,
                     items: this.MENU4
                 },
                 menu5: {
-                    acceptReporters: true,
+                    acceptReporters: false,
                     items: this.MENU5
                 },
                 menu6: {
-                    acceptReporters: true,
+                    acceptReporters: false,
                     items: this.MENU6
                 },
             }
