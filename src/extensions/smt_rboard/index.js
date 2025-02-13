@@ -50,7 +50,7 @@ class Rboard {
     static get PinMenu () {
         return PinMenu;
     }
-    get PinMenu_g () {
+    get PinMenuInfo () {
         return [
             {
                 text: '1',
@@ -67,7 +67,7 @@ class Rboard {
     static get OnOffMenu () {
         return OnOffMenu;
     }
-    get OnOffMenu_g () {
+    get OnOffMenuInfo () {
         return [
             {
                 text: '1',
@@ -83,7 +83,7 @@ class Rboard {
     static get SwitchMenu () {
         return SwitchMenu;
     }
-    get SwitchMenu_g () {
+    get SwitchMenuInfo () {
         return [
             {
                 text: 'SW1',
@@ -95,7 +95,7 @@ class Rboard {
     static get LedMenu () {
         return LedMenu;
     }    
-    get LedMenu_g () {
+    get LedMenuInfo () {
         return [
             {
                 text: 'LED1',
@@ -119,7 +119,7 @@ class Rboard {
     static get AdcMenu () {
         return AdcMenu;
     }    
-    get AdcMenu_g () {
+    get AdcMenuInfo () {
         return [
             {
                 text: 'ADC1',
@@ -153,7 +153,7 @@ class Rboard {
                     arguments: {
                         NUM1: {
                             type: ArgumentType.STRING,
-			                menu: 'menu_Led',
+			                menu: 'ledMenu',
                             defaultValue: LedMenu.led1
                         },
                     }
@@ -168,12 +168,12 @@ class Rboard {
                     arguments: {
                         NUM1: {
                             type: ArgumentType.STRING,
-                            menu: 'menu_Led',
+                            menu: 'ledMenu',
                             defaultValue: LedMenu.led1
                         },                        
                         VALUE: {
                             type: ArgumentType.STRING,
-                            menu: 'menu_OnOff',
+                            menu: 'onoffMenu',
                             defaultValue: OnOffMenu.OFF
                         },
                         
@@ -189,7 +189,7 @@ class Rboard {
                     arguments: {
                         NUM1: {
                             type: ArgumentType.STRING,
-			                menu: 'menu_Switch',
+			                menu: 'switchMenu',
                             defaultValue: SwitchMenu.sw1
                         },
                     }
@@ -204,7 +204,7 @@ class Rboard {
                     arguments: {
                         NUM1: {
                             type: ArgumentType.STRING,
-			                menu: 'menu_Switch',
+			                menu: 'switchMenu',
                             defaultValue: SwitchMenu.sw1
                         },
                     }
@@ -219,7 +219,7 @@ class Rboard {
                     arguments: {
                         NUM1: {
                             type: ArgumentType.STRING,
-                            menu: 'menu_Led',
+                            menu: 'ledMenu',
                             defaultValue: LedMenu.led1
                         },
                     }
@@ -234,7 +234,7 @@ class Rboard {
                     arguments: {
                         NUM1: {
                             type: ArgumentType.STRING,
-                            menu: 'menu_Led',
+                            menu: 'ledMenu',
                             defaultValue: LedMenu.led1
                         },                        
                         VALUE: {
@@ -254,7 +254,7 @@ class Rboard {
                     arguments: {
                         NUM1: {
                             type: ArgumentType.STRING,
-                            menu: 'menu_Led',
+                            menu: 'ledMenu',
                             defaultValue: LedMenu.led1
                         },                       
                         VALUE: {
@@ -274,7 +274,7 @@ class Rboard {
                     arguments: {
                         NUM1: {
                             type: ArgumentType.STRING,
-                            menu: 'menu_Adc',
+                            menu: 'adcMenu',
                             defaultValue: AdcMenu.adc1
                         },
                     }
@@ -289,7 +289,7 @@ class Rboard {
                     arguments: {                     
                         VALUE: {
                             type: ArgumentType.STRING,
-                            menu: 'menu_Adc',
+                            menu: 'adcMenu',
                             defaultValue: AdcMenu.adc1
                         },
                         
@@ -403,25 +403,25 @@ class Rboard {
 	    
 	    //ドロップボックスメニューを使う場合は以下に定義が必要
             menus: {
-		        menu_Pin: {
+		        pinMenu: {
 		            acceptReporters: true,
-                    items: this.PinMenu_g
+                    items: this.PinMenuInfo
                 },
-                menu_OnOff:{
+                onoffMenu:{
                     acceptReporters: false,
-                    items:this.OnOffMenu_g
+                    items:this.OnOffMenuInfo
                 },
-                menu_Led:{
+                ledMenu:{
                     acceptReporters: false,
-                    items:this.LedMenu_g
+                    items:this.LedMenuInfo
                 },
-		        menu_Switch:{
+		        switchMenu:{
                     acceptReporters: false,
-                    items:this.SwitchMenu_g
+                    items:this.SwitchMenuInfo
 		        },
-		        menu_Adc:{
+		        adcMenu:{
                     acceptReporters: false,
-                    items:this.AdcMenu_g
+                    items:this.AdcMenuInfo
 		        }		
             }
         };
