@@ -50,7 +50,7 @@ class Rboard {
     static get PinMenu () {
         return PinMenu;
     }
-    get MENU1 () {
+    get PinMenu_g () {
         return [
             {
                 text: '1',
@@ -63,11 +63,11 @@ class Rboard {
         ];
     }
 
-    //ドロップボックスメニュー  
+    //ドロップボックスメニュー
     static get OnOffMenu () {
         return OnOffMenu;
     }
-    get MENU2 () {
+    get OnOffMenu_g () {
         return [
             {
                 text: '1',
@@ -83,7 +83,7 @@ class Rboard {
     static get SwitchMenu () {
         return SwitchMenu;
     }
-    get MENU4 () {
+    get SwitchMenu_g () {
         return [
             {
                 text: 'SW1',
@@ -95,7 +95,7 @@ class Rboard {
     static get LedMenu () {
         return LedMenu;
     }    
-    get MENU3 () {
+    get LedMenu_g () {
         return [
             {
                 text: 'LED1',
@@ -119,7 +119,7 @@ class Rboard {
     static get AdcMenu () {
         return AdcMenu;
     }    
-    get MENU5 () {
+    get AdcMenu_g () {
         return [
             {
                 text: 'ADC1',
@@ -127,7 +127,7 @@ class Rboard {
             },
             {
                 text: 'ADC2',
-		value: AdcMenu.adc2
+		        value: AdcMenu.adc2
             }
         ];
     }
@@ -153,7 +153,7 @@ class Rboard {
                     arguments: {
                         NUM1: {
                             type: ArgumentType.STRING,
-			    menu: 'menu3',
+			                menu: 'menu_Led',
                             defaultValue: LedMenu.led1
                         },
                     }
@@ -161,19 +161,19 @@ class Rboard {
                 {                    
                     opcode :'gpio_output',
                     text: formatMessage({
-			id: 'rboard.gpio_output',
+			            id: 'rboard.gpio_output',
                         default:'OUTPUT GPIO: set [NUM1] to [VALUE]',
                     }),
                     blockType:BlockType.COMMAND,
                     arguments: {
                         NUM1: {
                             type: ArgumentType.STRING,
-                            menu: 'menu3',
+                            menu: 'menu_Led',
                             defaultValue: LedMenu.led1
                         },                        
                         VALUE: {
                             type: ArgumentType.STRING,
-                            menu: 'menu2',
+                            menu: 'menu_OnOff',
                             defaultValue: OnOffMenu.OFF
                         },
                         
@@ -189,7 +189,7 @@ class Rboard {
                     arguments: {
                         NUM1: {
                             type: ArgumentType.STRING,
-			    menu: 'menu4',
+			                menu: 'menu_Switch',
                             defaultValue: SwitchMenu.sw1
                         },
                     }
@@ -197,14 +197,14 @@ class Rboard {
                 {                    
                     opcode :'gpio_input',
                     text: formatMessage({
-			id: 'rboard.gpio_input',
+			            id: 'rboard.gpio_input',
                         default:'INPUT GPIO: read value from [NUM1]',
                     }),
                     blockType:BlockType.REPORTER,
                     arguments: {
                         NUM1: {
                             type: ArgumentType.STRING,
-			    menu: 'menu4',
+			                menu: 'menu_Switch',
                             defaultValue: SwitchMenu.sw1
                         },
                     }
@@ -219,7 +219,7 @@ class Rboard {
                     arguments: {
                         NUM1: {
                             type: ArgumentType.STRING,
-                            menu: 'menu3',
+                            menu: 'menu_Led',
                             defaultValue: LedMenu.led1
                         },
                     }
@@ -234,7 +234,7 @@ class Rboard {
                     arguments: {
                         NUM1: {
                             type: ArgumentType.STRING,
-                            menu: 'menu3',
+                            menu: 'menu_Led',
                             defaultValue: LedMenu.led1
                         },                        
                         VALUE: {
@@ -254,7 +254,7 @@ class Rboard {
                     arguments: {
                         NUM1: {
                             type: ArgumentType.STRING,
-                            menu: 'menu3',
+                            menu: 'menu_Led',
                             defaultValue: LedMenu.led1
                         },                       
                         VALUE: {
@@ -274,7 +274,7 @@ class Rboard {
                     arguments: {
                         NUM1: {
                             type: ArgumentType.STRING,
-                            menu: 'menu5',
+                            menu: 'menu_Adc',
                             defaultValue: AdcMenu.adc1
                         },
                     }
@@ -289,7 +289,7 @@ class Rboard {
                     arguments: {                     
                         VALUE: {
                             type: ArgumentType.STRING,
-                            menu: 'menu5',
+                            menu: 'menu_Adc',
                             defaultValue: AdcMenu.adc1
                         },
                         
@@ -298,7 +298,7 @@ class Rboard {
 /*
                 {
                     opcode: 'i2c_init',
-                    text: formatMessage({
+                        text: formatMessage({
                         id: 'rboard.i2c_init',
                         default: 'I2C (initialize)' 
                     }),
@@ -315,15 +315,15 @@ class Rboard {
                     arguments: {
                         NUM1: {
                             type: ArgumentType.NUMBER,
-			    defaultValue: 10
+			                defaultValue: 10
                         },
-			NUM2: {
+			            NUM2: {
                             type: ArgumentType.NUMBER,
-			    defaultValue: 40
+			                defaultValue: 40
                         },
                         NUM3: {
                             type: ArgumentType.STRING,
-			    defaultValue: "hoge"
+			                defaultValue: "hoge"
                         }
                     }
                 },		
@@ -337,13 +337,13 @@ class Rboard {
                     arguments: {
                         NUM1: {
                             type: ArgumentType.NUMBER,
-			    defaultValue: 10
+			                defaultValue: 10
                         },
-			NUM2: {
+			            NUM2: {
                             type: ArgumentType.NUMBER,
                             defaultValue: 8
                         },
-			NUM3: {
+			            NUM3: {
                             type: ArgumentType.NUMBER,
                             defaultValue: 40
                         }			
@@ -353,14 +353,14 @@ class Rboard {
                     opcode: 'uart_init',
                     text: formatMessage({
                         id: 'rboard.uart_init',
-                        default: 'UART: baudrate [NUM] (initialize)',
+                        default: 'UART: baudrate [NUM1] (initialize)',
                     }),		    		    
                     blockType: BlockType.COMMAND,
                     arguments: {
-                        NUM: {
+                        NUM1: {
                             type: ArgumentType.NUMBER,
                             defaultValue: 19200
-			}			
+			            }			
                     }
                 },
                 {
@@ -393,36 +393,36 @@ class Rboard {
                     }),		    		    
                     blockType: BlockType.COMMAND,
                     arguments: {
-			TEXT: {
+			            TEXT: {
                             type: ArgumentType.STRING,
                             defaultValue: "xxxxx"
-			}
+			            }
                     }
                 }		
             ],
 	    
 	    //ドロップボックスメニューを使う場合は以下に定義が必要
             menus: {
-		menu1: {
-		    acceptReporters: true,
-                    items: this.MENU1
+		        menu_Pin: {
+		            acceptReporters: true,
+                    items: this.PinMenu_g
                 },
-                menu2:{
+                menu_OnOff:{
                     acceptReporters: false,
-                    items:this.MENU2
+                    items:this.OnOffMenu_g
                 },
-                menu3:{
+                menu_Led:{
                     acceptReporters: false,
-                    items:this.MENU3
+                    items:this.LedMenu_g
                 },
-		menu4:{
+		        menu_Switch:{
                     acceptReporters: false,
-                    items:this.MENU4
-		},
-		menu5:{
+                    items:this.SwitchMenu_g
+		        },
+		        menu_Adc:{
                     acceptReporters: false,
-                    items:this.MENU5
-		}		
+                    items:this.AdcMenu_g
+		        }		
             }
         };
     }
