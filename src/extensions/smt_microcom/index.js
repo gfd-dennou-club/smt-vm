@@ -40,7 +40,7 @@ class Microcom {
     static get PinMenu () {
         return PinMenu;
     }
-    get MENU1 () {
+    get PinMenuInfo () {
         return [
             {
                 text: '1',
@@ -69,7 +69,7 @@ class Microcom {
     static get OnOffMenu () {
         return OnOffMenu;
     }
-    get MENU2 () {
+    get OnOffMnenuInfo () {
         return [
             {
                 text: '1',
@@ -121,7 +121,7 @@ class Microcom {
                         },                        
                         VALUE: {
                             type: ArgumentType.STRING,
-                            menu: 'menu2',
+                            menu: 'onOffMenu',
                             defaultValue: OnOffMenu.OFF
                         },
                         
@@ -279,7 +279,7 @@ class Microcom {
                             type: ArgumentType.NUMBER,
                             defaultValue: 23
                         },
-			NUM2: {
+			            NUM2: {
                             type: ArgumentType.NUMBER,
                             defaultValue: 22
                         }
@@ -295,15 +295,15 @@ class Microcom {
                     arguments: {
                         NUM1: {
                             type: ArgumentType.NUMBER,
-			    defaultValue: 10
+			                defaultValue: 10
                         },
-			NUM2: {
+			            NUM2: {
                             type: ArgumentType.NUMBER,
-			    defaultValue: 40
+			                defaultValue: 40
                         },
                         NUM3: {
                             type: ArgumentType.NUMBER,
-			    defaultValue: 20
+			                defaultValue: 20
                         }
                     }
                 },		
@@ -317,9 +317,9 @@ class Microcom {
                     arguments: {
                         NUM1: {
                             type: ArgumentType.NUMBER,
-			    defaultValue: 10
+			                defaultValue: 10
                         },
-			NUM2: {
+			            NUM2: {
                             type: ArgumentType.NUMBER,
                             defaultValue: 8
                         }
@@ -335,7 +335,7 @@ class Microcom {
                     arguments: {
                         TEXT: {
                             type: ArgumentType.STRING,
-                            menu: 'menu1',
+                            menu: 'pinMenu',
                             defaultValue: PinMenu.PIN2
 			},
                         NUM: {
@@ -352,11 +352,11 @@ class Microcom {
                     }),		    		    
                     blockType: BlockType.COMMAND,
                     arguments: {
-			TEXT1: {
+			            TEXT1: {
                             type: ArgumentType.STRING,
-                            menu: 'menu1',
+                            menu: 'pinMenu',
                             defaultValue: PinMenu.PIN2
-			},
+			            },
                         TEXT2: {
                             type: ArgumentType.STRING,
                             defaultValue: "xxxxx"
@@ -371,24 +371,24 @@ class Microcom {
                     }),		    		    
                     blockType: BlockType.REPORTER,
                     arguments: {
-			TEXT: {
+			        TEXT: {
                             type: ArgumentType.STRING,
-                            menu: 'menu1',
+                            menu: 'pinMenu',
                             defaultValue: PinMenu.PIN2
-			}
+			        }
                     }
                 }		
             ],
 	    
 	    //ドロップボックスメニューを使う場合は以下に定義が必要
             menus: {
-		menu1: {
-		    acceptReporters: true,
-                    items: this.MENU1
+		        pinMenu: {
+		            acceptReporters: false,
+                    items: this.PinMenuInfo
                 },
-                menu2:{
+                onOffMenu:{
                     acceptReporters: false,
-                    items:this.MENU2
+                    items:this.OnOffMnenuInfo
                 }
             }
         };
