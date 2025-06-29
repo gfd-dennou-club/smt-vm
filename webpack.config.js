@@ -35,8 +35,7 @@ const webBuilder = new ScratchWebpackConfigBuilder(common)
         },
         resolve: {
             fallback: {
-                Buffer: require.resolve('buffer/'),
-                stream: require.resolve('stream-browserify')
+                Buffer: require.resolve('buffer/')
             }
         },
         output: {
@@ -106,7 +105,7 @@ const playgroundBuilder = webBuilder.clone()
         }
     })
     .addModuleRule({
-        test: require.resolve('scratch-storage/src/index.js'),
+        test: require.resolve('scratch-storage/src/index.ts'),
         loader: 'expose-loader',
         options: {
             exposes: 'ScratchStorage'
@@ -139,7 +138,7 @@ const playgroundBuilder = webBuilder.clone()
     ]));
 
 module.exports = [
+    playgroundBuilder.get(), // webpack-dev-server only looks at the first configuration
     nodeBuilder.get(),
-    webBuilder.get(),
-    playgroundBuilder.get()
+    webBuilder.get()
 ];
