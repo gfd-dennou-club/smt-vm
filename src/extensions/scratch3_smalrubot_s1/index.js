@@ -894,41 +894,41 @@ class Scratch3SmalrubotS1Blocks {
         return [
             {
                 text: formatMessage({
-                    id: 'smalrubotS1.positionsMenu.left',
-                    default: 'left',
-                    description: 'label for "left" element in position picker for Smalrubot S1 extension'
+                    id: 'smalrubotS1.sensorPositionsMenu.left',
+                    default: 'left(A4)',
+                    description: 'label for "left" sensor in position picker for Smalrubot S1 extension'
                 }),
                 value: 'left'
             },
             {
                 text: formatMessage({
-                    id: 'smalrubotS1.positionsMenu.right',
-                    default: 'right',
-                    description: 'label for "right" element in position picker for Smalrubot S1 extension'
+                    id: 'smalrubotS1.sensorPositionsMenu.right',
+                    default: 'right(A5)',
+                    description: 'label for "right" sensor in position picker for Smalrubot S1 extension'
                 }),
                 value: 'right'
             },
             {
                 text: formatMessage({
-                    id: 'smalrubotS1.positionsMenu.touch',
-                    default: 'touch',
-                    description: 'label for "touch" element in position picker for Smalrubot S1 extension'
+                    id: 'smalrubotS1.sensorPositionsMenu.touch',
+                    default: 'touch(A2)',
+                    description: 'label for "touch" sensor in position picker for Smalrubot S1 extension'
                 }),
                 value: 'touch'
             },
             {
                 text: formatMessage({
-                    id: 'smalrubotS1.positionsMenu.light',
-                    default: 'light',
-                    description: 'label for "light" element in position picker for Smalrubot S1 extension'
+                    id: 'smalrubotS1.sensorPositionsMenu.light',
+                    default: 'light(A6)',
+                    description: 'label for "light" sensor in position picker for Smalrubot S1 extension'
                 }),
                 value: 'light'
             },
             {
                 text: formatMessage({
-                    id: 'smalrubotS1.positionsMenu.sound',
-                    default: 'sound',
-                    description: 'label for "sound" element in position picker for Smalrubot S1 extension'
+                    id: 'smalrubotS1.sensorPositionsMenu.sound',
+                    default: 'sound(A7)',
+                    description: 'label for "sound" sensor in position picker for Smalrubot S1 extension'
                 }),
                 value: 'sound'
             }
