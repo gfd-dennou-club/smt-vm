@@ -161,7 +161,7 @@ class Kanirobo {
                         TEXT: { type: ArgumentType.STRING, defaultValue: "test" }
                     }
                 }
-/*
+
 		,
                 {
                     opcode: 'servo2',
@@ -232,7 +232,7 @@ class Kanirobo {
 			    defaultValue: 1000
 			}
                     }
-                } */
+                } 
             ],
             menus: {
                 menuMotorID:    { acceptReporters: false, items: createMenuItems('menuMotorID') },

@@ -12,10 +12,18 @@ const menuIconURI = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZ
 
 //メニュー定義
 const MCTBoardMenus = {
+    //GPIO 出力用
     menuONOFF: {
 	items: [
 	    { text: 'OFF', value: '0'},
 	    { text: 'ON',  value: '1'}
+	]
+    },
+    //GPIO 入力用
+    menuONOFF2: {
+	items: [
+	    { text: 'OFF', value: '1'},
+	    { text: 'ON',  value: '0'}
 	]
     },
     menuLED: {
@@ -40,13 +48,13 @@ const MCTBoardMenus = {
     },
     menuNOTE: {
 	items: [
-	    {id: 'mctboard.menuNote_C', default: 'C', value: '261'},
-	    {id: 'mctboard.menuNote_D', default: 'D', value: '291'},
-	    {id: 'mctboard.menuNote_E', default: 'E', value: '329'},
+	    {id: 'mctboard.menuNote_C', default: 'C', value: '262'},
+	    {id: 'mctboard.menuNote_D', default: 'D', value: '294'},
+	    {id: 'mctboard.menuNote_E', default: 'E', value: '330'},
 	    {id: 'mctboard.menuNote_F', default: 'F', value: '349'},
-	    {id: 'mctboard.menuNote_G', default: 'G', value: '391'},
+	    {id: 'mctboard.menuNote_G', default: 'G', value: '392'},
 	    {id: 'mctboard.menuNote_A', default: 'A', value: '440'},
-	    {id: 'mctboard.menuNote_H', default: 'H', value: '493'},
+	    {id: 'mctboard.menuNote_H', default: 'H', value: '494'},
 	    {id: 'mctboard.menuNote_hiC', default: 'hiC', value: '523'}
 	]
     },
@@ -60,15 +68,38 @@ const MCTBoardMenus = {
 	items: [
 	    {id: 'mctboard.menuRTC_str_datetime', default: '%Y%m%d %H%M%S', value: 'str_datetime' },
 	    {id: 'mctboard.menuRTC_str_date', default: '%Y-%m-%d', value: 'str_date' },
-	    {id: 'mctboard.menuRTC.str_time', default: '%H:%M:%S', value: 'str_time' },
+	    {id: 'mctboard.menuRTC_str_time', default: '%H:%M:%S', value: 'str_time' },
 	    {id: 'mctboard.menuRTC_year', default: '%Y', value: 'year' },
-	    {id: 'mctboard.menuRTC_year2', default: '%y', value: 'year2' },
-	    {id: 'mctboard.menuRTC_month', default: '%m', value: 'month' },
-	    {id: 'mctboard.menuRTC_day', default: '%d', value: 'day' },
+	    {id: 'mctboard.menuRTC_mon',  default: '%m', value: 'mon' },
+	    {id: 'mctboard.menuRTC_mday', default: '%d', value: 'mday' },
 	    {id: 'mctboard.menuRTC_wday', default: '%w', value: 'wday' },
 	    {id: 'mctboard.menuRTC_hour', default: '%H', value: 'hour' },
-	    {id: 'mctboard.menuRTC_min', default: '%M', value: 'min' },
-	    {id: 'mctboard.menuRTC_sec', default: '%S', value: 'sec' }
+	    {id: 'mctboard.menuRTC_min',  default: '%M', value: 'min' },
+	    {id: 'mctboard.menuRTC_sec',  default: '%S', value: 'sec' }
+	]
+    },
+    menuSNTP: {
+	items: [
+	    {id: 'mctboard.menuSNTP_year', default: '%Y', value: 'year' },
+	    {id: 'mctboard.menuSNTP_mon',  default: '%m', value: 'mon' },
+	    {id: 'mctboard.menuSNTP_mday', default: '%d', value: 'mday' },
+	    {id: 'mctboard.menuSNTP_wday', default: '%w', value: 'wday' },
+	    {id: 'mctboard.menuSNTP_hour', default: '%H', value: 'hour' },
+	    {id: 'mctboard.menuSNTP_min',  default: '%M', value: 'min' },
+	    {id: 'mctboard.menuSNTP_sec',  default: '%S', value: 'sec' }
+	]
+    },
+    menuSDopen: {
+	items: [
+	    {id: 'mctboard.menuSDopen_w', default: '(new)', value: 'w' },
+	    {id: 'mctboard.menuSDopen_a', default: '(add)', value: 'a' },
+	    {id: 'mctboard.menuSDopen_r', default: '(read)',value: 'r' }
+	]
+    },
+    menuSDread: {
+	items: [
+	    {id: 'mctboard.menuSDread_read', default: '(all lines)', value: 'read' },
+	    {id: 'mctboard.menuSDread_gets', default: '(1 line)',    value: 'gets' }
 	]
     }
 };
@@ -135,10 +166,10 @@ class Mctboard {
                     }),
                     blockType: BlockType.BOOLEAN,
                     arguments: {
-                        ONOFF1: { type: ArgumentType.STRING, menu: 'menuONOFF' },
-                        ONOFF2: { type: ArgumentType.STRING, menu: 'menuONOFF' },
-                        ONOFF3: { type: ArgumentType.STRING, menu: 'menuONOFF' },
-                        ONOFF4: { type: ArgumentType.STRING, menu: 'menuONOFF' }
+                        ONOFF1: { type: ArgumentType.STRING, menu: 'menuONOFF2' },
+                        ONOFF2: { type: ArgumentType.STRING, menu: 'menuONOFF2' },
+                        ONOFF3: { type: ArgumentType.STRING, menu: 'menuONOFF2' },
+                        ONOFF4: { type: ArgumentType.STRING, menu: 'menuONOFF2' }
                     }
                 },
                 {
@@ -150,7 +181,7 @@ class Mctboard {
                     blockType: BlockType.BOOLEAN,
                     arguments: {
                         PIN:   { type: ArgumentType.STRING, menu: 'menuSW' },
-                        ONOFF: { type: ArgumentType.STRING, menu: 'menuONOFF' }
+                        ONOFF: { type: ArgumentType.STRING, menu: 'menuONOFF2' }
                     }
                 },
 		{                    
@@ -205,10 +236,35 @@ class Mctboard {
                     }
                 },
                 {
+                    opcode: 'rtc_set',
+                    text: formatMessage({
+                        id: 'mctboard.rtc_set',
+                        default: 'RTC: set time, year=[YEAR],month=[MON],day=[DAY],wday=[WDAY],hour=[HOUR],minute=[MIN],second=[SEC]',
+                    }),		    		    
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+			YEAR: { type: ArgumentType.NUMBER, defaultValue: 2025 },
+			MON:  { type: ArgumentType.NUMBER, defaultValue: 12 },
+			DAY:  { type: ArgumentType.NUMBER, defaultValue: 31 },
+			WDAY: { type: ArgumentType.NUMBER, defaultValue: 1 },
+			HOUR: { type: ArgumentType.NUMBER, defaultValue: 23 },
+			MIN:  { type: ArgumentType.NUMBER, defaultValue: 59 },
+			SEC:  { type: ArgumentType.NUMBER, defaultValue: 30 },
+                    }
+                },
+                {
+                    opcode: 'rtc_read',
+                    text: formatMessage({
+                        id: 'mctboard.rtc_read',
+                        default: 'RTC: get time',
+                    }),		    		    
+                    blockType: BlockType.COMMAND
+                },
+                {
                     opcode: 'rtc_date',
                     text: formatMessage({
                         id: 'mctboard.rtc_date',
-                        default: 'RTC: get time, format = [TIME]',
+                        default: 'RTC: [TIME]',
                     }),		    		    
                     blockType: BlockType.REPORTER,
                     arguments: {
@@ -219,21 +275,13 @@ class Mctboard {
 		    opcode: 'wifi_init',
 		    text: formatMessage({
                         id: 'mctboard.wifi_init',
-                        default: 'Wi-Fi: SSID = [SSID], passphrase = [PASS]',
+                        default: 'Wi-Fi: initialize, SSID = [SSID], passphrase = [PASS]',
                     }),		    		    
                     blockType: BlockType.COMMAND,
                     arguments: {
 			SSID: { type: ArgumentType.STRING, defaultValue: "SugiyamaLab" },
 			PASS: { type: ArgumentType.STRING, defaultValue: "hogehoge" }
                     }
-                },
-                {
-                    opcode: 'wifi_connected',
-                    text: formatMessage({
-                        id: 'mctboard.wifi_connected',
-                        default: 'Wi-Fi: connected?'
-                    }),		    		    
-                    blockType: BlockType.BOOLEAN
                 },
                 {
                     opcode: 'http_get',
@@ -259,6 +307,33 @@ class Mctboard {
                     }
                 },
                 {
+                    opcode: 'wifi_connected',
+                    text: formatMessage({
+                        id: 'mctboard.wifi_connected',
+                        default: 'Wi-Fi: connected?'
+                    }),		    		    
+                    blockType: BlockType.BOOLEAN
+                },
+                {
+                    opcode: 'sntp_init',
+                    text: formatMessage({
+                        id: 'mctboard.sntp_init',
+                        default: 'SNTP: initialize'
+                    }),		    		    
+                    blockType: BlockType.COMMAND
+                },
+                {
+                    opcode: 'sntp_date',
+                    text: formatMessage({
+                        id: 'mctboard.sntp_date',
+                        default: 'SNTP: [TIME]',
+                    }),		    		    
+                    blockType: BlockType.REPORTER,
+                    arguments: {
+			TIME: { type: ArgumentType.STRING, menu: 'menuSNTP' }
+                    }
+                },
+                {
                     opcode: 'gps_puts',
                     text: formatMessage({
                         id: 'mctboard.gps_puts',
@@ -266,7 +341,7 @@ class Mctboard {
                     }),		    		    
                     blockType: BlockType.COMMAND,
                     arguments: {
-			COMM: { type: ArgumentType.STRING, defaultValue: "$PMTK314,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*29\r\n" }
+			COMM: { type: ArgumentType.STRING, defaultValue: "$PMTK314,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*29" }
                     }
                 },
                 {
@@ -277,6 +352,53 @@ class Mctboard {
                     }),
                     blockType: BlockType.REPORTER,
                 },
+                {
+                    opcode: 'gps_clear',
+                    text: formatMessage({ id: 'mctboard.gps_clear', default: 'GPS: buffer clear'}),
+                    blockType: BlockType.COMMAND
+                },
+                {
+                    opcode: 'sd_open',
+                    text: formatMessage({
+                        id: 'mctboard.sd_open',
+                        default: 'SD: file open, file = [FILE] [MODE]'
+                    }),		    		    
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+			FILE: { type: ArgumentType.STRING, defaultValue: "filename.txt" },
+			MODE: { type: ArgumentType.STRING, menu: 'menuSDopen' }
+                    }
+                },
+                {
+                    opcode: 'sd_close',
+                    text: formatMessage({
+                        id: 'mctboard.sd_close',
+                        default: 'SD: file close'
+                    }),		    		    
+                    blockType: BlockType.COMMAND,
+                },
+                {
+                    opcode: 'sd_puts',
+                    text: formatMessage({
+                        id: 'mctboard.sd_puts',
+                        default: 'SD: puts [TEXT]'
+                    }),		    		    
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+			TEXT: { type: ArgumentType.STRING, defaultValue: "Hello World!" }
+                    }
+                },
+                {
+                    opcode: 'sd_read',
+                    text: formatMessage({
+                        id: 'mctboard.sd_read',
+                        default: 'SD: read from file [MODE]'
+                    }),
+                    blockType: BlockType.REPORTER,
+                    arguments: {
+			MODE: { type: ArgumentType.STRING, menu: 'menuSDread' }
+                    }		    
+                },		
                 {
                     opcode: 'puts',
                     text: formatMessage({ id: 'kanirobo.puts', default: 'output [TEXT]'}),
@@ -289,11 +411,15 @@ class Mctboard {
             //ドロップボックスメニューを使う場合は以下に定義が必要
             menus: {
 		menuONOFF: { acceptReporters: false, items: createMenuItems('menuONOFF') },
+		menuONOFF2:{ acceptReporters: false, items: createMenuItems('menuONOFF2') },
 		menuLED:   { acceptReporters: false, items: createMenuItems('menuLED') },
 		menuSW:    { acceptReporters: false, items: createMenuItems('menuSW') },
 		menuNOTE:  { acceptReporters: false, items: createMenuItems('menuNOTE') },
 		menuLCD:   { acceptReporters: false, items: createMenuItems('menuLCD') },
-		menuRTC:   { acceptReporters: false, items: createMenuItems('menuRTC') }
+		menuSNTP:  { acceptReporters: false, items: createMenuItems('menuSNTP') },
+		menuRTC:   { acceptReporters: false, items: createMenuItems('menuRTC') },
+		menuSDopen:{ acceptReporters: false, items: createMenuItems('menuSDopen') },
+		menuSDread:{ acceptReporters: false, items: createMenuItems('menuSDread') }
             }
         };
     }
@@ -308,13 +434,22 @@ class Mctboard {
     buzzer_stop(args) {}
     temp() {}
     monitor(){}
+    rtc_set(){}
     rtc_date(){}
+    rtc_read(){}
     wifi_init(){}
     wifi_connected(){}
+    sntp_init(){}
+    sntp_date(){}
     http_get(){}
     http_post(){}
     gps_puts(){}
     gps_gets(){}
+    gps_clear(){}
+    sd_open(){}
+    sd_close(){}
+    sd_puts(){}
+    sd_read(){}
     puts(){}
 }
 

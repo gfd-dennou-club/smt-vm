@@ -12,10 +12,18 @@ const menuIconURI = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZ
 
 //メニューで使う配列
 const RboardMenus = {
+    //GPIO 出力用
     menuONOFF: {
 	items: [
 	    { text: 'OFF', value: "0" },
 	    { text: 'ON',  value: "1" }
+	]
+    },
+    //GPIO 入力用
+    menuONOFF2: {
+	items: [
+	    { text: 'OFF', value: "1" },
+	    { text: 'ON',  value: "0" }
 	]
     },
     menuLED: {
@@ -89,7 +97,7 @@ class Rboard {
                     }),
                     blockType:BlockType.BOOLEAN,
 		    arguments: {
-                        ONOFF: { type: ArgumentType.STRING, menu: 'menuONOFF' }
+                        ONOFF: { type: ArgumentType.STRING, menu: 'menuONOFF2' }
                     }
                 },
                 {                    
@@ -131,6 +139,7 @@ class Rboard {
 	    //ドロップボックスメニューを使う場合は以下に定義が必要
             menus: {
 		menuONOFF: { acceptReporters: false, items: createMenuItems('menuONOFF') },
+		menuONOFF2:{ acceptReporters: false, items: createMenuItems('menuONOFF2') },
 		menuLED:   { acceptReporters: false, items: createMenuItems('menuLED') },
 		menuADC:   { acceptReporters: false, items: createMenuItems('menuADC') },
             }
