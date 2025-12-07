@@ -40,7 +40,7 @@ class Microcom {
                 {
                     opcode :'gpio_write',
                     text: formatMessage({
-			id: 'microcom.gpio_write',
+			            id: 'microcom.gpio_write',
                         default:'GPIO (write): set [PIN]pin [VALUE]',
                     }),
                     blockType:BlockType.COMMAND,
@@ -48,15 +48,14 @@ class Microcom {
                         PIN: {
                             type: ArgumentType.NUMBER,
                             defaultValue: 13
-                        },                        
+                        },
                         VALUE: {
                             type: ArgumentType.NUMBER,
                             defaultValue: 1
                         },
-                        
                     }
                 },
-                {                    
+                {
                     opcode :'gpio_input_init',
                     text: formatMessage({
                         id: 'microcom.gpio_input_init',
@@ -70,10 +69,10 @@ class Microcom {
                         },
                     }
                 },
-                {                    
+                {
                     opcode :'gpio_read',
                     text: formatMessage({
-			id: 'microcom.gpio_read',
+			            id: 'microcom.gpio_read',
                         default:'GPIO (input): read value from [PIN]pin',
                     }),
                     blockType:BlockType.REPORTER,
@@ -84,7 +83,7 @@ class Microcom {
                         },
                     }
                 },
-                {                    
+                {
                     opcode :'pwm_init',
                     text: formatMessage({
                         id: 'microcom.pwm_init',
@@ -110,7 +109,7 @@ class Microcom {
                         },
                     }
                 },
-                {                    
+                {
                     opcode :'pwm_duty',
                     text: formatMessage({
                         id: 'microcom.pwm_duty',
@@ -121,12 +120,11 @@ class Microcom {
                         PIN: {
                             type: ArgumentType.NUMBER,
                             defaultValue: 15
-                        },                        
+                        },
                         DUTY: {
                             type: ArgumentType.NUMBER,
                             defaultValue: 100
                         },
-                        
                     }
                 },
                 {
@@ -140,12 +138,11 @@ class Microcom {
                         PIN: {
                             type: ArgumentType.NUMBER,
                             defaultValue: 15
-                        },                        
+                        },
                         FREQ: {
                             type: ArgumentType.NUMBER,
                             defaultValue: 440
                         },
-                        
                     }
                 },
                 {
@@ -159,15 +156,14 @@ class Microcom {
                         PIN: {
                             type: ArgumentType.NUMBER,
                             defaultValue: 15
-                        },                        
+                        },
                         PULSE: {
                             type: ArgumentType.NUMBER,
                             defaultValue: 1000
                         },
-                        
                     }
                 },
-                {                    
+                {
                     opcode :'adc_init',
                     text: formatMessage({
                         id: 'microcom.adc_init',
@@ -188,11 +184,11 @@ class Microcom {
                         default:'ADC: read raw_value from [PIN]pin',
                     }),
                     blockType:BlockType.REPORTER,
-                    arguments: {                     
+                    arguments: {
                         PIN: {
                             type: ArgumentType.NUMBER,
                             defaultValue: 39
-                        },                        
+                        },
                     }
                 },
                 {
@@ -202,18 +198,18 @@ class Microcom {
                         default:'ADC: read voltage from [PIN]pin',
                     }),
                     blockType:BlockType.REPORTER,
-                    arguments: {                     
+                    arguments: {
                         PIN: {
                             type: ArgumentType.NUMBER,
                             defaultValue: 39
-                        },                        
+                        },
                     }
                 },
                 {
                     opcode: 'i2c_init',
                     text: formatMessage({
                         id: 'microcom.i2c_init',
-                        default: 'I2C: initialize (SCL = [SCL]pin, SDA = [SDA]pin)' 
+                        default: 'I2C: initialize (SCL = [SCL]pin, SDA = [SDA]pin)'
                     }),
                     blockType: BlockType.COMMAND,
                     arguments: {
@@ -221,7 +217,7 @@ class Microcom {
                             type: ArgumentType.NUMBER,
                             defaultValue: 23
                         },
-			SDA: {
+			            SDA: {
                             type: ArgumentType.NUMBER,
                             defaultValue: 22
                         }
@@ -232,29 +228,29 @@ class Microcom {
                     text: formatMessage({
                         id: 'microcom.i2c_write',
                         default: 'I2C: output (address = [ADDR], command = [COMM])'
-                    }),		    
+                    }),
                     blockType: BlockType.COMMAND,
                     arguments: {
                         ADDR: {
                             type: ArgumentType.NUMBER,
-			    defaultValue: 0x73
+			                defaultValue: 0x73
                         },
-			COMM: {
+			            COMM: {
                             type: ArgumentType.STRING,
-			    defaultValue: '[0x00, 0x21]'
+			                defaultValue: '[0x00, 0x21]'
                         }
                     }
-                },		
+                },
                 {
                     opcode: 'i2c_read',
                     text: formatMessage({
                         id: 'microcom.i2c_read',
                         default: 'I2C: input (address = [ADDR], [BYTES] bytes)'
-                    }),		    		    
+                    }),
                     blockType: BlockType.REPORTER,
                     arguments: {
                         ADDR: {
-                            type: ArgumentType.NUMBER, 
+                            type: ArgumentType.NUMBER,
 			    defaultValue: 0x73
                         },
 			BYTES: {
@@ -262,23 +258,23 @@ class Microcom {
                             defaultValue: 1
                         }
                     }
-                },		
+                },
                 {
                     opcode: 'uart_init',
                     text: formatMessage({
                         id: 'microcom.uart_init',
                         default: 'UART-[UART]: initiralize (Bourate = [RATE])',
-                    }),		    		    
+                    }),
                     blockType: BlockType.COMMAND,
                     arguments: {
                         UART: {
                             type: ArgumentType.NUMBER,
                             defaultValue: 2
-			},
+			            },
                         RATE: {
                             type: ArgumentType.NUMBER,
                             defaultValue: 9600
-			}			
+			            }
                     }
                 },
                 {
@@ -286,13 +282,13 @@ class Microcom {
                     text: formatMessage({
                         id: 'microcom.uart_puts',
                         default: 'UART-[UART]: puts, command = [COMM]',
-                    }),		    		    
+                    }),
                     blockType: BlockType.COMMAND,
                     arguments: {
-			UART: {
+			            UART: {
                             type: ArgumentType.NUMBER,
                             defaultValue: 2
-			},
+			            },
                         COMM: {
                             type: ArgumentType.STRING,
                             defaultValue: "Output String"
@@ -304,41 +300,41 @@ class Microcom {
                     text: formatMessage({
                         id: 'microcom.uart_gets',
                         default: 'UART-[UART]: gets',
-                    }),		    		    
+                    }),
                     blockType: BlockType.REPORTER,
                     arguments: {
-			UART: {
+			            UART: {
                             type: ArgumentType.NUMBER,
                             defaultValue: 2
-			}
+			            }
                     }
-                },		
+                },
                 {
                     opcode: 'uart_txclear',
                     text: formatMessage({
                         id: 'microcom.uart_txclear',
                         default: 'UART-[UART] clear tx_buffer',
-                    }),		    		    
+                    }),
                     blockType: BlockType.COMMAND,
                     arguments: {
-			UART: {
+			            UART: {
                             type: ArgumentType.NUMBER,
                             defaultValue: 2
-			}
+			            }
                     }
-                },		
+                },
                 {
                     opcode: 'uart_rxclear',
                     text: formatMessage({
                         id: 'microcom.uart_rxclear',
                         default: 'UART-[UART] clear rx_buffer',
-                    }),		    		    
+                    }),
                     blockType: BlockType.COMMAND,
                     arguments: {
-			UART: {
+			            UART: {
                             type: ArgumentType.NUMBER,
                             defaultValue: 2
-			}
+			            }
                     }
                 },
                 {
@@ -346,35 +342,35 @@ class Microcom {
                     text: formatMessage({
                         id: 'kanirobo.puts',
                         default: 'output [TEXT]',
-                    }),		    		    
+                    }),
                     blockType: BlockType.COMMAND,
                     arguments: {
-			TEXT: { type: ArgumentType.STRING, defaultValue: "xxxxx" }
+			            TEXT: { type: ArgumentType.STRING, defaultValue: "xxxxx" }
                     }
-		}
-            ],	    
+		        }
+            ],
         };
     }
 
-    // ブロックがクリックされた時の挙動．何もしない．   
+    // ブロックがクリックされた時の挙動．何もしない
     gpio_output_init () {}
     gpio_write () {}
     gpio_input_init () {}
-    gpio_input () {}
-    pwm_init () {} 
+    gpio_read () {}
+    pwm_init () {}
     pwm_duty () {}
     pwm_frequency () {}
     pwm_pulse () {}
     adc_init () {}
-    adc_raw () {}    
-    adc_volt () {}    
-    i2c_init () {}    
+    adc_raw () {}
+    adc_volt () {}
+    i2c_init () {}
     i2c_write () {}
     i2c_read () {}
     uart_init () {}
-    uart_puts () {}    
-    uart_gets () {}    
-    uart_txclear () {}    
+    uart_puts () {}
+    uart_gets () {}
+    uart_txclear () {}
     uart_rxclear () {}
     puts () {}
 }
