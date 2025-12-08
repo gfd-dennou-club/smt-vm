@@ -251,9 +251,9 @@ class Microcom {
                     arguments: {
                         ADDR: {
                             type: ArgumentType.NUMBER,
-			    defaultValue: 0x73
+			                defaultValue: 0x73
                         },
-			BYTES: {
+			            BYTES: {
                             type: ArgumentType.NUMBER,
                             defaultValue: 1
                         }
