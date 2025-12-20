@@ -210,6 +210,20 @@ class Microcom {
                     }
                 },
                 {
+                    opcode: 'i2c_num',
+                    text: formatMessage({
+                        id: 'microcom.i2c_num',
+                        default: 'I2C: 0x[NUM]' 
+                    }),
+                    blockType: BlockType.REPORTER,
+                    arguments: {
+			NUM: {
+                            type: ArgumentType.STRING,
+                            defaultValue: '77'
+                        }
+                    }
+                },
+                {
                     opcode: 'i2c_init',
                     text: formatMessage({
                         id: 'microcom.i2c_init',
@@ -231,17 +245,21 @@ class Microcom {
                     opcode: 'i2c_write',
                     text: formatMessage({
                         id: 'microcom.i2c_write',
-                        default: 'I2C: output (address = [ADDR], command = [COMM])'
+                        default: 'I2C: output (address = [ADDR], command = [COMM1], [COMM2])'
                     }),		    
                     blockType: BlockType.COMMAND,
                     arguments: {
                         ADDR: {
-                            type: ArgumentType.NUMBER,
-			    defaultValue: 0x73
-                        },
-			COMM: {
                             type: ArgumentType.STRING,
-			    defaultValue: '[0x00, 0x21]'
+			    defaultValue: '0x73'
+                        },
+			COMM1: {
+                            type: ArgumentType.STRING,
+			    defaultValue: '0x00'
+                        },
+			COMM2: {
+                            type: ArgumentType.STRING,
+			    defaultValue: '0x00'
                         }
                     }
                 },		
@@ -254,8 +272,8 @@ class Microcom {
                     blockType: BlockType.REPORTER,
                     arguments: {
                         ADDR: {
-                            type: ArgumentType.NUMBER, 
-			    defaultValue: 0x73
+                            type: ArgumentType.STRING, 
+			    defaultValue: '0x73'
                         },
 			BYTES: {
                             type: ArgumentType.NUMBER,

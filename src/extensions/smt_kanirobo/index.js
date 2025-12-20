@@ -56,53 +56,6 @@ const KaniroboMenus = {
             { text: '90', value: '2000' }
         ]
     }
-/*
-    ,
-    menuGPIO: {
-        items: [
-            { text: '0', value: '0' },
-            { text: '1', value: '1' },
-            { text: '2', value: '2' },
-            { text: '3', value: '3' },
-            { text: '4', value: '4' },
-            { text: '5', value: '5' },
-            { text: '6', value: '6' },
-            { text: '7', value: '7' },
-            { text: '8', value: '8' },
-            { text: '9', value: '9' },
-            { text: '10', value: '10' },
-            { text: '11', value: '11' },
-            { text: '12', value: '12' },
-            { text: '13', value: '13' },
-            { text: '14', value: '14' },
-            { text: '15', value: '15' },
-            { text: '16', value: '16' },
-            { text: '17', value: '17' },
-            { text: '18', value: '18' },
-            { text: '19', value: '19' },
-            { text: '20', value: '20' },
-            { text: '21', value: '21' },
-            { text: '22', value: '22' },
-            { text: '23', value: '23' },
-            { text: '24', value: '24' },
-            { text: '25', value: '25' },
-            { text: '26', value: '26' },
-            { text: '27', value: '27' },
-            { text: '28', value: '28' },
-            { text: '29', value: '29' },
-            { text: '30', value: '30' },
-            { text: '31', value: '31' },
-            { text: '32', value: '32' },
-            { text: '33', value: '33' },
-            { text: '34', value: '34' },
-            { text: '35', value: '35' },
-            { text: '36', value: '36' },
-            { text: '37', value: '37' },
-            { text: '38', value: '38' },
-            { text: '39', value: '39' },
-            { text: '40', value: '40' }
-        ]
-    }*/
 };
 
 function createMenuItems(menuKey) {
@@ -161,78 +114,6 @@ class Kanirobo {
                         TEXT: { type: ArgumentType.STRING, defaultValue: "test" }
                     }
                 }
-
-		,
-                {
-                    opcode: 'servo2',
-                    text: formatMessage({ id: 'kanirobo.servo2', default: 'Set servo motor angle [AGL]' }),
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-                        AGL: {
-			    type: ArgumentType.NUMBER,
-			    defaultValue: 1000
-			}
-                    }
-                },
-                {
-                    opcode: 'servo3',
-                    text: formatMessage({ id: 'kanirobo.servo3', default: 'Set servo motor angle [AGL]' }),
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-                        AGL: {
-			    type: ArgumentType.NUMBER,
-			    defaultValue: 1000
-			}
-                    }
-                },
-                {
-                    opcode: 'servo4',
-                    text: formatMessage({ id: 'kanirobo.servo4', default: 'Set [PIN] pin as servo, angle [AGL]' }),
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-                        AGL: {
-			    type: ArgumentType.NUMBER,
-			    defaultValue: 1000
-			},			
-                        PIN: {
-			    type: ArgumentType.NUMBER,
-			    defaultValue: 10
-			}
-                    }
-                },
-                {
-                    opcode: 'servo5',
-                    text: formatMessage({ id: 'kanirobo.servo5', default: 'Set [PIN] pin as PWM' }),
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-                        PIN: {
-			    type: ArgumentType.NUMBER,
-			    defaultValue: 10
-			}
-                    }
-                },
-                {
-                    opcode: 'servo6',
-                    text: formatMessage({ id: 'kanirobo.servo6', default: 'Create Instance [INSTANCE] as PWM using [PIN]' }),
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-                        PIN: {
-			    type: ArgumentType.NUMBER,
-			    defaultValue: 10
-			}
-                    }
-                },
-                {
-                    opcode: 'instance',
-                    text: formatMessage({ id: 'kanirobo.instance', default: 'PIN [GPIO]' }),
-                    blockType: BlockType.REPORTER,
-                    arguments: {
-                        GPIO: {
-			    type: ArgumentType.NUMBER,
-			    defaultValue: 1000
-			}
-                    }
-                } 
             ],
             menus: {
                 menuMotorID:    { acceptReporters: false, items: createMenuItems('menuMotorID') },
@@ -241,7 +122,6 @@ class Kanirobo {
                 menuSensorID:   { acceptReporters: false, items: createMenuItems('menuSensorID') },
                 menuServoID:    { acceptReporters: false, items: createMenuItems('menuServoID') },
                 menuServoAngle: { acceptReporters: false, items: createMenuItems('menuServoAngle') },
-//                menuGPIO:       { acceptReporters: false, items: createMenuItems('menuGPIO') }
             }
         };
     }
