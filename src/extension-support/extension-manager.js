@@ -32,7 +32,8 @@ const builtinExtensions = {
     microcom:   () => require('../extensions/smt_microcom'),
     mctboard:   () => require('../extensions/smt_mctboard'),
     rboard:     () => require('../extensions/smt_rboard'),
-    peripherals:() => require('../extensions/smt_peripherals')
+    peripherals:() => require('../extensions/smt_peripherals'),
+    rboard0:    () => require('../extensions/smt_rboard0')
 };
 
 /**
