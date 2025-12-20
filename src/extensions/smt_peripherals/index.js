@@ -15,9 +15,15 @@ const menuIconURI = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZ
 const PeripheralsMenus = {
     menuSCD30: {
 	items: [
-	    { id: 'peripherals.menuSCD30_temp', default: 'Temperature', value: 'temp' },
-	    { id: 'peripherals.menuSCD30_humi', default: 'Humidity',    value: 'humi' },
-	    { id: 'peripherals.menuSCD30_co2',  default: 'CO2',         value: 'co2' }
+	    { id: 'peripherals.menu_temp', default: 'Temperature', value: 'temp' },
+	    { id: 'peripherals.menu_humi', default: 'Humidity',    value: 'humi' },
+	    { id: 'peripherals.menu_co2',  default: 'CO2',         value: 'co2' }
+	]
+    },
+    menuDPS310: {
+	items: [
+	    { id: 'peripherals.menu_temp', default: 'Temperature', value: 'measure_temperature_once' },
+	    { id: 'peripherals.menu_pres', default: 'Pressure',    value: 'measure_pressure_once' }
 	]
     },
     menuILI934Xline: {
@@ -37,7 +43,7 @@ const PeripheralsMenus = {
 	items: [
 	    { id: 'peripherals.menuILI934Xcolor_white',  default: 'white',  value: '[0xFF, 0xFF, 0xFF]' },
 	    { id: 'peripherals.menuILI934Xcolor_black',  default: 'black',  value: '[0x00, 0x00, 0x00]' },
-	    { id: 'peripherals.menuILI934Xcolor_red',    default: 'red',    value: '[0xFF, 0x00, 0x00]' },
+	    { id: 'peripherals.menuILI934Xcolor_red',    default: 'red',    OAvalue: '[0xFF, 0x00, 0x00]' },
 	    { id: 'peripherals.menuILI934Xcolor_green',  default: 'green',  value: '[0x00, 0xFF, 0x00]' },
 	    { id: 'peripherals.menuILI934Xcolor_blue',   default: 'blue',   value: '[0x00, 0x00, 0xFF]' },
 	    { id: 'peripherals.menuILI934Xcolor_yellow', default: 'yellow', value: '[0xFF, 0xFF, 0x00]' },
@@ -70,17 +76,25 @@ class Peripherals {
             menuIconURI: menuIconURI,
             blockIconURI: blockIconURI,
             blocks: [
+//                {
+//                    opcode: 'i2c_init',
+//                    text: formatMessage({ id: 'peripherals.i2c_init', default: 'I2C: init' }),
+//                    blockType: BlockType.COMMAND,
+//                },
                 {
-                    opcode: 'scd30_status',
-                    text: formatMessage({ id: 'peripherals.scd30_status', default: 'SCD30: ready?' }),
-                    blockType: BlockType.BOOLEAN
-                },
-                {
-                    opcode: 'scd30_measure',
-                    text: formatMessage({ id: 'peripherals.sdc30_measure', default: 'SCD30: [SENS]' }),
+                    opcode: 'scd30',
+                    text: formatMessage({ id: 'peripherals.sdc30_measure', default: 'SCD30: [OBS]' }),
                     blockType: BlockType.REPORTER,
 		    arguments: {
-                        SENS: { type: ArgumentType.STRING, menu: 'menuSCD30' }
+                        OBS: { type: ArgumentType.STRING, menu: 'menuSCD30' }
+                    }
+                },
+                {
+                    opcode: 'dps310',
+                    text: formatMessage({ id: 'peripherals.dps310_measure', default: 'DPS310: [OBS]' }),
+                    blockType: BlockType.REPORTER,
+		    arguments: {
+                        OBS: { type: ArgumentType.STRING, menu: 'menuDPS310' }
                     }
                 },
                 {
@@ -132,6 +146,7 @@ class Peripherals {
             ],
             menus: {
                 menuSCD30:         { acceptReporters: false, items: createMenuItems('menuSCD30')},
+                menuDPS310:        { acceptReporters: false, items: createMenuItems('menuDPS310')},
                 menuILI934Xline:   { acceptReporters: false, items: createMenuItems('menuILI934Xline')},
                 menuILI934Xcircle: { acceptReporters: false, items: createMenuItems('menuILI934Xcircle')},
                 menuILI934Xcolor:  { acceptReporters: false, items: createMenuItems('menuILI934Xcolor')},
@@ -140,8 +155,9 @@ class Peripherals {
     }
 
     // クリックされた時の挙動．何もしない．   
-    scd30_status() {}
-    scd30_measure() {}
+    i2c_init() {}
+    scd30() {}
+    dps310() {}
     ili934x_write_line() {}
     ili934x_write_circle() {}
     ili934x_write_string() {}
