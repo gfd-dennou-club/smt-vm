@@ -22,6 +22,14 @@ const nodeBuilder = new ScratchWebpackConfigBuilder(common)
         }
     })
     .addModuleRule({
+        test: /\.mjs$/,
+        include: /node_modules/,
+        type: 'javascript/auto',
+        resolve: {
+            fullySpecified: false
+        }
+    })
+    .addModuleRule({
         test: /\.(svg|png|wav|mp3|gif|jpg)$/,
         resourceQuery: /^$/, // reject any query string
         type: 'asset' // let webpack decide on the best type of asset
@@ -42,6 +50,14 @@ const webBuilder = new ScratchWebpackConfigBuilder(common)
             library: {
                 name: 'VirtualMachine'
             }
+        }
+    })
+    .addModuleRule({
+        test: /\.mjs$/,
+        include: /node_modules/,
+        type: 'javascript/auto',
+        resolve: {
+            fullySpecified: false
         }
     })
     .addModuleRule({
