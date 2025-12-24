@@ -56,6 +56,7 @@ class Scratch3MeshBlocks {
     }
 
     constructor (runtime) {
+        log.info('Loading OLD Mesh extension (SkyWay)');
         /**
          * The runtime instantiating this block package.
          * @type {Runtime}

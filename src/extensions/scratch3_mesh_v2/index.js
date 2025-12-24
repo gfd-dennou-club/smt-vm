@@ -18,8 +18,11 @@ const blockIconURI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAYA
 const MESH_V2_HOST_ID = 'mesh_v2_host';
 
 class Scratch3MeshV2Blocks {
+    /**
+     * @return {string} - the name of this extension.
+     */
     static get EXTENSION_NAME () {
-        return 'Mesh V2';
+        return 'Mesh V2 (GraphQL)';
     }
 
     static get EXTENSION_ID () {
@@ -27,20 +30,21 @@ class Scratch3MeshV2Blocks {
     }
 
     constructor (runtime) {
+        log.info('Loading NEW Mesh V2 extension (GraphQL)');
         this.runtime = runtime;
         this.domain = getDomainFromUrl();
         this.nodeId = uuidv4().replaceAll('-', '');
         
-        this.meshService = null;
-
-        if (this.domain) {
-            try {
-                createClient();
-                this.meshService = new MeshV2Service(this.nodeId, this.domain);
-                log.info(`Mesh V2: Initialized with domain ${this.domain} and nodeId ${this.nodeId}`);
-            } catch (error) {
-                log.error(`Failed to initialize Mesh V2: ${error}`);
+        try {
+            createClient();
+            this.meshService = new MeshV2Service(this.nodeId, this.domain);
+            log.info(`Mesh V2: Initialized with domain ${this.domain || 'null (auto)'} and nodeId ${this.nodeId}`);
+            
+            if (this.runtime.extensionManager.isExtensionLoaded('mesh')) {
+                log.warn('Mesh V2: WARNING - Old Mesh extension (SkyWay) is also loaded. This may cause conflicts and unwanted network traffic.');
             }
+        } catch (error) {
+            log.error(`Failed to initialize Mesh V2: ${error}`);
         }
 
         this.runtime.registerPeripheralExtension(Scratch3MeshV2Blocks.EXTENSION_ID, this);
@@ -128,9 +132,9 @@ class Scratch3MeshV2Blocks {
             const peripherals = groups.map(group => ({
                 peripheralId: group.id,
                 name: formatMessage({
-                    id: 'mesh.clientPeripheralName',
-                    default: 'Join Mesh [{ MESH_ID }]',
-                    description: 'label for joining Mesh in connect modal for Mesh extension'
+                    id: 'mesh.clientPeripheralNameV2',
+                    default: 'Join Mesh V2 [{ MESH_ID }]',
+                    description: 'label for joining Mesh in connect modal for Mesh V2 extension'
                 }, {MESH_ID: group.name}),
                 rssi: 0,
                 domain: group.domain
@@ -140,9 +144,9 @@ class Scratch3MeshV2Blocks {
             peripherals.unshift({
                 peripheralId: MESH_V2_HOST_ID,
                 name: formatMessage({
-                    id: 'mesh.hostPeripheralName',
-                    default: 'Become Mesh Host [{ MESH_ID }]',
-                    description: 'label for becoming Host Mesh in connect modal for Mesh extension'
+                    id: 'mesh.hostPeripheralNameV2',
+                    default: 'Become Mesh V2 Host [{ MESH_ID }]',
+                    description: 'label for becoming Host Mesh in connect modal for Mesh V2 extension'
                 }, {MESH_ID: this.nodeId.slice(0, 6)}),
                 rssi: 0
             });
@@ -193,21 +197,21 @@ class Scratch3MeshV2Blocks {
         if (this.meshService && this.meshService.groupId) {
             if (this.meshService.isHost) {
                 return formatMessage({
-                    id: 'mesh.registeredHost',
-                    default: 'Registered Host Mesh [{ MESH_ID }]',
-                    description: 'label for registered Host Mesh in connect modal for Mesh extension'
+                    id: 'mesh.registeredHostV2',
+                    default: 'Registered Host Mesh V2 [{ MESH_ID }]',
+                    description: 'label for registered Host Mesh in connect modal for Mesh V2 extension'
                 }, {MESH_ID: this.meshService.groupId});
             }
             return formatMessage({
-                id: 'mesh.joinedMesh',
-                default: 'Joined Mesh [{ MESH_ID }]',
-                description: 'label for joined Mesh in connect modal for Mesh extension'
+                id: 'mesh.joinedMeshV2',
+                default: 'Joined Mesh V2 [{ MESH_ID }]',
+                description: 'label for joined Mesh in connect modal for Mesh V2 extension'
             }, {MESH_ID: this.meshService.groupId});
         }
         return formatMessage({
-            id: 'mesh.notConnected',
-            default: 'Not connected',
-            description: 'label for not connected in connect modal for Mesh extension'
+            id: 'mesh.notConnectedV2',
+            default: 'Not connected (Mesh V2)',
+            description: 'label for not connected in connect modal for Mesh V2 extension'
         });
     }
 
