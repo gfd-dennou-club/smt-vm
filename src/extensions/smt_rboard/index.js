@@ -37,7 +37,7 @@ const RboardMenus = {
     menuADC: {
 	items: [
 	    { text: 'ADC_1', value: '20' },
-	    { text: 'ADC_2', value: '19' }
+	    { text: 'ADC_2', value: '18' }
 	]
     }
 };
