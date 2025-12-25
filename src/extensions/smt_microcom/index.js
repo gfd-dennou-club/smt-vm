@@ -88,7 +88,7 @@ class Microcom {
                     opcode :'pwm_init',
                     text: formatMessage({
                         id: 'microcom.pwm_init',
-                        default:'PWM: initialize [PIN]pin (timer = [TIMER], channel = [CHAN], frequency = [FREQ])',
+                        default:'PWM: initialize [PIN]pin (timer = [TIMER], frequency = [FREQ])',
                     }),
                     blockType:BlockType.COMMAND,
                     arguments: {
@@ -97,10 +97,6 @@ class Microcom {
                             defaultValue: 15
                         },
                         TIMER: {
-                            type: ArgumentType.NUMBER,
-                            defaultValue: 0
-                        },
-                        CHAN: {
                             type: ArgumentType.NUMBER,
                             defaultValue: 0
                         },
@@ -210,20 +206,6 @@ class Microcom {
                     }
                 },
                 {
-                    opcode: 'i2c_num',
-                    text: formatMessage({
-                        id: 'microcom.i2c_num',
-                        default: 'I2C: 0x[NUM]' 
-                    }),
-                    blockType: BlockType.REPORTER,
-                    arguments: {
-			NUM: {
-                            type: ArgumentType.STRING,
-                            defaultValue: '77'
-                        }
-                    }
-                },
-                {
                     opcode: 'i2c_init',
                     text: formatMessage({
                         id: 'microcom.i2c_init',
@@ -233,11 +215,11 @@ class Microcom {
                     arguments: {
                         SCL: {
                             type: ArgumentType.NUMBER,
-                            defaultValue: 23
+                            defaultValue: 22
                         },
 			SDA: {
                             type: ArgumentType.NUMBER,
-                            defaultValue: 22
+                            defaultValue: 21
                         }
                     }
                 },
@@ -259,7 +241,7 @@ class Microcom {
                         },
 			COMM2: {
                             type: ArgumentType.STRING,
-			    defaultValue: '0x00'
+			    defaultValue: '0xF0'
                         }
                     }
                 },		
@@ -360,6 +342,76 @@ class Microcom {
                     }
                 },
                 {
+                    opcode: 'num16',
+                    text: formatMessage({
+                        id: 'microcom.num16',
+                        default: '[NUM].to_i(16)'
+                    }),
+                    blockType: BlockType.REPORTER,
+                    arguments: {
+			NUM: {
+                            type: ArgumentType.STRING,
+                            defaultValue: '77'
+                        }
+                    }
+                },
+                {
+                    opcode: 'str16',
+                    text: formatMessage({
+                        id: 'microcom.str16',
+                        default: '[STR].to_str(16)'
+                    }),
+                    blockType: BlockType.REPORTER,
+                    arguments: {
+			STR: {
+                            type: ArgumentType.STRING,
+                            defaultValue: '10'
+                        }
+                    }
+                },
+                {
+                    opcode: 'ord',
+                    text: formatMessage({
+                        id: 'microcom.ord',
+                        default: '[STR].ord'
+                    }),
+                    blockType: BlockType.REPORTER,
+                    arguments: {
+			STR: {
+                            type: ArgumentType.STRING,
+                            defaultValue: 'A'
+                        }
+                    }
+                },
+                {
+                    opcode: 'bytes',
+                    text: formatMessage({
+                        id: 'microcom.bytes',
+                        default: '[STR].bytes'
+                    }),
+                    blockType: BlockType.REPORTER,
+                    arguments: {
+			STR: {
+                            type: ArgumentType.STRING,
+                            defaultValue: 'input i2c_read'
+                        }
+                    }
+                },
+                {
+                    opcode: 'split',
+                    text: formatMessage({
+                        id: 'microcom.split',
+                        default: '[STR].split(,)'
+                    }),
+                    blockType: BlockType.REPORTER,
+                    arguments: {
+			STR: {
+                            type: ArgumentType.STRING,
+                            defaultValue: 'string'
+                        }
+                    }
+                },
+                {
                     opcode: 'puts',
                     text: formatMessage({
                         id: 'kanirobo.puts',
@@ -378,7 +430,7 @@ class Microcom {
     gpio_output_init () {}
     gpio_write () {}
     gpio_input_init () {}
-    gpio_input () {}
+    gpio_read () {}
     pwm_init () {} 
     pwm_duty () {}
     pwm_frequency () {}
@@ -394,6 +446,11 @@ class Microcom {
     uart_gets () {}    
     uart_txclear () {}    
     uart_rxclear () {}
+    num16 () {}    
+    str16 () {}    
+    ord () {}    
+    bytes () {}    
+    split () {}    
     puts () {}
 }
 
