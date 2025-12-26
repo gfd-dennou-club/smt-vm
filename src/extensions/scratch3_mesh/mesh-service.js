@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 const formatMessage = require('format-message');
 const Variable = require('../../engine/variable');
 const BlockUtility = require('../../engine/block-utility.js');
