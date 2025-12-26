@@ -1,7 +1,7 @@
 const test = require('tap').test;
 const URLSearchParams = require('url').URLSearchParams;
 const MeshBlocks = require('../../src/extensions/scratch3_mesh/index.js');
-const MeshV2Blocks = require('../../src/extensions/scratch3_mesh_v2/index.js').default;
+const MeshV2Blocks = require('../../src/extensions/scratch3_mesh_v2/index.js');
 
 const createMockRuntime = () => {
     const runtime = {
