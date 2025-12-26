@@ -1,0 +1,33 @@
+const AWSAppSyncClient = require('aws-appsync').default;
+const gql = require('graphql-tag');
+
+// TODO: Replace with actual configuration or environment variables
+const GRAPHQL_ENDPOINT = process.env.MESH_GRAPHQL_ENDPOINT || 'https://example.com/graphql';
+const REGION = process.env.MESH_AWS_REGION || 'us-east-1';
+const API_KEY = process.env.MESH_API_KEY || 'da2-example';
+
+let client = null;
+
+const createClient = () => {
+    if (client) return client;
+
+    client = new AWSAppSyncClient({
+        url: GRAPHQL_ENDPOINT,
+        region: REGION,
+        auth: {
+            type: 'API_KEY',
+            apiKey: API_KEY
+        },
+        disableOffline: true
+    });
+
+    return client;
+};
+
+const getClient = () => client;
+
+module.exports = {
+    createClient,
+    getClient,
+    gql
+};
