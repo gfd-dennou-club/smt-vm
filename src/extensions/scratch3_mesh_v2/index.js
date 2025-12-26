@@ -128,7 +128,9 @@ class Scratch3MeshV2Blocks {
 
     /* istanbul ignore next */
     getBroadcastMessagesMenuItems () {
-        return this.runtime.getAllVarNamesOfType(Variable.BROADCAST_MESSAGE_TYPE);
+        const messages = this.runtime.getAllVarNamesOfType(Variable.BROADCAST_MESSAGE_TYPE);
+        if (messages.length < 1) return [' '];
+        return messages;
     }
 
     // Peripheral methods
