@@ -41,7 +41,8 @@ class Scratch3MeshV2Blocks {
             log.info(`Mesh V2: Initialized with domain ${this.domain || 'null (auto)'} and nodeId ${this.nodeId}`);
             
             if (this.runtime.extensionManager.isExtensionLoaded('mesh')) {
-                log.warn('Mesh V2: WARNING - Old Mesh extension (SkyWay) is also loaded. This may cause conflicts and unwanted network traffic.');
+                log.warn('Mesh V2: WARNING - Old Mesh extension (SkyWay) is also loaded. ' +
+                    'This may cause conflicts and unwanted network traffic.');
             }
         } catch (error) {
             log.error(`Failed to initialize Mesh V2: ${error}`);
