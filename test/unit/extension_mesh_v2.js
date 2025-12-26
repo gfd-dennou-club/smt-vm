@@ -83,6 +83,7 @@ test('Mesh V2 Blocks', t => {
             st.equal(mockRuntime.lastEmittedData.length, 2); // Host option + 1 group
             st.equal(mockRuntime.lastEmittedData[0].peripheralId, 'meshV2_host');
             st.equal(mockRuntime.lastEmittedData[1].peripheralId, 'group1');
+            st.deepEqual(blocks.discoveredGroups, mockGroups);
             st.end();
         });
     });
@@ -90,17 +91,22 @@ test('Mesh V2 Blocks', t => {
     t.test('connect as host', st => {
         const mockRuntime = createMockRuntime();
         const blocks = new MeshV2Blocks(mockRuntime);
+        blocks.domain = null;
+        blocks.meshService.domain = null;
 
         // Mock service methods
         blocks.meshService.createGroup = name => {
             st.ok(name.includes("'s Mesh"));
-            return Promise.resolve({id: 'new-group-id'});
+            // Simulate server returning auto-generated domain
+            blocks.meshService.domain = 'auto-domain';
+            return Promise.resolve({id: 'new-group-id', domain: 'auto-domain'});
         };
 
         blocks.connect('meshV2_host');
 
         setImmediate(() => {
             st.equal(mockRuntime.lastEmittedEvent, 'PERIPHERAL_CONNECTED');
+            st.equal(blocks.meshService.domain, 'auto-domain');
             st.ok(mockRuntime._primitives.event_broadcast);
             st.end();
         });
@@ -109,17 +115,23 @@ test('Mesh V2 Blocks', t => {
     t.test('connect as peer', st => {
         const mockRuntime = createMockRuntime();
         const blocks = new MeshV2Blocks(mockRuntime);
+        blocks.domain = null;
+        blocks.meshService.domain = null;
+        blocks.discoveredGroups = [{id: 'group1', name: 'Group 1', domain: 'scanned-domain'}];
 
         // Mock service methods
-        blocks.meshService.joinGroup = id => {
+        blocks.meshService.joinGroup = (id, domain) => {
             st.equal(id, 'group1');
-            return Promise.resolve({id: 'node1'});
+            st.equal(domain, 'scanned-domain');
+            blocks.meshService.domain = domain;
+            return Promise.resolve({id: 'node1', domain: domain});
         };
 
         blocks.connect('group1');
 
         setImmediate(() => {
             st.equal(mockRuntime.lastEmittedEvent, 'PERIPHERAL_CONNECTED');
+            st.equal(blocks.meshService.domain, 'scanned-domain');
             st.end();
         });
     });

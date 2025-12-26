@@ -137,6 +137,7 @@ class Scratch3MeshV2Blocks {
     scan () {
         if (!this.meshService) return;
         this.meshService.listGroups().then(groups => {
+            this.discoveredGroups = groups;
             const peripherals = groups.map(group => ({
                 peripheralId: group.id,
                 name: formatMessage({
@@ -184,7 +185,9 @@ class Scratch3MeshV2Blocks {
                     this.runtime.emit(this.runtime.constructor.PERIPHERAL_CONNECTION_ERROR_ID, id);
                 });
         } else {
-            this.meshService.joinGroup(id).then(() => {
+            const group = this.discoveredGroups && this.discoveredGroups.find(g => g.id === id);
+            const domain = group ? group.domain : null;
+            this.meshService.joinGroup(id, domain).then(() => {
                 this.runtime.emit(this.runtime.constructor.PERIPHERAL_CONNECTED);
             })
                 /* istanbul ignore next */

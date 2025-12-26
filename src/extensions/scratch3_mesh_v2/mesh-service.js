@@ -58,12 +58,13 @@ class MeshV2Service {
             const group = result.data.createGroup;
             this.groupId = group.id;
             this.groupName = group.name;
+            this.domain = group.domain; // Update domain from server
             this.isHost = true;
 
             this.startSubscriptions();
             this.startConnectionTimer();
             
-            log.info(`Mesh V2: Created group ${this.groupName} (${this.groupId})`);
+            log.info(`Mesh V2: Created group ${this.groupName} (${this.groupId}) in domain ${this.domain}`);
             return group;
         } catch (error) {
             log.error(`Mesh V2: Failed to create group: ${error}`);
@@ -90,7 +91,7 @@ class MeshV2Service {
         }
     }
 
-    async joinGroup (groupId) {
+    async joinGroup (groupId, domain) {
         if (!this.client) throw new Error('Client not initialized');
 
         try {
@@ -98,19 +99,20 @@ class MeshV2Service {
                 mutation: JOIN_GROUP,
                 variables: {
                     groupId: groupId,
-                    domain: this.domain,
+                    domain: domain || this.domain,
                     nodeId: this.meshId
                 }
             });
 
             const node = result.data.joinGroup;
             this.groupId = groupId;
+            this.domain = node.domain; // Update domain from server
             this.isHost = false;
 
             this.startSubscriptions();
             this.startConnectionTimer();
 
-            log.info(`Mesh V2: Joined group ${this.groupId}`);
+            log.info(`Mesh V2: Joined group ${this.groupId} in domain ${this.domain}`);
             return node;
         } catch (error) {
             log.error(`Mesh V2: Failed to join group: ${error}`);
