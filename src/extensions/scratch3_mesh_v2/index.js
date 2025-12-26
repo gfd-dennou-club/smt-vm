@@ -128,9 +128,7 @@ class Scratch3MeshV2Blocks {
 
     /* istanbul ignore next */
     getBroadcastMessagesMenuItems () {
-        const stage = this.runtime.getTargetForStage();
-        const broadcastVars = stage.getCustomVars(Variable.BROADCAST_MESSAGE_TYPE);
-        return broadcastVars.map(v => v.name);
+        return this.runtime.getAllVarNamesOfType(Variable.BROADCAST_MESSAGE_TYPE);
     }
 
     // Peripheral methods
