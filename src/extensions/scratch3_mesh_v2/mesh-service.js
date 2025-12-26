@@ -3,6 +3,7 @@ const {getClient} = require('./mesh-client');
 const RateLimiter = require('./rate-limiter');
 const {
     LIST_GROUPS_BY_DOMAIN,
+    CREATE_DOMAIN,
     CREATE_GROUP,
     JOIN_GROUP,
     LEAVE_GROUP,
@@ -42,10 +43,31 @@ class MeshV2Service {
         this.lastSentData = {};
     }
 
+    async createDomain () {
+        if (!this.client) throw new Error('Client not initialized');
+
+        try {
+            const result = await this.client.mutate({
+                mutation: CREATE_DOMAIN
+            });
+
+            this.domain = result.data.createDomain;
+            log.info(`Mesh V2: Created domain ${this.domain} from source IP`);
+            return this.domain;
+        } catch (error) {
+            log.error(`Mesh V2: Failed to create domain: ${error}`);
+            throw error;
+        }
+    }
+
     async createGroup (groupName) {
         if (!this.client) throw new Error('Client not initialized');
         
         try {
+            if (!this.domain) {
+                await this.createDomain();
+            }
+
             const result = await this.client.mutate({
                 mutation: CREATE_GROUP,
                 variables: {
@@ -76,6 +98,10 @@ class MeshV2Service {
         if (!this.client) throw new Error('Client not initialized');
         
         try {
+            if (!this.domain) {
+                await this.createDomain();
+            }
+
             const result = await this.client.query({
                 query: LIST_GROUPS_BY_DOMAIN,
                 variables: {

@@ -2,7 +2,7 @@ const gqlTag = require('graphql-tag');
 const gql = gqlTag.default || gqlTag;
 
 const LIST_GROUPS_BY_DOMAIN = gql`
-  query ListGroupsByDomain($domain: String) {
+  query ListGroupsByDomain($domain: String!) {
     listGroupsByDomain(domain: $domain) {
       id
       domain
@@ -14,8 +14,14 @@ const LIST_GROUPS_BY_DOMAIN = gql`
   }
 `;
 
+const CREATE_DOMAIN = gql`
+  mutation CreateDomain {
+    createDomain
+  }
+`;
+
 const CREATE_GROUP = gql`
-  mutation CreateGroup($name: String!, $hostId: ID!, $domain: String) {
+  mutation CreateGroup($name: String!, $hostId: ID!, $domain: String!) {
     createGroup(name: $name, hostId: $hostId, domain: $domain) {
       id
       domain
@@ -127,6 +133,7 @@ const ON_GROUP_DISSOLVE = gql`
 
 module.exports = {
     LIST_GROUPS_BY_DOMAIN,
+    CREATE_DOMAIN,
     CREATE_GROUP,
     JOIN_GROUP,
     LEAVE_GROUP,

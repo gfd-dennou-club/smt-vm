@@ -213,18 +213,19 @@ class Scratch3MeshV2Blocks {
     /* istanbul ignore next */
     connectedMessage () {
         if (this.meshService && this.meshService.groupId) {
+            const meshIdWithDomain = `${this.meshService.groupId}@${this.meshService.domain}`;
             if (this.meshService.isHost) {
                 return formatMessage({
                     id: 'mesh.registeredHostV2',
                     default: 'Registered Host Mesh V2 [{ MESH_ID }]',
                     description: 'label for registered Host Mesh in connect modal for Mesh V2 extension'
-                }, {MESH_ID: this.meshService.groupId});
+                }, {MESH_ID: meshIdWithDomain});
             }
             return formatMessage({
                 id: 'mesh.joinedMeshV2',
                 default: 'Joined Mesh V2 [{ MESH_ID }]',
                 description: 'label for joined Mesh in connect modal for Mesh V2 extension'
-            }, {MESH_ID: this.meshService.groupId});
+            }, {MESH_ID: meshIdWithDomain});
         }
         return formatMessage({
             id: 'mesh.notConnectedV2',
