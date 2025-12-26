@@ -1,5 +1,6 @@
 const log = require('../../util/log');
 const {getClient} = require('./mesh-client');
+const RateLimiter = require('./rate-limiter');
 const {
     LIST_GROUPS_BY_DOMAIN,
     CREATE_GROUP,
@@ -30,6 +31,13 @@ class MeshV2Service {
 
         // Data from other nodes: { nodeId: { key: value } }
         this.remoteData = {};
+
+        // Rate limiters
+        this.dataRateLimiter = new RateLimiter(4, 250); // 4 times/sec, 250ms interval
+        this.eventRateLimiter = new RateLimiter(2, 500); // 2 times/sec, 500ms interval
+
+        // Last sent data to detect changes
+        this.lastSentData = {};
     }
 
     async createGroup (groupName) {
@@ -148,6 +156,7 @@ class MeshV2Service {
         this.groupName = null;
         this.isHost = false;
         this.remoteData = {};
+        this.lastSentData = {};
     }
 
     startSubscriptions () {
@@ -227,18 +236,43 @@ class MeshV2Service {
         }
     }
 
+    /**
+     * Check if the data has changed since the last successful send.
+     * @param {Array} dataArray - Array of {key, value} objects.
+     * @returns {boolean} - True if data is unchanged.
+     */
+    isDataUnchanged (dataArray) {
+        if (dataArray.length !== Object.keys(this.lastSentData).length) return false;
+        for (const item of dataArray) {
+            if (this.lastSentData[item.key] !== item.value) return false;
+        }
+        return true;
+    }
+
     async sendData (dataArray) {
         if (!this.groupId || !this.client) return;
 
+        // Change detection
+        if (this.isDataUnchanged(dataArray)) {
+            return;
+        }
+
         try {
-            await this.client.mutate({
-                mutation: REPORT_DATA,
-                variables: {
-                    groupId: this.groupId,
-                    domain: this.domain,
-                    nodeId: this.meshId,
-                    data: dataArray
-                }
+            await this.dataRateLimiter.send(dataArray, async payload => {
+                await this.client.mutate({
+                    mutation: REPORT_DATA,
+                    variables: {
+                        groupId: this.groupId,
+                        domain: this.domain,
+                        nodeId: this.meshId,
+                        data: payload
+                    }
+                });
+
+                // Update last sent data on success
+                payload.forEach(item => {
+                    this.lastSentData[item.key] = item.value;
+                });
             });
         } catch (error) {
             log.error(`Mesh V2: Failed to send data: ${error}`);
@@ -249,15 +283,20 @@ class MeshV2Service {
         if (!this.groupId || !this.client) return;
 
         try {
-            await this.client.mutate({
-                mutation: FIRE_EVENT,
-                variables: {
-                    groupId: this.groupId,
-                    domain: this.domain,
-                    nodeId: this.meshId,
-                    eventName: eventName,
-                    payload: payload
-                }
+            // Wait for data transmission to complete
+            await this.dataRateLimiter.waitForCompletion();
+
+            await this.eventRateLimiter.send({eventName, payload}, async data => {
+                await this.client.mutate({
+                    mutation: FIRE_EVENT,
+                    variables: {
+                        groupId: this.groupId,
+                        domain: this.domain,
+                        nodeId: this.meshId,
+                        eventName: data.eventName,
+                        payload: data.payload
+                    }
+                });
             });
         } catch (error) {
             log.error(`Mesh V2: Failed to fire event: ${error}`);
