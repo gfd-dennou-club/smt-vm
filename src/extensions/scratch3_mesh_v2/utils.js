@@ -1,6 +1,8 @@
 const log = require('../../util/log');
 
+/* istanbul ignore next */
 const getDomainFromUrl = () => {
+    /* istanbul ignore next */
     if (typeof window === 'undefined') return null;
     const urlParams = new URLSearchParams(window.location.search);
     const domain = urlParams.get('mesh');

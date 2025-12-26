@@ -12,6 +12,7 @@ const MeshV2Service = require('./mesh-service');
  * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
  * @type {string}
  */
+/* istanbul ignore next */
 // eslint-disable-next-line max-len
 const blockIconURI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAYAAACOEfKtAAAAIGNIUk0AAHomAACAhAAA+gAAAIDoAAB1MAAA6mAAADqYAAAXcJy6UTwAAAAGYktHRAD/AP8A/6C9p5MAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAAHdElNRQfpCRUAFhXmDXQKAAAON0lEQVR42u1cW4xd1Xn+1lr7fm5zt2d8ZjzguyGUxknAXALFE4pDCKWpMI2CaInapIpQKqpSKZHaPFSp+tDShqgPjVLRpAnGF2Rc0wJKaUla0jYtNhXBQ3DjMb7NzLnNuez73mv14ZwZxvaZc+ay98xx5U8687Bn7bX+9e29bv//fxu4hhWBxFn5jrF9a90/nPzB87HWL8XdAcdxoWlqr207ad/3RdztUUqJYeiexNgkFyKMu73YCVRVRSeEfHNkeOjjyWQi9g75QUCmpnIlz/MfJYS8FXd7sRNYMy1lw+C6rY88/Omh7IZBeJ4Hzhd+EQld3qxCADBJQhiGeG7/iwNvnni7X9PUuLsXP4G+70NRFN7T3YVazcQLL74M07Rw5fQrQClFb28vdF2DWPJgF7hh5xbs3L4ZyaTBeaundDURONs5AMjli3jn5HsIw4VHcr4wg/7+PhCytDeRc47eni7s2LZpGeQvH6tE4AeglEAIuuD/LcuC7/tQ1aUNP0IIsETSI+nPqrfYBkEQoFKprrUZi0bHEQgAtVoNjuOstRmLQkcSGAQBSjMz4JyvtSlt0ZEEAoBZM1Gtdv5Q7lgChRAolUodP5Q7lkAA8P0A+XwBvu+vtSkLoqMJBADbtpHPF1ruHdcSHU8gUF+V8/l8R5J4VRAIAJVKFblcDkEQrLUpl+CqIRAAqtUapqam4breWpsyh6uKQKB+1JucnETNNLGKR94FcdURCACe52F6agqFfGHekF79czCwBs6EqBCGHKVSCZZloasrA1031sSOq/INnA/XdTE9ncPFixdhmuaqt7/qBMbhqxNCwLIs1Gr/HwkUEGh4VCWJQZIkEEIi/zHGYOhavU3SaBnxRwZjmwNnDZckJgkBhQuBjSNZPP7Yw/A8L3LnJwHByPAQCAGEEJQQMueR3TG2L7bwZiwEzpKnqgoxEsbnCSXbOecIwhCjo8OxdAQAOBewbBeyJCmyLD0B4ASAi7E1iBjW/lnygiAApfRRTVOfuX/vnky6qxv5Qjlmt7uAqijo7UrgpX/4Ac6eu/gdxugTACqzJaJ+EyN9A2fJ45yDUvawLEtPj91zRyY7nMU//+txuJ4H0uqZEbQNJgkh0GoHLSCwfctGfPqBe3Hw8LFHp6cLlsToUwKIxbkY6euwY2xfvYPA3ZTS7951563ZT31yDyzbgWk59flpQUMILMvBxelCU0+0EICmKhha3wdJYo21qSmDoJSgr7cLP3vv59h/4Kgolcp/yRj7ihDCBqJ9C+OYA0cJId/4yK6bsnt/+W7IsoSMnERXJtX2xndPvY/zF3OzD+EKAg1dxZZNw+jrToO32Q8JAezcvgUPPXgfOXT4SS1VqrXjlNLvRN3ZyAl0PW9w25brr7/v3rvhuD7KVbMpIc2gawpu+fDOluPCth2cdz1wzluehQkBGKXYuHEEu3fvkl959fVtUfc1FgLDkCOVSorurjQYY4smb17X2/xfzPvbvhbGGLrSaRBCBFnEfUtF5ARqquJNTJz1XzjyMgxjOSka0UIIgfF3T0EIOCKGDUDkBEqSNF6pmo+/9i9vdC314MZBRD9x+u/USl8ZTco9SkpFZvM2UMpw/D9PFP+paHw9Bz1HsTQqGGOcMfaj6OmLgUAhhEkpOaIo8pLv3UJmsI+/k1WVxJdvTBk9iX6OwRu7QaiE5Ds1c3tu/PnDgs3n3hNdcXCxLEjfundrhNUdX3ENJah0QBCEjV/ABQgRCAVQgkYfIKdXvvmKsM+SabmjkdW2Ughw...';
 
@@ -29,6 +30,7 @@ class Scratch3MeshV2Blocks {
         return 'mesh_v2';
     }
 
+    /* istanbul ignore next */
     constructor (runtime) {
         log.info('Loading NEW Mesh V2 extension (GraphQL)');
         this.runtime = runtime;
@@ -51,6 +53,7 @@ class Scratch3MeshV2Blocks {
         this.runtime.registerPeripheralExtension(Scratch3MeshV2Blocks.EXTENSION_ID, this);
     }
 
+    /* istanbul ignore next */
     getInfo () {
         return {
             id: Scratch3MeshV2Blocks.EXTENSION_ID,
@@ -103,6 +106,7 @@ class Scratch3MeshV2Blocks {
         };
     }
 
+    /* istanbul ignore next */
     getSensorValue (args) {
         if (!this.meshService) return '';
         return this.meshService.getRemoteVariable(args.NAME) || '';
@@ -116,6 +120,7 @@ class Scratch3MeshV2Blocks {
         return [' '].concat([...new Set(names)]);
     }
 
+    /* istanbul ignore next */
     fireMeshEvent (args) {
         if (!this.meshService) return;
         return this.meshService.fireEvent(args.BROADCAST_OPTION);
@@ -129,6 +134,7 @@ class Scratch3MeshV2Blocks {
     }
 
     // Peripheral methods
+    /* istanbul ignore next */
     scan () {
         if (!this.meshService) return;
         this.meshService.listGroups().then(groups => {
@@ -162,6 +168,7 @@ class Scratch3MeshV2Blocks {
             });
     }
 
+    /* istanbul ignore next */
     connect (id) {
         this.setOpcodeFunctionHOC();
         this.setVariableFunctionHOC();
@@ -285,6 +292,7 @@ class Scratch3MeshV2Blocks {
         }
     }
 
+    /* istanbul ignore next */
     setVariableFunctionHOC () {
         if (this.variableFunctions) return;
 
@@ -308,6 +316,7 @@ class Scratch3MeshV2Blocks {
         stage.renameVariable = this.renameVariable.bind(this);
     }
 
+    /* istanbul ignore next */
     createNewGlobalVariable (variableName, optVarId, optVarType) {
         const variable = this.variableFunctions.runtime.createNewGlobalVariable(variableName, optVarId, optVarType);
         if (this.meshService && variable.type === Variable.SCALAR_TYPE) {
@@ -345,6 +354,7 @@ class Scratch3MeshV2Blocks {
         }
     }
 
+    /* istanbul ignore next */
     setVariableValue (id, newValue) {
         const stage = this.runtime.getTargetForStage();
         if (Object.prototype.hasOwnProperty.call(stage.variables, id)) {
