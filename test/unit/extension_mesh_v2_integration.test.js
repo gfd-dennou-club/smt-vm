@@ -33,7 +33,7 @@ test('Mesh and Mesh V2 Coexistence', t => {
 
     const mockRuntime = createMockRuntime();
 
-    t.test('extension IDs are different', st => {
+    t.test('integration: extension IDs are different', st => {
         const meshV1 = new MeshBlocks(mockRuntime);
         const meshV2 = new MeshV2Blocks(mockRuntime);
 
@@ -46,7 +46,7 @@ test('Mesh and Mesh V2 Coexistence', t => {
         st.end();
     });
 
-    t.test('block opcodes can overlap without conflict', st => {
+    t.test('integration: block opcodes can overlap without conflict', st => {
         const meshV1 = new MeshBlocks(mockRuntime);
         const meshV2 = new MeshV2Blocks(mockRuntime);
 
