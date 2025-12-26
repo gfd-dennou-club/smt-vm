@@ -1,0 +1,278 @@
+const log = require('../../util/log');
+const {getClient} = require('./mesh-client');
+const {
+    LIST_GROUPS_BY_DOMAIN,
+    CREATE_GROUP,
+    JOIN_GROUP,
+    LEAVE_GROUP,
+    DISSOLVE_GROUP,
+    REPORT_DATA,
+    FIRE_EVENT,
+    ON_DATA_UPDATE,
+    ON_EVENT,
+    ON_GROUP_DISSOLVE
+} = require('./gql-operations');
+
+const CONNECTION_TIMEOUT = 90 * 60 * 1000; // 90 minutes in milliseconds
+
+class MeshV2Service {
+    constructor (meshId, domain) {
+        this.meshId = meshId;
+        this.domain = domain;
+        this.client = getClient();
+        
+        this.groupId = null;
+        this.groupName = null;
+        this.isHost = false;
+        
+        this.subscriptions = [];
+        this.connectionTimer = null;
+
+        // Data from other nodes: { nodeId: { key: value } }
+        this.remoteData = {};
+    }
+
+    async createGroup (groupName) {
+        if (!this.client) throw new Error('Client not initialized');
+        
+        try {
+            const result = await this.client.mutate({
+                mutation: CREATE_GROUP,
+                variables: {
+                    name: groupName,
+                    hostId: this.meshId,
+                    domain: this.domain
+                }
+            });
+
+            const group = result.data.createGroup;
+            this.groupId = group.id;
+            this.groupName = group.name;
+            this.isHost = true;
+
+            this.startSubscriptions();
+            this.startConnectionTimer();
+            
+            log.info(`Mesh V2: Created group ${this.groupName} (${this.groupId})`);
+            return group;
+        } catch (error) {
+            log.error(`Mesh V2: Failed to create group: ${error}`);
+            throw error;
+        }
+    }
+
+    async listGroups () {
+        if (!this.client) throw new Error('Client not initialized');
+        
+        try {
+            const result = await this.client.query({
+                query: LIST_GROUPS_BY_DOMAIN,
+                variables: {
+                    domain: this.domain
+                },
+                fetchPolicy: 'network-only'
+            });
+
+            return result.data.listGroupsByDomain;
+        } catch (error) {
+            log.error(`Mesh V2: Failed to list groups: ${error}`);
+            throw error;
+        }
+    }
+
+    async joinGroup (groupId) {
+        if (!this.client) throw new Error('Client not initialized');
+
+        try {
+            const result = await this.client.mutate({
+                mutation: JOIN_GROUP,
+                variables: {
+                    groupId: groupId,
+                    domain: this.domain,
+                    nodeId: this.meshId
+                }
+            });
+
+            const node = result.data.joinGroup;
+            this.groupId = groupId;
+            this.isHost = false;
+
+            this.startSubscriptions();
+            this.startConnectionTimer();
+
+            log.info(`Mesh V2: Joined group ${this.groupId}`);
+            return node;
+        } catch (error) {
+            log.error(`Mesh V2: Failed to join group: ${error}`);
+            throw error;
+        }
+    }
+
+    async leaveGroup () {
+        if (!this.groupId) return;
+        if (!this.client) return;
+
+        try {
+            if (this.isHost) {
+                await this.client.mutate({
+                    mutation: DISSOLVE_GROUP,
+                    variables: {
+                        groupId: this.groupId,
+                        domain: this.domain,
+                        hostId: this.meshId
+                    }
+                });
+                log.info(`Mesh V2: Dissolved group ${this.groupId}`);
+            } else {
+                await this.client.mutate({
+                    mutation: LEAVE_GROUP,
+                    variables: {
+                        groupId: this.groupId,
+                        domain: this.domain,
+                        nodeId: this.meshId
+                    }
+                });
+                log.info(`Mesh V2: Left group ${this.groupId}`);
+            }
+        } catch (error) {
+            log.error(`Mesh V2: Error during leave/dissolve: ${error}`);
+        } finally {
+            this.cleanup();
+        }
+    }
+
+    cleanup () {
+        this.stopSubscriptions();
+        this.stopConnectionTimer();
+        this.groupId = null;
+        this.groupName = null;
+        this.isHost = false;
+        this.remoteData = {};
+    }
+
+    startSubscriptions () {
+        if (!this.groupId || !this.client) return;
+
+        const variables = {
+            groupId: this.groupId,
+            domain: this.domain
+        };
+
+        const dataSub = this.client.subscribe({
+            query: ON_DATA_UPDATE,
+            variables
+        }).subscribe({
+            next: result => this.handleDataUpdate(result.data.onDataUpdateInGroup),
+            error: err => log.error(`Mesh V2: Data subscription error: ${err}`)
+        });
+
+        const eventSub = this.client.subscribe({
+            query: ON_EVENT,
+            variables
+        }).subscribe({
+            next: result => this.handleEvent(result.data.onEventInGroup),
+            error: err => log.error(`Mesh V2: Event subscription error: ${err}`)
+        });
+
+        const dissolveSub = this.client.subscribe({
+            query: ON_GROUP_DISSOLVE,
+            variables
+        }).subscribe({
+            next: () => {
+                log.info('Mesh V2: Group dissolved by host');
+                this.cleanup();
+            },
+            error: err => log.error(`Mesh V2: Dissolve subscription error: ${err}`)
+        });
+
+        this.subscriptions.push(dataSub, eventSub, dissolveSub);
+    }
+
+    stopSubscriptions () {
+        this.subscriptions.forEach(sub => sub.unsubscribe());
+        this.subscriptions = [];
+    }
+
+    handleDataUpdate (nodeStatus) {
+        if (!nodeStatus || nodeStatus.nodeId === this.meshId) return;
+
+        const nodeId = nodeStatus.nodeId;
+        if (!this.remoteData[nodeId]) {
+            this.remoteData[nodeId] = {};
+        }
+
+        nodeStatus.data.forEach(item => {
+            this.remoteData[nodeId][item.key] = item.value;
+        });
+    }
+
+    handleEvent (event) {
+        if (!event || event.firedByNodeId === this.meshId) return;
+        // Event handling will be implemented in Phase 3 blocks
+        log.info(`Mesh V2: Received event ${event.name} from ${event.firedByNodeId}`);
+    }
+
+    startConnectionTimer () {
+        this.stopConnectionTimer();
+        this.connectionTimer = setTimeout(() => {
+            log.warn('Mesh V2: Connection timeout (90 minutes)');
+            this.leaveGroup();
+        }, CONNECTION_TIMEOUT);
+    }
+
+    stopConnectionTimer () {
+        if (this.connectionTimer) {
+            clearTimeout(this.connectionTimer);
+            this.connectionTimer = null;
+        }
+    }
+
+    async sendData (dataArray) {
+        if (!this.groupId || !this.client) return;
+
+        try {
+            await this.client.mutate({
+                mutation: REPORT_DATA,
+                variables: {
+                    groupId: this.groupId,
+                    domain: this.domain,
+                    nodeId: this.meshId,
+                    data: dataArray
+                }
+            });
+        } catch (error) {
+            log.error(`Mesh V2: Failed to send data: ${error}`);
+        }
+    }
+
+    async fireEvent (eventName, payload = '') {
+        if (!this.groupId || !this.client) return;
+
+        try {
+            await this.client.mutate({
+                mutation: FIRE_EVENT,
+                variables: {
+                    groupId: this.groupId,
+                    domain: this.domain,
+                    nodeId: this.meshId,
+                    eventName: eventName,
+                    payload: payload
+                }
+            });
+        } catch (error) {
+            log.error(`Mesh V2: Failed to fire event: ${error}`);
+        }
+    }
+
+    getRemoteVariable (name) {
+        // Search across all nodes for the variable name
+        for (const nodeId in this.remoteData) {
+            if (Object.prototype.hasOwnProperty.call(this.remoteData[nodeId], name)) {
+                return this.remoteData[nodeId][name];
+            }
+        }
+        return null;
+    }
+}
+
+module.exports = MeshV2Service;
