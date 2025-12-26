@@ -1,4 +1,5 @@
-const gql = require('graphql-tag');
+const gqlTag = require('graphql-tag');
+const gql = gqlTag.default || gqlTag;
 
 const LIST_GROUPS_BY_DOMAIN = gql`
   query ListGroupsByDomain($domain: String!) {

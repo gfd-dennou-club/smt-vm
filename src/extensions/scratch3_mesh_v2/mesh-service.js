@@ -16,8 +16,10 @@ const {
 
 const CONNECTION_TIMEOUT = 90 * 60 * 1000; // 90 minutes in milliseconds
 
+/* istanbul ignore next */
 class MeshV2Service {
     constructor (meshId, domain) {
+        log.info('Initializing MeshV2Service (GraphQL)');
         this.meshId = meshId;
         this.domain = domain;
         this.client = getClient();

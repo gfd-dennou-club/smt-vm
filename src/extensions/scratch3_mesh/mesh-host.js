@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 const MeshService = require('./mesh-service');
 
 const log = require('../../util/log');

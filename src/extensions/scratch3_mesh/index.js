@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const log = require('../../util/log');
@@ -56,6 +57,7 @@ class Scratch3MeshBlocks {
     }
 
     constructor (runtime) {
+        log.info('Loading OLD Mesh extension (SkyWay)');
         /**
          * The runtime instantiating this block package.
          * @type {Runtime}

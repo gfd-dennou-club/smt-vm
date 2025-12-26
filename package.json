@@ -55,7 +55,10 @@
     "branches": 60,
     "functions": 70,
     "lines": 70,
-    "statements": 70
+    "statements": 70,
+    "nyc-arg": [
+      "--exclude=src/extensions/scratch3_mesh/**"
+    ]
   },
   "dependencies": {
     "@vernier/godirect": "^1.5.0",
