@@ -1,24 +1,26 @@
-const ArgumentType = require('../../extension-support/argument-type');
-const BlockType = require('../../extension-support/block-type');
-const formatMessage = require('format-message');
-const log = require('../../util/log');
-const {v4: uuidv4} = require('uuid');
-const Variable = require('../../engine/variable');
-const {getDomainFromUrl} = require('./utils');
-const {createClient} = require('./mesh-client');
-const MeshV2Service = require('./mesh-service');
+import ArgumentType from '../../extension-support/argument-type';
+import BlockType from '../../extension-support/block-type';
+import log from '../../util/log';
+import {v4 as uuidv4} from 'uuid';
+import Variable from '../../engine/variable';
+import {getDomainFromUrl} from './utils';
+import {createClient} from './mesh-client';
+import MeshV2Service from './mesh-service';
+import blockIcon from './block-icon.png';
 
-/**
- * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
- * @type {string}
- */
-/* istanbul ignore next */
-// eslint-disable-next-line max-len
-const blockIconURI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAYAAACOEfKtAAAAIGNIUk0AAHomAACAhAAA+gAAAIDoAAB1MAAA6mAAADqYAAAXcJy6UTwAAAAGYktHRAD/AP8A/6C9p5MAAAAJcEhZcwAACxIAAAsSAdLdfvwAAAAHdElNRQfpCRUAFhXmDXQKAAAON0lEQVR42u1cW4xd1Xn+1lr7fm5zt2d8ZjzguyGUxknAXALFE4pDCKWpMI2CaInapIpQKqpSKZHaPFSp+tDShqgPjVLRpAnGF2Rc0wJKaUla0jYtNhXBQ3DjMb7NzLnNuez73mv14ZwZxvaZc+ay98xx5U8687Bn7bX+9e29bv//fxu4hhWBxFn5jrF9a90/nPzB87HWL8XdAcdxoWlqr207ad/3RdztUUqJYeiexNgkFyKMu73YCVRVRSeEfHNkeOjjyWQi9g75QUCmpnIlz/MfJYS8FXd7sRNYMy1lw+C6rY88/Omh7IZBeJ4Hzhd+EQld3qxCADBJQhiGeG7/iwNvnni7X9PUuLsXP4G+70NRFN7T3YVazcQLL74M07Rw5fQrQClFb28vdF2DWPJgF7hh5xbs3L4ZyaTBeaundDURONs5AMjli3jn5HsIw4VHcr4wg/7+PhCytDeRc47eni7s2LZpGeQvH6tE4AeglEAIuuD/LcuC7/tQ1aUNP0IIsETSI+nPqrfYBkEQoFKprrUZi0bHEQgAtVoNjuOstRmLQkcSGAQBSjMz4JyvtSlt0ZEEAoBZM1Gtdv5Q7lgChRAolUodP5Q7lkAA8P0A+XwBvu+vtSkLoqMJBADbtpHPF1ruHdcSHU8gUF+V8/l8R5J4VRAIAJVKFblcDkEQrLUpl+CqIRAAqtUapqam4breWpsyh6uKQKB+1JucnETNNLGKR94FcdURCACe52F6agqFfGHekF79czCwBs6EqBCGHKVSCZZloasrA1031sSOq/INnA/XdTE9ncPFixdhmuaqt7/qBMbhqxNCwLIs1Gr/HwkUEGh4VCWJQZIkEEIi/zHGYOhavU3SaBnxRwZjmwNnDZckJgkBhQuBjSNZPP7Yw/A8L3LnJwHByPAQCAGEEJQQMueR3TG2L7bwZiwEzpKnqgoxEsbnCSXbOecIwhCjo8OxdAQAOBewbBeyJCmyLD0B4ASAi7E1iBjW/lnygiAApfRRTVOfuX/vnky6qxv5Qjlmt7uAqijo7UrgpX/4Ac6eu/gdxugTACqzJaJ+EyN9A2fJ45yDUvawLEtPj91zRyY7nMU//+txuJ4H0uqZEbQNJgkh0GoHLSCwfctGfPqBe3Hw8LFHp6cLlsToUwKIxbkY6euwY2xfvYPA3ZTS7951563ZT31yDyzbgWk59flpQUMILMvBxelCU0+0EICmKhha3wdJYo21qSmDoJSgr7cLP3vv59h/4Kgolcp/yRj7ihDCBqJ9C+OYA0cJId/4yK6bsnt/+W7IsoSMnERXJtX2xndPvY/zF3OzD+EKAg1dxZZNw+jrToO32Q8JAezcvgUPPXgfOXT4SS1VqrXjlNLvRN3ZyAl0PW9w25brr7/v3rvhuD7KVbMpIc2gawpu+fDOluPCth2cdz1wzluehQkBGKXYuHEEu3fvkl959fVtUfc1FgLDkCOVSorurjQYY4smb17X2/xfzPvbvhbGGLrSaRBCBFnEfUtF5ARqquJNTJz1XzjyMgxjOSka0UIIgfF3T0EIOCKGDUDkBEqSNF6pmo+/9i9vdC314MZBRD9x+u/USl8ZTco9SkpFZvM2UMpw/D9PFP+paHw9Bz1HsTQqGGOcMfaj6OmLgUAhhEkpOaIo8pLv3UJmsI+/k1WVxJdvTBk9iX6OwRu7QaiE5Ds1c3tu/PnDgs3n3hNdcXCxLEjfundrhNUdX3ENJah0QBCEjV/ABQgRCAVQgkYfIKdXvvmKsM+SabmjkdW2Ughw...';
+let formatMessage = messageData => messageData.default;
 
 const MESH_V2_HOST_ID = 'meshV2_host';
 
 class Scratch3MeshV2Blocks {
+    /**
+     * A translation object which is used in this class.
+     * @param {FormatObject} formatter - translation object
+     */
+    static set formatMessage (formatter) {
+        formatMessage = formatter;
+    }
+
     /**
      * @return {string} - the name of this extension.
      */
@@ -36,12 +38,12 @@ class Scratch3MeshV2Blocks {
         this.runtime = runtime;
         this.domain = getDomainFromUrl();
         this.nodeId = uuidv4().replaceAll('-', '');
-        
+
         try {
             createClient();
             this.meshService = new MeshV2Service(this.nodeId, this.domain);
             log.info(`Mesh V2: Initialized with domain ${this.domain || 'null (auto)'} and nodeId ${this.nodeId}`);
-            
+
             if (this.runtime.extensionManager && this.runtime.extensionManager.isExtensionLoaded('mesh')) {
                 log.warn('Mesh V2: WARNING - Old Mesh extension (SkyWay) is also loaded. ' +
                     'This may cause conflicts and unwanted network traffic.');
@@ -58,7 +60,7 @@ class Scratch3MeshV2Blocks {
         return {
             id: Scratch3MeshV2Blocks.EXTENSION_ID,
             name: Scratch3MeshV2Blocks.EXTENSION_NAME,
-            blockIconURI: blockIconURI,
+            blockIconURI: blockIcon,
             showStatusButton: true,
             blocks: [
                 {
@@ -172,7 +174,7 @@ class Scratch3MeshV2Blocks {
     connect (id) {
         this.setOpcodeFunctionHOC();
         this.setVariableFunctionHOC();
-        
+
         if (!this.meshService) return;
 
         if (id === MESH_V2_HOST_ID) {
@@ -379,4 +381,7 @@ class Scratch3MeshV2Blocks {
     }
 }
 
-module.exports = Scratch3MeshV2Blocks;
+export {
+    Scratch3MeshV2Blocks as default,
+    Scratch3MeshV2Blocks as blockClass
+};

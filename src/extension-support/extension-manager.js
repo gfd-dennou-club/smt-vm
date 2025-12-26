@@ -25,7 +25,6 @@ const builtinExtensions = {
     boost: () => require('../extensions/scratch3_boost'),
     gdxfor: () => require('../extensions/scratch3_gdx_for'),
     mesh: () => require('../extensions/scratch3_mesh'),
-    meshV2: () => require('../extensions/scratch3_mesh_v2'),
     smalrubotS1: () => require('../extensions/scratch3_smalrubot_s1')
 };
 
@@ -60,6 +59,14 @@ const builtinExtensions = {
  * @property {Function} resolve - function to call on successful worker startup
  * @property {Function} reject - function to call on failed worker startup
  */
+
+builtinExtensions.meshV2 = () => {
+    const formatMessage = require('format-message');
+    const ext = require('../extensions/scratch3_mesh_v2');
+    const blockClass = ext.blockClass;
+    blockClass.formatMessage = formatMessage;
+    return blockClass;
+};
 
 builtinExtensions.microbitMore = () => {
     const formatMessage = require('format-message');
