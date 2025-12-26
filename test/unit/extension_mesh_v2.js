@@ -60,7 +60,7 @@ test('Mesh V2 Blocks', t => {
         const mockRuntime = createMockRuntime();
         const blocks = new MeshV2Blocks(mockRuntime);
         const info = blocks.getInfo();
-        st.equal(info.id, 'mesh_v2');
+        st.equal(info.id, 'meshV2');
         st.ok(info.blocks.length > 0);
         st.ok(info.menus.variableNames);
         st.ok(info.menus.broadcastMessages);
@@ -81,7 +81,7 @@ test('Mesh V2 Blocks', t => {
         setImmediate(() => {
             st.equal(mockRuntime.lastEmittedEvent, 'PERIPHERAL_LIST_UPDATE');
             st.equal(mockRuntime.lastEmittedData.length, 2); // Host option + 1 group
-            st.equal(mockRuntime.lastEmittedData[0].peripheralId, 'mesh_v2_host');
+            st.equal(mockRuntime.lastEmittedData[0].peripheralId, 'meshV2_host');
             st.equal(mockRuntime.lastEmittedData[1].peripheralId, 'group1');
             st.end();
         });
@@ -97,7 +97,7 @@ test('Mesh V2 Blocks', t => {
             return Promise.resolve({id: 'new-group-id'});
         };
 
-        blocks.connect('mesh_v2_host');
+        blocks.connect('meshV2_host');
 
         setImmediate(() => {
             st.equal(mockRuntime.lastEmittedEvent, 'PERIPHERAL_CONNECTED');

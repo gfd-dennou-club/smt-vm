@@ -41,7 +41,7 @@ test('Mesh and Mesh V2 Coexistence', t => {
         const info2 = meshV2.getInfo();
 
         st.equal(info1.id, 'mesh', 'Old Mesh ID is "mesh"');
-        st.equal(info2.id, 'mesh_v2', 'New Mesh ID is "mesh_v2"');
+        st.equal(info2.id, 'meshV2', 'New Mesh ID is "meshV2"');
         st.not(info1.id, info2.id, 'IDs must be unique');
         st.end();
     });
@@ -62,13 +62,13 @@ test('Mesh and Mesh V2 Coexistence', t => {
         st.equal(block1.opcode, block2.opcode, 'Opcodes are allowed to be identical if extension IDs differ');
 
         // In scratch-vm, the effective opcode becomes extensionId_opcode
-        // e.g., mesh_getSensorValue and mesh_v2_getSensorValue
+        // e.g., mesh_getSensorValue and meshV2_getSensorValue
         const effectiveOpcode1 = `${info1.id}_${block1.opcode}`;
         const effectiveOpcode2 = `${info2.id}_${block2.opcode}`;
 
         st.not(effectiveOpcode1, effectiveOpcode2, 'Effective opcodes are unique');
         st.equal(effectiveOpcode1, 'mesh_getSensorValue');
-        st.equal(effectiveOpcode2, 'mesh_v2_getSensorValue');
+        st.equal(effectiveOpcode2, 'meshV2_getSensorValue');
         st.end();
     });
 
