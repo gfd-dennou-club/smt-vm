@@ -25,7 +25,7 @@ const builtinExtensions = {
     boost: () => require('../extensions/scratch3_boost'),
     gdxfor: () => require('../extensions/scratch3_gdx_for'),
     mesh: () => require('../extensions/scratch3_mesh'),
-    mesh_v2: () => require('../extensions/scratch3_mesh_v2'),
+    meshV2: () => require('../extensions/scratch3_mesh_v2'),
     smalrubotS1: () => require('../extensions/scratch3_smalrubot_s1')
 };
 

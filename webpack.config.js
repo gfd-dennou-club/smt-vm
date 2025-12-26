@@ -1,4 +1,5 @@
 const path = require('path');
+const webpack = require('webpack');
 
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 
@@ -71,7 +72,12 @@ const webBuilder = new ScratchWebpackConfigBuilder(common)
         options: {
             exposes: 'VirtualMachine'
         }
-    });
+    })
+    .addPlugin(new webpack.DefinePlugin({
+        'process.env.MESH_GRAPHQL_ENDPOINT': JSON.stringify(process.env.MESH_GRAPHQL_ENDPOINT),
+        'process.env.MESH_API_KEY': JSON.stringify(process.env.MESH_API_KEY),
+        'process.env.MESH_AWS_REGION': JSON.stringify(process.env.MESH_AWS_REGION)
+    }));
 
 const playgroundBuilder = webBuilder.clone()
     .merge({

@@ -1,5 +1,6 @@
 const AWSAppSyncClient = require('aws-appsync').default;
-const gql = require('graphql-tag');
+const gqlTag = require('graphql-tag');
+const gql = gqlTag.default || gqlTag;
 
 // TODO: Replace with actual configuration or environment variables
 const GRAPHQL_ENDPOINT = process.env.MESH_GRAPHQL_ENDPOINT || 'https://example.com/graphql';
