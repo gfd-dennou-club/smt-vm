@@ -137,6 +137,7 @@ class Scratch3MeshV2Blocks {
     scan () {
         if (!this.meshService) return;
         this.meshService.listGroups().then(groups => {
+            this.discoveredGroups = groups;
             const peripherals = groups.map(group => ({
                 peripheralId: group.id,
                 name: formatMessage({
@@ -184,7 +185,9 @@ class Scratch3MeshV2Blocks {
                     this.runtime.emit(this.runtime.constructor.PERIPHERAL_CONNECTION_ERROR_ID, id);
                 });
         } else {
-            this.meshService.joinGroup(id).then(() => {
+            const group = this.discoveredGroups && this.discoveredGroups.find(g => g.id === id);
+            const domain = group ? group.domain : null;
+            this.meshService.joinGroup(id, domain).then(() => {
                 this.runtime.emit(this.runtime.constructor.PERIPHERAL_CONNECTED);
             })
                 /* istanbul ignore next */
@@ -210,18 +213,19 @@ class Scratch3MeshV2Blocks {
     /* istanbul ignore next */
     connectedMessage () {
         if (this.meshService && this.meshService.groupId) {
+            const meshIdWithDomain = `${this.meshService.groupId}@${this.meshService.domain}`;
             if (this.meshService.isHost) {
                 return formatMessage({
                     id: 'mesh.registeredHostV2',
                     default: 'Registered Host Mesh V2 [{ MESH_ID }]',
                     description: 'label for registered Host Mesh in connect modal for Mesh V2 extension'
-                }, {MESH_ID: this.meshService.groupId});
+                }, {MESH_ID: meshIdWithDomain});
             }
             return formatMessage({
                 id: 'mesh.joinedMeshV2',
                 default: 'Joined Mesh V2 [{ MESH_ID }]',
                 description: 'label for joined Mesh in connect modal for Mesh V2 extension'
-            }, {MESH_ID: this.meshService.groupId});
+            }, {MESH_ID: meshIdWithDomain});
         }
         return formatMessage({
             id: 'mesh.notConnectedV2',

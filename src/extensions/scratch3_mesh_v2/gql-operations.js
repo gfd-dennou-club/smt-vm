@@ -14,6 +14,12 @@ const LIST_GROUPS_BY_DOMAIN = gql`
   }
 `;
 
+const CREATE_DOMAIN = gql`
+  mutation CreateDomain {
+    createDomain
+  }
+`;
+
 const CREATE_GROUP = gql`
   mutation CreateGroup($name: String!, $hostId: ID!, $domain: String!) {
     createGroup(name: $name, hostId: $hostId, domain: $domain) {
@@ -127,6 +133,7 @@ const ON_GROUP_DISSOLVE = gql`
 
 module.exports = {
     LIST_GROUPS_BY_DOMAIN,
+    CREATE_DOMAIN,
     CREATE_GROUP,
     JOIN_GROUP,
     LEAVE_GROUP,
