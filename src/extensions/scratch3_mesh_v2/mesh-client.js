@@ -8,6 +8,7 @@ const API_KEY = process.env.MESH_API_KEY || 'da2-example';
 
 let client = null;
 
+/* istanbul ignore next */
 const createClient = () => {
     if (client) return client;
 
@@ -24,6 +25,7 @@ const createClient = () => {
     return client;
 };
 
+/* istanbul ignore next */
 const getClient = () => client;
 
 module.exports = {

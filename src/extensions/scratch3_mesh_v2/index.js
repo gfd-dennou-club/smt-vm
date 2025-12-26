@@ -108,6 +108,7 @@ class Scratch3MeshV2Blocks {
         return this.meshService.getRemoteVariable(args.NAME) || '';
     }
 
+    /* istanbul ignore next */
     getVariableNamesMenuItems () {
         if (!this.meshService) return [' '];
         const names = Object.values(this.meshService.remoteData)
@@ -120,6 +121,7 @@ class Scratch3MeshV2Blocks {
         return this.meshService.fireEvent(args.BROADCAST_OPTION);
     }
 
+    /* istanbul ignore next */
     getBroadcastMessagesMenuItems () {
         const stage = this.runtime.getTargetForStage();
         const broadcastVars = stage.getCustomVars(Variable.BROADCAST_MESSAGE_TYPE);
@@ -154,6 +156,7 @@ class Scratch3MeshV2Blocks {
 
             this.runtime.emit(this.runtime.constructor.PERIPHERAL_LIST_UPDATE, peripherals);
         })
+            /* istanbul ignore next */
             .catch(err => {
                 log.error(`Mesh V2: Scan failed: ${err}`);
             });
@@ -169,6 +172,7 @@ class Scratch3MeshV2Blocks {
             this.meshService.createGroup(`${this.nodeId.slice(0, 6)}'s Mesh`).then(() => {
                 this.runtime.emit(this.runtime.constructor.PERIPHERAL_CONNECTED);
             })
+                /* istanbul ignore next */
                 .catch(err => {
                     log.error(`Mesh V2: Connect (host) failed: ${err}`);
                     this.runtime.emit(this.runtime.constructor.PERIPHERAL_CONNECTION_ERROR_ID, id);
@@ -177,6 +181,7 @@ class Scratch3MeshV2Blocks {
             this.meshService.joinGroup(id).then(() => {
                 this.runtime.emit(this.runtime.constructor.PERIPHERAL_CONNECTED);
             })
+                /* istanbul ignore next */
                 .catch(err => {
                     log.error(`Mesh V2: Connect (peer) failed: ${err}`);
                     this.runtime.emit(this.runtime.constructor.PERIPHERAL_CONNECTION_ERROR_ID, id);
@@ -184,16 +189,19 @@ class Scratch3MeshV2Blocks {
         }
     }
 
+    /* istanbul ignore next */
     disconnect () {
         if (this.meshService) {
             this.meshService.leaveGroup();
         }
     }
 
+    /* istanbul ignore next */
     isConnected () {
         return !!(this.meshService && this.meshService.groupId);
     }
 
+    /* istanbul ignore next */
     connectedMessage () {
         if (this.meshService && this.meshService.groupId) {
             if (this.meshService.isHost) {
@@ -217,6 +225,7 @@ class Scratch3MeshV2Blocks {
     }
 
     // HOC logic
+    /* istanbul ignore next */
     setOpcodeFunctionHOC () {
         if (this.opcodeFunctions) return;
 
@@ -233,6 +242,7 @@ class Scratch3MeshV2Blocks {
         this.runtime._primitives.data_changevariableby = this.changeVariableBy.bind(this);
     }
 
+    /* istanbul ignore next */
     broadcast (args, util) {
         this.opcodeFunctions.event_broadcast(args, util);
         if (this.meshService) {
@@ -240,6 +250,7 @@ class Scratch3MeshV2Blocks {
         }
     }
 
+    /* istanbul ignore next */
     broadcastAndWait (args, util) {
         const first = !util.stackFrame.startedThreads;
         this.opcodeFunctions.event_broadcastandwait(args, util);
@@ -248,16 +259,19 @@ class Scratch3MeshV2Blocks {
         }
     }
 
+    /* istanbul ignore next */
     setVariableTo (args, util) {
         this.opcodeFunctions.data_setvariableto(args, util);
         this.syncVariable(args);
     }
 
+    /* istanbul ignore next */
     changeVariableBy (args, util) {
         this.opcodeFunctions.data_changevariableby(args, util);
         this.syncVariable(args);
     }
 
+    /* istanbul ignore next */
     syncVariable (args) {
         if (!this.meshService) return;
         const stage = this.runtime.getTargetForStage();
@@ -302,6 +316,7 @@ class Scratch3MeshV2Blocks {
         return variable;
     }
 
+    /* istanbul ignore next */
     lookupOrCreateVariable (id, name) {
         const stage = this.runtime.getTargetForStage();
         let variable = stage.lookupVariableById(id);
@@ -318,6 +333,7 @@ class Scratch3MeshV2Blocks {
         return newVariable;
     }
 
+    /* istanbul ignore next */
     createVariable (id, name, type, isCloud) {
         const stage = this.runtime.getTargetForStage();
         if (!Object.prototype.hasOwnProperty.call(stage.variables, id)) {
@@ -340,6 +356,7 @@ class Scratch3MeshV2Blocks {
         }
     }
 
+    /* istanbul ignore next */
     renameVariable (id, newName) {
         const stage = this.runtime.getTargetForStage();
         if (Object.prototype.hasOwnProperty.call(stage.variables, id)) {

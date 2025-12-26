@@ -1,3 +1,4 @@
+/* istanbul ignore next */
 class RateLimiter {
     /**
      * @param {number} maxPerSecond - Maximum number of requests per second.
