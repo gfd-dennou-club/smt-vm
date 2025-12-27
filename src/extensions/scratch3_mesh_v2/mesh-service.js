@@ -16,7 +16,7 @@ const {
     ON_GROUP_DISSOLVE
 } = require('./gql-operations');
 
-const CONNECTION_TIMEOUT = 90 * 60 * 1000; // 90 minutes in milliseconds
+const CONNECTION_TIMEOUT = 50 * 60 * 1000; // 50 minutes in milliseconds
 
 /* istanbul ignore next */
 class MeshV2Service {
@@ -264,7 +264,7 @@ class MeshV2Service {
         log.info('Mesh V2: Starting heartbeat timer');
         this.heartbeatTimer = setInterval(() => {
             this.renewHeartbeat();
-        }, 60 * 1000); // Every 1 minute
+        }, 15 * 1000); // Every 15 seconds
     }
 
     stopHeartbeat () {
@@ -301,7 +301,7 @@ class MeshV2Service {
     startConnectionTimer () {
         this.stopConnectionTimer();
         this.connectionTimer = setTimeout(() => {
-            log.warn('Mesh V2: Connection timeout (90 minutes)');
+            log.warn('Mesh V2: Connection timeout (50 minutes)');
             this.leaveGroup();
         }, CONNECTION_TIMEOUT);
     }
