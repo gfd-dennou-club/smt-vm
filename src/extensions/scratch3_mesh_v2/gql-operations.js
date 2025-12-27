@@ -10,6 +10,7 @@ const LIST_GROUPS_BY_DOMAIN = gql`
       name
       hostId
       createdAt
+      expiresAt
     }
   }
 `;
@@ -29,6 +30,7 @@ const CREATE_GROUP = gql`
       name
       hostId
       createdAt
+      expiresAt
     }
   }
 `;
@@ -45,8 +47,8 @@ const JOIN_GROUP = gql`
 `;
 
 const LEAVE_GROUP = gql`
-  mutation LeaveGroup($groupId: ID!, $domain: String!, $nodeId: ID!) {
-    leaveGroup(groupId: $groupId, domain: $domain, nodeId: $nodeId) {
+  mutation LeaveGroup($groupId: ID!, $nodeId: ID!, $domain: String!) {
+    leaveGroup(groupId: $groupId, nodeId: $nodeId, domain: $domain) {
       peerId
       groupId
       domain
@@ -61,6 +63,16 @@ const DISSOLVE_GROUP = gql`
       groupId
       domain
       message
+    }
+  }
+`;
+
+const RENEW_HEARTBEAT = gql`
+  mutation RenewHeartbeat($groupId: ID!, $domain: String!, $hostId: ID!) {
+    renewHeartbeat(groupId: $groupId, domain: $domain, hostId: $hostId) {
+      groupId
+      domain
+      expiresAt
     }
   }
 `;
@@ -138,6 +150,7 @@ module.exports = {
     JOIN_GROUP,
     LEAVE_GROUP,
     DISSOLVE_GROUP,
+    RENEW_HEARTBEAT,
     REPORT_DATA,
     FIRE_EVENT,
     ON_DATA_UPDATE,

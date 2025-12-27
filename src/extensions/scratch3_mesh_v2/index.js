@@ -214,12 +214,27 @@ class Scratch3MeshV2Blocks {
     connectedMessage () {
         if (this.meshService && this.meshService.groupId) {
             const meshIdWithDomain = `${this.meshService.groupId}@${this.meshService.domain}`;
+            const expiresAt = this.meshService.expiresAt ?
+                new Date(this.meshService.expiresAt).toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }) : null;
+
             if (this.meshService.isHost) {
+                const expiresAtMessage = expiresAt ? formatMessage({
+                    id: 'mesh.expiresAtV2',
+                    default: ' (Expires at { TIME })',
+                    description: 'label for expiration time in connect modal for Mesh V2 extension'
+                }, {TIME: expiresAt}) : '';
+
                 return formatMessage({
                     id: 'mesh.registeredHostV2',
-                    default: 'Registered Host Mesh V2 [{ MESH_ID }]',
+                    default: 'Registered Host Mesh V2 [{ MESH_ID }]{ EXPIRES_AT }',
                     description: 'label for registered Host Mesh in connect modal for Mesh V2 extension'
-                }, {MESH_ID: meshIdWithDomain});
+                }, {
+                    MESH_ID: meshIdWithDomain,
+                    EXPIRES_AT: expiresAtMessage
+                });
             }
             return formatMessage({
                 id: 'mesh.joinedMeshV2',
