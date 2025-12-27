@@ -553,6 +553,17 @@ class Microcom {
                     arguments: {
 			TEXT: { type: ArgumentType.STRING, defaultValue: "xxxxx" }
                     }
+		},
+                {
+                    opcode: 'p',
+                    text: formatMessage({
+                        id: 'kanirobo.p',
+                        default: 'output (for debug) [TEXT]',
+                    }),		    		    
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+			TEXT: { type: ArgumentType.STRING, defaultValue: "xxxxx" }
+                    }
 		}
             ],
             menus: {
@@ -593,6 +604,7 @@ class Microcom {
 //    split () {}    
     tools () {}
     puts () {}
+    p () {}
 }
 
 module.exports = Microcom
