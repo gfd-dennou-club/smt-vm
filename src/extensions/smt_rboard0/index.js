@@ -477,7 +477,7 @@ class Rboard0 {
         const val  = Cast.toString(args.VALUE);
         log.log(val);
     }   
-    
+/*    
     i2c_init (args) {
         const num1  = Cast.toString(args.NUM1);
         const num2  = Cast.toString(args.NUM2);
@@ -517,7 +517,8 @@ class Rboard0 {
         const text  = Cast.toString(args.TEXT);
         log.log(text);
     }
-
+*/
+    puts(){}
 }
 
 module.exports = Rboard0
