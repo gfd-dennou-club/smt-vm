@@ -39,6 +39,9 @@ class Scratch3MeshV2Blocks {
         try {
             createClient();
             this.meshService = new MeshV2Service(this.nodeId, this.domain);
+            this.meshService.setDisconnectCallback(() => {
+                this.runtime.emit(this.runtime.constructor.PERIPHERAL_DISCONNECTED);
+            });
             log.info(`Mesh V2: Initialized with domain ${this.domain || 'null (auto)'} and nodeId ${this.nodeId}`);
 
             if (this.runtime.extensionManager && this.runtime.extensionManager.isExtensionLoaded('mesh')) {

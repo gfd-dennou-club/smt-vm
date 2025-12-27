@@ -42,6 +42,7 @@ const JOIN_GROUP = gql`
       name
       groupId
       domain
+      heartbeatIntervalSeconds
     }
   }
 `;
@@ -73,6 +74,19 @@ const RENEW_HEARTBEAT = gql`
       groupId
       domain
       expiresAt
+      heartbeatIntervalSeconds
+    }
+  }
+`;
+
+const SEND_MEMBER_HEARTBEAT = gql`
+  mutation SendMemberHeartbeat($groupId: ID!, $domain: String!, $nodeId: ID!) {
+    sendMemberHeartbeat(groupId: $groupId, domain: $domain, nodeId: $nodeId) {
+      nodeId
+      groupId
+      domain
+      expiresAt
+      heartbeatIntervalSeconds
     }
   }
 `;
@@ -151,6 +165,7 @@ module.exports = {
     LEAVE_GROUP,
     DISSOLVE_GROUP,
     RENEW_HEARTBEAT,
+    SEND_MEMBER_HEARTBEAT,
     REPORT_DATA,
     FIRE_EVENT,
     ON_DATA_UPDATE,
