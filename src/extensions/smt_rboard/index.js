@@ -112,6 +112,18 @@ class Rboard {
                         DUTY: { type: ArgumentType.NUMBER, defaultValue: 50 }
                     }
                 },
+                {                    
+                    opcode :'pwm_frequency',
+                    text: formatMessage({
+                        id: 'rboard.pwm_frequency',
+                        default:'PWM: set [PIN] frequency [FREQ]',
+                    }),
+                    blockType:BlockType.COMMAND,
+                    arguments: {
+                        PIN:  { type: ArgumentType.STRING, menu: 'menuLED' },
+                        FREQ: { type: ArgumentType.NUMBER, defaultValue: 1000 }
+                    }
+                },
                 {
                     opcode :'adc_volt',
                     text: formatMessage({
@@ -151,6 +163,7 @@ class Rboard {
     led(){}
     sw(){}
     pwm_duty(){}
+    pwm_frequency(){}
     adc_volt(){}
     puts(){}
 }
