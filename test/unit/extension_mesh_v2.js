@@ -70,7 +70,21 @@ test('Mesh V2 Blocks', t => {
     t.test('scan', st => {
         const mockRuntime = createMockRuntime();
         const blocks = new MeshV2Blocks(mockRuntime);
-        const mockGroups = [{id: 'group1', name: 'Group 1', domain: 'test-domain'}];
+        const now = Date.now();
+        const mockGroups = [
+            {
+                id: 'group1',
+                name: 'Group 1',
+                domain: 'test-domain',
+                expiresAt: new Date(now + 100000).toISOString()
+            },
+            {
+                id: 'expired-group',
+                name: 'Expired',
+                domain: 'test-domain',
+                expiresAt: new Date(now - 100000).toISOString()
+            }
+        ];
 
         // Mock service method
         blocks.meshService.listGroups = () => Promise.resolve(mockGroups);
@@ -80,7 +94,7 @@ test('Mesh V2 Blocks', t => {
         // Since it's async, we need to wait
         setImmediate(() => {
             st.equal(mockRuntime.lastEmittedEvent, 'PERIPHERAL_LIST_UPDATE');
-            st.equal(mockRuntime.lastEmittedData.length, 2); // Host option + 1 group
+            st.equal(mockRuntime.lastEmittedData.length, 2); // Host option + 1 valid group
             st.equal(mockRuntime.lastEmittedData[0].peripheralId, 'meshV2_host');
             st.equal(mockRuntime.lastEmittedData[1].peripheralId, 'group1');
             st.deepEqual(blocks.discoveredGroups, mockGroups);
@@ -197,6 +211,116 @@ test('Mesh V2 Blocks', t => {
         st.ok(dataSent);
         st.equal(dataSent[0].key, 'var1');
         st.equal(dataSent[0].value, '100');
+
+        st.end();
+    });
+
+    t.test('calculateRssi', st => {
+        const mockRuntime = createMockRuntime();
+        const blocks = new MeshV2Blocks(mockRuntime);
+        const now = Date.now();
+
+        // strongest: 3000s remaining
+        const strongest = new Date(now + (3000 * 1000)).toISOString();
+        st.equal(blocks.calculateRssi(strongest), 0);
+
+        // medium: 1500s remaining
+        const medium = new Date(now + (1500 * 1000)).toISOString();
+        st.equal(blocks.calculateRssi(medium), -50);
+
+        // weakest: 0s remaining
+        const weakest = new Date(now).toISOString();
+        st.equal(blocks.calculateRssi(weakest), -100);
+
+        // expired: -100s remaining
+        const expired = new Date(now - (100 * 1000)).toISOString();
+        st.equal(blocks.calculateRssi(expired), -100);
+
+        // null/empty
+        st.equal(blocks.calculateRssi(null), 0);
+
+        st.test('with custom environment variable', sst => {
+            const originalEnvValue = process.env.MESH_MAX_CONNECTION_TIME_SECONDS;
+            process.env.MESH_MAX_CONNECTION_TIME_SECONDS = '6000';
+            try {
+                // We need to re-require or manually trigger the logic that reads the env var
+                // But the constant is defined at the top level of the module.
+                // For testing purposes, we can just pass it as an argument to calculateRssi
+                // OR we can test the value of MESH_V2_MAX_CONNECTION_TIME_SECONDS if it was exported.
+                // Since it's not exported, let's test by passing it.
+                const customStrongest = new Date(now + (6000 * 1000)).toISOString();
+                sst.equal(blocks.calculateRssi(customStrongest, 6000), 0);
+                sst.equal(blocks.calculateRssi(new Date(now + (3000 * 1000)).toISOString(), 6000), -50);
+            } finally {
+                if (originalEnvValue) {
+                    process.env.MESH_MAX_CONNECTION_TIME_SECONDS = originalEnvValue;
+                } else {
+                    delete process.env.MESH_MAX_CONNECTION_TIME_SECONDS;
+                }
+            }
+            sst.end();
+        });
+
+        st.end();
+    });
+
+    t.test('shouldDisconnectOnError', st => {
+        const mockRuntime = createMockRuntime();
+        const blocks = new MeshV2Blocks(mockRuntime);
+
+        // GraphQL errorType: GroupNotFound
+        const groupNotFoundError = {
+            graphQLErrors: [{
+                message: 'Group expired: xxx@yyy',
+                errorType: 'GroupNotFound'
+            }]
+        };
+        st.equal(blocks.meshService.shouldDisconnectOnError(groupNotFoundError), true);
+
+        // GraphQL errorType: Unauthorized
+        const unauthorizedError = {
+            graphQLErrors: [{
+                message: 'Only the host can renew',
+                errorType: 'Unauthorized'
+            }]
+        };
+        st.equal(blocks.meshService.shouldDisconnectOnError(unauthorizedError), true);
+
+        // GraphQL errorType: NodeNotFound
+        const nodeNotFoundError = {
+            graphQLErrors: [{
+                message: 'Node not found',
+                errorType: 'NodeNotFound'
+            }]
+        };
+        st.equal(blocks.meshService.shouldDisconnectOnError(nodeNotFoundError), true);
+
+        // GraphQL errorType: ValidationError (should NOT disconnect)
+        const validationError = {
+            graphQLErrors: [{
+                message: 'Domain must be 256 characters or less',
+                errorType: 'ValidationError'
+            }]
+        };
+        st.equal(blocks.meshService.shouldDisconnectOnError(validationError), false);
+
+        // Fallback: message string matching
+        const messageOnlyError = {
+            message: 'GraphQL error: Group not found'
+        };
+        st.equal(blocks.meshService.shouldDisconnectOnError(messageOnlyError), true);
+
+        const expiredMessageError = {
+            message: 'Group expired'
+        };
+        st.equal(blocks.meshService.shouldDisconnectOnError(expiredMessageError), true);
+
+        // Network error (should NOT disconnect)
+        const networkError = {
+            message: 'Network request failed',
+            networkError: new Error('Fetch failed')
+        };
+        st.equal(blocks.meshService.shouldDisconnectOnError(networkError), false);
 
         st.end();
     });

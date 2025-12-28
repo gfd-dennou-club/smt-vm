@@ -17,6 +17,10 @@ const blockIconURI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAYA
 
 const MESH_V2_HOST_ID = 'meshV2_host';
 
+const MESH_V2_MAX_CONNECTION_TIME_SECONDS =
+    (typeof process !== 'undefined' && process.env.MESH_MAX_CONNECTION_TIME_SECONDS) ?
+        Number(process.env.MESH_MAX_CONNECTION_TIME_SECONDS) : 3000;
+
 const MESH_ID_LABEL_CHARACTERS = {
     0: 'い',
     1: 'し',
@@ -59,7 +63,9 @@ class Scratch3MeshV2Blocks {
             createClient();
             this.meshService = new MeshV2Service(this, this.nodeId, this.domain);
             this.meshService.setDisconnectCallback(() => {
-                this.runtime.emit(this.runtime.constructor.PERIPHERAL_DISCONNECTED);
+                this.runtime.emit(this.runtime.constructor.PERIPHERAL_DISCONNECTED, {
+                    extensionId: Scratch3MeshV2Blocks.EXTENSION_ID
+                });
             });
             log.info(`Mesh V2: Initialized with domain ${this.domain || 'null (auto)'} and nodeId ${this.nodeId}`);
 
@@ -78,6 +84,28 @@ class Scratch3MeshV2Blocks {
         if (!meshId) return '';
         const label = meshId.slice(0, 6);
         return [...label].map(c => MESH_ID_LABEL_CHARACTERS[c]).join('');
+    }
+
+    /**
+     * Calculate RSSI based on time remaining until expiresAt
+     * @param {string} expiresAt - ISO 8601 timestamp
+     * @param {number} maxConnectionTimeSeconds - Maximum connection time in seconds (default: 3000)
+     * @returns {number} RSSI value in range -100 to 0 (higher = stronger signal)
+     */
+    calculateRssi (expiresAt, maxConnectionTimeSeconds = MESH_V2_MAX_CONNECTION_TIME_SECONDS) {
+        if (!expiresAt) return 0;
+        const now = Date.now();
+        const expiresAtMs = new Date(expiresAt).getTime();
+        const timeRemaining = expiresAtMs - now;
+        const maxConnectionTimeMs = maxConnectionTimeSeconds * 1000;
+
+        // Calculate percentage: more time remaining = higher percentage
+        // Range: 0-100
+        const percentage = Math.max(0, Math.min(100, (timeRemaining / maxConnectionTimeMs) * 100));
+
+        // Convert to signal strength range (-100 to 0)
+        // Higher percentage = stronger signal (closer to 0)
+        return Math.round(percentage - 100);
     }
 
     /* istanbul ignore next */
@@ -160,20 +188,37 @@ class Scratch3MeshV2Blocks {
         return messages;
     }
 
-    // Peripheral methods
     /* istanbul ignore next */
     scan () {
         if (!this.meshService) return;
         this.meshService.listGroups().then(groups => {
             this.discoveredGroups = groups;
-            const peripherals = groups.map(group => ({
+
+            // Filter out expired groups
+            const now = Date.now();
+            const validGroups = groups.filter(group => {
+                if (!group.expiresAt) return true; // Keep groups with no expiry (should not happen)
+                const expiresAtMs = new Date(group.expiresAt).getTime();
+                const isValid = expiresAtMs > now;
+                if (!isValid) {
+                    log.warn('Mesh V2: Filtering out expired group:', {
+                        id: group.id,
+                        name: group.name,
+                        expiresAt: group.expiresAt,
+                        now: new Date(now).toISOString()
+                    });
+                }
+                return isValid;
+            });
+
+            const peripherals = validGroups.map(group => ({
                 peripheralId: group.id,
                 name: formatMessage({
                     id: 'mesh.clientPeripheralNameV2',
                     default: 'Join Mesh V2 [{ MESH_ID }]',
                     description: 'label for joining Mesh in connect modal for Mesh V2 extension'
                 }, {MESH_ID: this.makeMeshIdLabel(group.name)}),
-                rssi: 0,
+                rssi: this.calculateRssi(group.expiresAt),
                 domain: group.domain
             }));
 
