@@ -199,7 +199,16 @@ class Scratch3MeshV2Blocks {
             const validGroups = groups.filter(group => {
                 if (!group.expiresAt) return true; // Keep groups with no expiry (should not happen)
                 const expiresAtMs = new Date(group.expiresAt).getTime();
-                return expiresAtMs > now;
+                const isValid = expiresAtMs > now;
+                if (!isValid) {
+                    log.warn('Mesh V2: Filtering out expired group:', {
+                        id: group.id,
+                        name: group.name,
+                        expiresAt: group.expiresAt,
+                        now: new Date(now).toISOString()
+                    });
+                }
+                return isValid;
             });
 
             const peripherals = validGroups.map(group => ({

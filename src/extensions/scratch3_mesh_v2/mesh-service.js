@@ -150,7 +150,7 @@ class MeshV2Service {
             this.startSubscriptions();
             this.startHeartbeat();
             this.startConnectionTimer();
-            
+
             log.info(`Mesh V2: Created group ${this.groupName} (${this.groupId}) in domain ${this.domain}`);
             return group;
         } catch (error) {
@@ -175,7 +175,8 @@ class MeshV2Service {
                 fetchPolicy: 'network-only'
             });
 
-            return result.data.listGroupsByDomain;
+            const groups = result.data.listGroupsByDomain;
+            return groups;
         } catch (error) {
             log.error(`Mesh V2: Failed to list groups: ${error}`);
             throw error;

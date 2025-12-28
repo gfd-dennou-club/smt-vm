@@ -72,8 +72,18 @@ test('Mesh V2 Blocks', t => {
         const blocks = new MeshV2Blocks(mockRuntime);
         const now = Date.now();
         const mockGroups = [
-            {id: 'group1', name: 'Group 1', domain: 'test-domain', expiresAt: new Date(now + 100000).toISOString()},
-            {id: 'expired-group', name: 'Expired', domain: 'test-domain', expiresAt: new Date(now - 100000).toISOString()}
+            {
+                id: 'group1',
+                name: 'Group 1',
+                domain: 'test-domain',
+                expiresAt: new Date(now + 100000).toISOString()
+            },
+            {
+                id: 'expired-group',
+                name: 'Expired',
+                domain: 'test-domain',
+                expiresAt: new Date(now - 100000).toISOString()
+            }
         ];
 
         // Mock service method
