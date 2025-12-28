@@ -57,7 +57,7 @@ class Scratch3MeshV2Blocks {
 
         try {
             createClient();
-            this.meshService = new MeshV2Service(this.nodeId, this.domain);
+            this.meshService = new MeshV2Service(this, this.nodeId, this.domain);
             this.meshService.setDisconnectCallback(() => {
                 this.runtime.emit(this.runtime.constructor.PERIPHERAL_DISCONNECTED);
             });
