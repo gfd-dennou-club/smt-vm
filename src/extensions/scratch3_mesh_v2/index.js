@@ -17,7 +17,9 @@ const blockIconURI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAYA
 
 const MESH_V2_HOST_ID = 'meshV2_host';
 
-const MESH_V2_MAX_CONNECTION_TIME_SECONDS = 3000;
+const MESH_V2_MAX_CONNECTION_TIME_SECONDS =
+    (typeof process !== 'undefined' && process.env.MESH_MAX_CONNECTION_TIME_SECONDS) ?
+        Number(process.env.MESH_MAX_CONNECTION_TIME_SECONDS) : 3000;
 
 const MESH_ID_LABEL_CHARACTERS = {
     0: 'い',

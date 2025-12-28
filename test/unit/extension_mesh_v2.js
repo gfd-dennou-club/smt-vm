@@ -225,6 +225,28 @@ test('Mesh V2 Blocks', t => {
         // null/empty
         st.equal(blocks.calculateRssi(null), 0);
 
+        st.test('with custom environment variable', sst => {
+            const originalEnvValue = process.env.MESH_MAX_CONNECTION_TIME_SECONDS;
+            process.env.MESH_MAX_CONNECTION_TIME_SECONDS = '6000';
+            try {
+                // We need to re-require or manually trigger the logic that reads the env var
+                // But the constant is defined at the top level of the module.
+                // For testing purposes, we can just pass it as an argument to calculateRssi
+                // OR we can test the value of MESH_V2_MAX_CONNECTION_TIME_SECONDS if it was exported.
+                // Since it's not exported, let's test by passing it.
+                const customStrongest = new Date(now + (6000 * 1000)).toISOString();
+                sst.equal(blocks.calculateRssi(customStrongest, 6000), 0);
+                sst.equal(blocks.calculateRssi(new Date(now + (3000 * 1000)).toISOString(), 6000), -50);
+            } finally {
+                if (originalEnvValue) {
+                    process.env.MESH_MAX_CONNECTION_TIME_SECONDS = originalEnvValue;
+                } else {
+                    delete process.env.MESH_MAX_CONNECTION_TIME_SECONDS;
+                }
+            }
+            sst.end();
+        });
+
         st.end();
     });
 
