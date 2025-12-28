@@ -315,6 +315,7 @@ class MeshV2Service {
             });
             this.expiresAt = result.data.renewHeartbeat.expiresAt;
             log.info(`Mesh V2: Heartbeat renewed. Expires at: ${this.expiresAt}`);
+            this.startConnectionTimer();
             return result.data.renewHeartbeat;
         } catch (error) {
             log.error(`Mesh V2: Heartbeat renewal failed: ${error}`);
@@ -338,6 +339,10 @@ class MeshV2Service {
                 }
             });
             log.info('Mesh V2: Member heartbeat sent');
+            if (result.data.sendMemberHeartbeat.expiresAt) {
+                this.expiresAt = result.data.sendMemberHeartbeat.expiresAt;
+                this.startConnectionTimer();
+            }
             if (result.data.sendMemberHeartbeat.heartbeatIntervalSeconds) {
                 const newInterval = result.data.sendMemberHeartbeat.heartbeatIntervalSeconds;
                 if (newInterval !== this.memberHeartbeatInterval) {
@@ -357,10 +362,18 @@ class MeshV2Service {
 
     startConnectionTimer () {
         this.stopConnectionTimer();
+        let timeout = CONNECTION_TIMEOUT;
+        if (this.expiresAt) {
+            const serverTimeout = new Date(this.expiresAt).getTime() - Date.now();
+            if (serverTimeout > 0) {
+                timeout = serverTimeout;
+            }
+        }
+        const timeoutMinutes = Math.round(timeout / 60000);
         this.connectionTimer = setTimeout(() => {
-            log.warn('Mesh V2: Connection timeout (50 minutes)');
+            log.warn(`Mesh V2: Connection timeout (${timeoutMinutes} minutes)`);
             this.leaveGroup();
-        }, CONNECTION_TIMEOUT);
+        }, timeout);
     }
 
     stopConnectionTimer () {
