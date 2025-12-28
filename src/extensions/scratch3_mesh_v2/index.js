@@ -17,12 +17,31 @@ const blockIconURI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAYA
 
 const MESH_V2_HOST_ID = 'meshV2_host';
 
+const MESH_ID_LABEL_CHARACTERS = {
+    0: 'い',
+    1: 'し',
+    2: 'か',
+    3: 'た',
+    4: 'う',
+    5: 'ん',
+    6: 'て',
+    7: 'と',
+    8: 'の',
+    9: 'つ',
+    a: 'は',
+    b: 'こ',
+    c: 'に',
+    d: 'な',
+    e: 'く',
+    f: 'き'
+};
+
 class Scratch3MeshV2Blocks {
     /**
      * @return {string} - the name of this extension.
      */
     static get EXTENSION_NAME () {
-        return 'Mesh V2 (GraphQL)';
+        return 'Mesh V2';
     }
 
     static get EXTENSION_ID () {
@@ -53,6 +72,11 @@ class Scratch3MeshV2Blocks {
         }
 
         this.runtime.registerPeripheralExtension(Scratch3MeshV2Blocks.EXTENSION_ID, this);
+    }
+
+    makeMeshIdLabel (meshId) {
+        const label = meshId.slice(0, 6);
+        return [...label].map(c => MESH_ID_LABEL_CHARACTERS[c]).join('');
     }
 
     /* istanbul ignore next */
@@ -147,7 +171,7 @@ class Scratch3MeshV2Blocks {
                     id: 'mesh.clientPeripheralNameV2',
                     default: 'Join Mesh V2 [{ MESH_ID }]',
                     description: 'label for joining Mesh in connect modal for Mesh V2 extension'
-                }, {MESH_ID: group.name}),
+                }, {MESH_ID: this.makeMeshIdLabel(group.name)}),
                 rssi: 0,
                 domain: group.domain
             }));
@@ -159,7 +183,7 @@ class Scratch3MeshV2Blocks {
                     id: 'mesh.hostPeripheralNameV2',
                     default: 'Become Mesh V2 Host [{ MESH_ID }]',
                     description: 'label for becoming Host Mesh in connect modal for Mesh V2 extension'
-                }, {MESH_ID: this.nodeId.slice(0, 6)}),
+                }, {MESH_ID: this.makeMeshIdLabel(this.nodeId)}),
                 rssi: 0
             });
 
@@ -179,7 +203,7 @@ class Scratch3MeshV2Blocks {
         if (!this.meshService) return;
 
         if (id === MESH_V2_HOST_ID) {
-            this.meshService.createGroup(`${this.nodeId.slice(0, 6)}'s Mesh`).then(() => {
+            this.meshService.createGroup(this.nodeId).then(() => {
                 this.runtime.emit(this.runtime.constructor.PERIPHERAL_CONNECTED);
             })
                 /* istanbul ignore next */
@@ -216,7 +240,7 @@ class Scratch3MeshV2Blocks {
     /* istanbul ignore next */
     connectedMessage () {
         if (this.meshService && this.meshService.groupId) {
-            const meshIdWithDomain = `${this.meshService.groupId}@${this.meshService.domain}`;
+            const meshIdLabel = this.makeMeshIdLabel(this.meshService.groupName);
             const expiresAt = this.meshService.expiresAt ?
                 new Date(this.meshService.expiresAt).toLocaleTimeString([], {
                     hour: '2-digit',
@@ -235,7 +259,7 @@ class Scratch3MeshV2Blocks {
                     default: 'Registered Host Mesh V2 [{ MESH_ID }]{ EXPIRES_AT }',
                     description: 'label for registered Host Mesh in connect modal for Mesh V2 extension'
                 }, {
-                    MESH_ID: meshIdWithDomain,
+                    MESH_ID: meshIdLabel,
                     EXPIRES_AT: expiresAtMessage
                 });
             }
@@ -243,7 +267,7 @@ class Scratch3MeshV2Blocks {
                 id: 'mesh.joinedMeshV2',
                 default: 'Joined Mesh V2 [{ MESH_ID }]',
                 description: 'label for joined Mesh in connect modal for Mesh V2 extension'
-            }, {MESH_ID: meshIdWithDomain});
+            }, {MESH_ID: meshIdLabel});
         }
         return formatMessage({
             id: 'mesh.notConnectedV2',
