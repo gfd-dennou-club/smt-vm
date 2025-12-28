@@ -188,13 +188,21 @@ class Scratch3MeshV2Blocks {
         return messages;
     }
 
-    // Peripheral methods
     /* istanbul ignore next */
     scan () {
         if (!this.meshService) return;
         this.meshService.listGroups().then(groups => {
             this.discoveredGroups = groups;
-            const peripherals = groups.map(group => ({
+
+            // Filter out expired groups
+            const now = Date.now();
+            const validGroups = groups.filter(group => {
+                if (!group.expiresAt) return true; // Keep groups with no expiry (should not happen)
+                const expiresAtMs = new Date(group.expiresAt).getTime();
+                return expiresAtMs > now;
+            });
+
+            const peripherals = validGroups.map(group => ({
                 peripheralId: group.id,
                 name: formatMessage({
                     id: 'mesh.clientPeripheralNameV2',

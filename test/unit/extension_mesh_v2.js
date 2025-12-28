@@ -70,7 +70,11 @@ test('Mesh V2 Blocks', t => {
     t.test('scan', st => {
         const mockRuntime = createMockRuntime();
         const blocks = new MeshV2Blocks(mockRuntime);
-        const mockGroups = [{id: 'group1', name: 'Group 1', domain: 'test-domain'}];
+        const now = Date.now();
+        const mockGroups = [
+            {id: 'group1', name: 'Group 1', domain: 'test-domain', expiresAt: new Date(now + 100000).toISOString()},
+            {id: 'expired-group', name: 'Expired', domain: 'test-domain', expiresAt: new Date(now - 100000).toISOString()}
+        ];
 
         // Mock service method
         blocks.meshService.listGroups = () => Promise.resolve(mockGroups);
@@ -80,7 +84,7 @@ test('Mesh V2 Blocks', t => {
         // Since it's async, we need to wait
         setImmediate(() => {
             st.equal(mockRuntime.lastEmittedEvent, 'PERIPHERAL_LIST_UPDATE');
-            st.equal(mockRuntime.lastEmittedData.length, 2); // Host option + 1 group
+            st.equal(mockRuntime.lastEmittedData.length, 2); // Host option + 1 valid group
             st.equal(mockRuntime.lastEmittedData[0].peripheralId, 'meshV2_host');
             st.equal(mockRuntime.lastEmittedData[1].peripheralId, 'group1');
             st.deepEqual(blocks.discoveredGroups, mockGroups);
