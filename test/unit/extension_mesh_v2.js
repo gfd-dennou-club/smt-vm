@@ -250,5 +250,66 @@ test('Mesh V2 Blocks', t => {
         st.end();
     });
 
+    t.test('shouldDisconnectOnError', st => {
+        const mockRuntime = createMockRuntime();
+        const blocks = new MeshV2Blocks(mockRuntime);
+
+        // GraphQL errorType: GroupNotFound
+        const groupNotFoundError = {
+            graphQLErrors: [{
+                message: 'Group expired: xxx@yyy',
+                errorType: 'GroupNotFound'
+            }]
+        };
+        st.equal(blocks.meshService.shouldDisconnectOnError(groupNotFoundError), true);
+
+        // GraphQL errorType: Unauthorized
+        const unauthorizedError = {
+            graphQLErrors: [{
+                message: 'Only the host can renew',
+                errorType: 'Unauthorized'
+            }]
+        };
+        st.equal(blocks.meshService.shouldDisconnectOnError(unauthorizedError), true);
+
+        // GraphQL errorType: NodeNotFound
+        const nodeNotFoundError = {
+            graphQLErrors: [{
+                message: 'Node not found',
+                errorType: 'NodeNotFound'
+            }]
+        };
+        st.equal(blocks.meshService.shouldDisconnectOnError(nodeNotFoundError), true);
+
+        // GraphQL errorType: ValidationError (should NOT disconnect)
+        const validationError = {
+            graphQLErrors: [{
+                message: 'Domain must be 256 characters or less',
+                errorType: 'ValidationError'
+            }]
+        };
+        st.equal(blocks.meshService.shouldDisconnectOnError(validationError), false);
+
+        // Fallback: message string matching
+        const messageOnlyError = {
+            message: 'GraphQL error: Group not found'
+        };
+        st.equal(blocks.meshService.shouldDisconnectOnError(messageOnlyError), true);
+
+        const expiredMessageError = {
+            message: 'Group expired'
+        };
+        st.equal(blocks.meshService.shouldDisconnectOnError(expiredMessageError), true);
+
+        // Network error (should NOT disconnect)
+        const networkError = {
+            message: 'Network request failed',
+            networkError: new Error('Fetch failed')
+        };
+        st.equal(blocks.meshService.shouldDisconnectOnError(networkError), false);
+
+        st.end();
+    });
+
     t.end();
 });

@@ -20,6 +20,16 @@ const {
 
 const CONNECTION_TIMEOUT = 50 * 60 * 1000; // 50 minutes in milliseconds
 
+/**
+ * GraphQL error types that indicate the connection is no longer valid.
+ * These are defined in infra/mesh-v2/js/functions/*.js
+ */
+const DISCONNECT_ERROR_TYPES = new Set([
+    'GroupNotFound', // Group doesn't exist, expired, or heartbeat expired
+    'Unauthorized', // Not authorized for this operation
+    'NodeNotFound' // Node doesn't exist
+]);
+
 /* istanbul ignore next */
 class MeshV2Service {
     constructor (blocks, meshId, domain) {
@@ -50,6 +60,39 @@ class MeshV2Service {
         this.lastSentData = {};
 
         this.disconnectCallback = null;
+    }
+
+    /**
+     * Check if the error indicates the group/node is no longer valid.
+     * Uses errorType from GraphQL response for robust error detection.
+     * @param {Error} error - The error to check.
+     * @returns {boolean} true if should disconnect.
+     */
+    shouldDisconnectOnError (error) {
+        if (!error) return false;
+
+        // Primary check: GraphQL errorType (most reliable)
+        if (error.graphQLErrors && error.graphQLErrors.length > 0) {
+            const errorType = error.graphQLErrors[0].errorType;
+            if (DISCONNECT_ERROR_TYPES.has(errorType)) {
+                log.info(`Mesh V2: Disconnecting due to errorType: ${errorType}`);
+                return true;
+            }
+        }
+
+        // Fallback: check message string (backward compatibility)
+        // This ensures old behavior is preserved if errorType is missing
+        if (error.message) {
+            const message = error.message.toLowerCase();
+            if (message.includes('not found') ||
+                message.includes('expired') ||
+                message.includes('unauthorized')) {
+                log.warn('Mesh V2: Disconnecting based on error message (fallback). Consider checking errorType.');
+                return true;
+            }
+        }
+
+        return false;
     }
 
     setDisconnectCallback (callback) {
@@ -345,8 +388,7 @@ class MeshV2Service {
             return result.data.renewHeartbeat;
         } catch (error) {
             log.error(`Mesh V2: Heartbeat renewal failed: ${error}`);
-            // If group not found or unauthorized, it might have been dissolved or expired
-            if (error.message.includes('not found') || error.message.includes('Unauthorized')) {
+            if (this.shouldDisconnectOnError(error)) {
                 this.cleanupAndDisconnect();
             }
         }
@@ -379,8 +421,7 @@ class MeshV2Service {
             return result.data.sendMemberHeartbeat;
         } catch (error) {
             log.error(`Mesh V2: Member heartbeat failed: ${error}`);
-            // If group or node not found, we should disconnect
-            if (error.message.includes('not found')) {
+            if (this.shouldDisconnectOnError(error)) {
                 this.cleanupAndDisconnect();
             }
         }
@@ -449,6 +490,9 @@ class MeshV2Service {
             });
         } catch (error) {
             log.error(`Mesh V2: Failed to send data: ${error}`);
+            if (this.shouldDisconnectOnError(error)) {
+                this.cleanupAndDisconnect();
+            }
         }
     }
 
@@ -473,6 +517,9 @@ class MeshV2Service {
             });
         } catch (error) {
             log.error(`Mesh V2: Failed to fire event: ${error}`);
+            if (this.shouldDisconnectOnError(error)) {
+                this.cleanupAndDisconnect();
+            }
         }
     }
 
