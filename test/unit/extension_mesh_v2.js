@@ -96,7 +96,7 @@ test('Mesh V2 Blocks', t => {
 
         // Mock service methods
         blocks.meshService.createGroup = name => {
-            st.ok(name.includes("'s Mesh"));
+            st.equal(name, blocks.nodeId);
             // Simulate server returning auto-generated domain
             blocks.meshService.domain = 'auto-domain';
             return Promise.resolve({id: 'new-group-id', domain: 'auto-domain'});
@@ -120,9 +120,10 @@ test('Mesh V2 Blocks', t => {
         blocks.discoveredGroups = [{id: 'group1', name: 'Group 1', domain: 'scanned-domain'}];
 
         // Mock service methods
-        blocks.meshService.joinGroup = (id, domain) => {
+        blocks.meshService.joinGroup = (id, domain, groupName) => {
             st.equal(id, 'group1');
             st.equal(domain, 'scanned-domain');
+            st.equal(groupName, 'Group 1');
             blocks.meshService.domain = domain;
             return Promise.resolve({id: 'node1', domain: domain});
         };
