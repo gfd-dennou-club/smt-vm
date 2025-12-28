@@ -201,5 +201,32 @@ test('Mesh V2 Blocks', t => {
         st.end();
     });
 
+    t.test('calculateRssi', st => {
+        const mockRuntime = createMockRuntime();
+        const blocks = new MeshV2Blocks(mockRuntime);
+        const now = Date.now();
+
+        // strongest: 3000s remaining
+        const strongest = new Date(now + (3000 * 1000)).toISOString();
+        st.equal(blocks.calculateRssi(strongest), 0);
+
+        // medium: 1500s remaining
+        const medium = new Date(now + (1500 * 1000)).toISOString();
+        st.equal(blocks.calculateRssi(medium), -50);
+
+        // weakest: 0s remaining
+        const weakest = new Date(now).toISOString();
+        st.equal(blocks.calculateRssi(weakest), -100);
+
+        // expired: -100s remaining
+        const expired = new Date(now - (100 * 1000)).toISOString();
+        st.equal(blocks.calculateRssi(expired), -100);
+
+        // null/empty
+        st.equal(blocks.calculateRssi(null), 0);
+
+        st.end();
+    });
+
     t.end();
 });

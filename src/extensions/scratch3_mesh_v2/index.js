@@ -17,6 +17,8 @@ const blockIconURI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAYA
 
 const MESH_V2_HOST_ID = 'meshV2_host';
 
+const MESH_V2_MAX_CONNECTION_TIME_SECONDS = 3000;
+
 const MESH_ID_LABEL_CHARACTERS = {
     0: 'い',
     1: 'し',
@@ -78,6 +80,28 @@ class Scratch3MeshV2Blocks {
         if (!meshId) return '';
         const label = meshId.slice(0, 6);
         return [...label].map(c => MESH_ID_LABEL_CHARACTERS[c]).join('');
+    }
+
+    /**
+     * Calculate RSSI based on time remaining until expiresAt
+     * @param {string} expiresAt - ISO 8601 timestamp
+     * @param {number} maxConnectionTimeSeconds - Maximum connection time in seconds (default: 3000)
+     * @returns {number} RSSI value in range -100 to 0 (higher = stronger signal)
+     */
+    calculateRssi (expiresAt, maxConnectionTimeSeconds = MESH_V2_MAX_CONNECTION_TIME_SECONDS) {
+        if (!expiresAt) return 0;
+        const now = Date.now();
+        const expiresAtMs = new Date(expiresAt).getTime();
+        const timeRemaining = expiresAtMs - now;
+        const maxConnectionTimeMs = maxConnectionTimeSeconds * 1000;
+
+        // Calculate percentage: more time remaining = higher percentage
+        // Range: 0-100
+        const percentage = Math.max(0, Math.min(100, (timeRemaining / maxConnectionTimeMs) * 100));
+
+        // Convert to signal strength range (-100 to 0)
+        // Higher percentage = stronger signal (closer to 0)
+        return Math.round(percentage - 100);
     }
 
     /* istanbul ignore next */
@@ -173,7 +197,7 @@ class Scratch3MeshV2Blocks {
                     default: 'Join Mesh V2 [{ MESH_ID }]',
                     description: 'label for joining Mesh in connect modal for Mesh V2 extension'
                 }, {MESH_ID: this.makeMeshIdLabel(group.name)}),
-                rssi: 0,
+                rssi: this.calculateRssi(group.expiresAt),
                 domain: group.domain
             }));
 
