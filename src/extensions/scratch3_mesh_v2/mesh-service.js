@@ -9,6 +9,7 @@ const {
     LEAVE_GROUP,
     DISSOLVE_GROUP,
     RENEW_HEARTBEAT,
+    SEND_MEMBER_HEARTBEAT,
     REPORT_DATA,
     FIRE_EVENT,
     ON_DATA_UPDATE,
@@ -33,6 +34,7 @@ class MeshV2Service {
         this.subscriptions = [];
         this.connectionTimer = null;
         this.heartbeatTimer = null;
+        this.memberHeartbeatInterval = 120; // Default 2 min
 
         // Data from other nodes: { nodeId: { key: value } }
         this.remoteData = {};
@@ -43,6 +45,19 @@ class MeshV2Service {
 
         // Last sent data to detect changes
         this.lastSentData = {};
+
+        this.disconnectCallback = null;
+    }
+
+    setDisconnectCallback (callback) {
+        this.disconnectCallback = callback;
+    }
+
+    cleanupAndDisconnect () {
+        this.cleanup();
+        if (this.disconnectCallback) {
+            this.disconnectCallback();
+        }
     }
 
     async createDomain () {
@@ -138,8 +153,12 @@ class MeshV2Service {
             this.groupId = groupId;
             this.domain = node.domain; // Update domain from server
             this.isHost = false;
+            if (node.heartbeatIntervalSeconds) {
+                this.memberHeartbeatInterval = node.heartbeatIntervalSeconds;
+            }
 
             this.startSubscriptions();
+            this.startHeartbeat(); // Start heartbeat for member too
             this.startConnectionTimer();
 
             log.info(`Mesh V2: Joined group ${this.groupId} in domain ${this.domain}`);
@@ -179,7 +198,7 @@ class MeshV2Service {
         } catch (error) {
             log.error(`Mesh V2: Error during leave/dissolve: ${error}`);
         } finally {
-            this.cleanup();
+            this.cleanupAndDisconnect();
         }
     }
 
@@ -225,7 +244,7 @@ class MeshV2Service {
         }).subscribe({
             next: () => {
                 log.info('Mesh V2: Group dissolved by host');
-                this.cleanup();
+                this.cleanupAndDisconnect();
             },
             error: err => log.error(`Mesh V2: Dissolve subscription error: ${err}`)
         });
@@ -259,12 +278,19 @@ class MeshV2Service {
 
     startHeartbeat () {
         this.stopHeartbeat();
-        if (!this.isHost || !this.groupId) return;
+        if (!this.groupId) return;
 
-        log.info('Mesh V2: Starting heartbeat timer');
+        log.info(`Mesh V2: Starting heartbeat timer (Role: ${this.isHost ? 'Host' : 'Member'})`);
+        // Use 15s for host, memberHeartbeatInterval for member (default 120s)
+        const interval = this.isHost ? 15 * 1000 : this.memberHeartbeatInterval * 1000;
+
         this.heartbeatTimer = setInterval(() => {
-            this.renewHeartbeat();
-        }, 15 * 1000); // Every 15 seconds
+            if (this.isHost) {
+                this.renewHeartbeat();
+            } else {
+                this.sendMemberHeartbeat();
+            }
+        }, interval);
     }
 
     stopHeartbeat () {
@@ -289,21 +315,65 @@ class MeshV2Service {
             });
             this.expiresAt = result.data.renewHeartbeat.expiresAt;
             log.info(`Mesh V2: Heartbeat renewed. Expires at: ${this.expiresAt}`);
+            this.startConnectionTimer();
+            return result.data.renewHeartbeat;
         } catch (error) {
             log.error(`Mesh V2: Heartbeat renewal failed: ${error}`);
             // If group not found or unauthorized, it might have been dissolved or expired
             if (error.message.includes('not found') || error.message.includes('Unauthorized')) {
-                this.cleanup();
+                this.cleanupAndDisconnect();
+            }
+        }
+    }
+
+    async sendMemberHeartbeat () {
+        if (!this.groupId || !this.client || this.isHost) return;
+
+        try {
+            const result = await this.client.mutate({
+                mutation: SEND_MEMBER_HEARTBEAT,
+                variables: {
+                    groupId: this.groupId,
+                    domain: this.domain,
+                    nodeId: this.meshId
+                }
+            });
+            log.info('Mesh V2: Member heartbeat sent');
+            if (result.data.sendMemberHeartbeat.expiresAt) {
+                this.expiresAt = result.data.sendMemberHeartbeat.expiresAt;
+                this.startConnectionTimer();
+            }
+            if (result.data.sendMemberHeartbeat.heartbeatIntervalSeconds) {
+                const newInterval = result.data.sendMemberHeartbeat.heartbeatIntervalSeconds;
+                if (newInterval !== this.memberHeartbeatInterval) {
+                    this.memberHeartbeatInterval = newInterval;
+                    this.startHeartbeat(); // Restart with new interval
+                }
+            }
+            return result.data.sendMemberHeartbeat;
+        } catch (error) {
+            log.error(`Mesh V2: Member heartbeat failed: ${error}`);
+            // If group or node not found, we should disconnect
+            if (error.message.includes('not found')) {
+                this.cleanupAndDisconnect();
             }
         }
     }
 
     startConnectionTimer () {
         this.stopConnectionTimer();
+        let timeout = CONNECTION_TIMEOUT;
+        if (this.expiresAt) {
+            const serverTimeout = new Date(this.expiresAt).getTime() - Date.now();
+            if (serverTimeout > 0) {
+                timeout = serverTimeout;
+            }
+        }
+        const timeoutMinutes = Math.round(timeout / 60000);
         this.connectionTimer = setTimeout(() => {
-            log.warn('Mesh V2: Connection timeout (50 minutes)');
+            log.warn(`Mesh V2: Connection timeout (${timeoutMinutes} minutes)`);
             this.leaveGroup();
-        }, CONNECTION_TIMEOUT);
+        }, timeout);
     }
 
     stopConnectionTimer () {
