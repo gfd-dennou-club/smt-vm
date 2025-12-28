@@ -1,6 +1,7 @@
 const log = require('../../util/log');
 const {getClient} = require('./mesh-client');
 const RateLimiter = require('./rate-limiter');
+const BlockUtility = require('../../engine/block-utility');
 const {
     LIST_GROUPS_BY_DOMAIN,
     CREATE_DOMAIN,
@@ -21,8 +22,10 @@ const CONNECTION_TIMEOUT = 50 * 60 * 1000; // 50 minutes in milliseconds
 
 /* istanbul ignore next */
 class MeshV2Service {
-    constructor (meshId, domain) {
+    constructor (blocks, meshId, domain) {
         log.info('Initializing MeshV2Service (GraphQL)');
+        this.blocks = blocks;
+        this.runtime = blocks.runtime;
         this.meshId = meshId;
         this.domain = domain;
         this.client = getClient();
@@ -136,7 +139,7 @@ class MeshV2Service {
         }
     }
 
-    async joinGroup (groupId, domain) {
+    async joinGroup (groupId, domain, groupName) {
         if (!this.client) throw new Error('Client not initialized');
 
         try {
@@ -151,6 +154,7 @@ class MeshV2Service {
 
             const node = result.data.joinGroup;
             this.groupId = groupId;
+            this.groupName = groupName || groupId;
             this.domain = node.domain; // Update domain from server
             this.isHost = false;
             if (node.heartbeatIntervalSeconds) {
@@ -272,8 +276,23 @@ class MeshV2Service {
 
     handleEvent (event) {
         if (!event || event.firedByNodeId === this.meshId) return;
-        // Event handling will be implemented in Phase 3 blocks
         log.info(`Mesh V2: Received event ${event.name} from ${event.firedByNodeId}`);
+
+        try {
+            const args = {
+                BROADCAST_OPTION: {
+                    id: null,
+                    name: event.name
+                }
+            };
+            const util = BlockUtility.lastInstance();
+            if (!util.sequencer) {
+                util.sequencer = this.runtime.sequencer;
+            }
+            this.blocks.opcodeFunctions.event_broadcast(args, util);
+        } catch (error) {
+            log.error(`Mesh V2: Failed to broadcast event: ${error}`);
+        }
     }
 
     startHeartbeat () {
