@@ -139,7 +139,7 @@ class MeshV2Service {
         }
     }
 
-    async joinGroup (groupId, domain) {
+    async joinGroup (groupId, domain, groupName) {
         if (!this.client) throw new Error('Client not initialized');
 
         try {
@@ -154,6 +154,7 @@ class MeshV2Service {
 
             const node = result.data.joinGroup;
             this.groupId = groupId;
+            this.groupName = groupName || groupId;
             this.domain = node.domain; // Update domain from server
             this.isHost = false;
             if (node.heartbeatIntervalSeconds) {

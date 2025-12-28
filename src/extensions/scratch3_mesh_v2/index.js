@@ -75,6 +75,7 @@ class Scratch3MeshV2Blocks {
     }
 
     makeMeshIdLabel (meshId) {
+        if (!meshId) return '';
         const label = meshId.slice(0, 6);
         return [...label].map(c => MESH_ID_LABEL_CHARACTERS[c]).join('');
     }
@@ -214,7 +215,8 @@ class Scratch3MeshV2Blocks {
         } else {
             const group = this.discoveredGroups && this.discoveredGroups.find(g => g.id === id);
             const domain = group ? group.domain : null;
-            this.meshService.joinGroup(id, domain).then(() => {
+            const groupName = group ? group.name : id;
+            this.meshService.joinGroup(id, domain, groupName).then(() => {
                 this.runtime.emit(this.runtime.constructor.PERIPHERAL_CONNECTED);
             })
                 /* istanbul ignore next */
