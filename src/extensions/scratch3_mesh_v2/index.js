@@ -61,7 +61,9 @@ class Scratch3MeshV2Blocks {
             createClient();
             this.meshService = new MeshV2Service(this, this.nodeId, this.domain);
             this.meshService.setDisconnectCallback(() => {
-                this.runtime.emit(this.runtime.constructor.PERIPHERAL_DISCONNECTED);
+                this.runtime.emit(this.runtime.constructor.PERIPHERAL_DISCONNECTED, {
+                    extensionId: Scratch3MeshV2Blocks.EXTENSION_ID
+                });
             });
             log.info(`Mesh V2: Initialized with domain ${this.domain || 'null (auto)'} and nodeId ${this.nodeId}`);
 

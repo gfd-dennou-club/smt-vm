@@ -129,14 +129,14 @@ class VirtualMachine extends EventEmitter {
         this.runtime.on(Runtime.USER_PICKED_PERIPHERAL, info => {
             this.emit(Runtime.USER_PICKED_PERIPHERAL, info);
         });
-        this.runtime.on(Runtime.PERIPHERAL_CONNECTED, () =>
-            this.emit(Runtime.PERIPHERAL_CONNECTED)
+        this.runtime.on(Runtime.PERIPHERAL_CONNECTED, data =>
+            this.emit(Runtime.PERIPHERAL_CONNECTED, data)
         );
         this.runtime.on(Runtime.PERIPHERAL_REQUEST_ERROR, () =>
             this.emit(Runtime.PERIPHERAL_REQUEST_ERROR)
         );
-        this.runtime.on(Runtime.PERIPHERAL_DISCONNECTED, () =>
-            this.emit(Runtime.PERIPHERAL_DISCONNECTED)
+        this.runtime.on(Runtime.PERIPHERAL_DISCONNECTED, data =>
+            this.emit(Runtime.PERIPHERAL_DISCONNECTED, data)
         );
         this.runtime.on(Runtime.PERIPHERAL_CONNECTION_LOST_ERROR, data =>
             this.emit(Runtime.PERIPHERAL_CONNECTION_LOST_ERROR, data)

@@ -175,34 +175,41 @@ class MeshV2Service {
 
     async leaveGroup () {
         if (!this.groupId) return;
+
+        const groupId = this.groupId;
+        const domain = this.domain;
+        const isHost = this.isHost;
+        const hostId = this.meshId;
+        const nodeId = this.meshId;
+
+        this.cleanupAndDisconnect();
+
         if (!this.client) return;
 
         try {
-            if (this.isHost) {
+            if (isHost) {
                 await this.client.mutate({
                     mutation: DISSOLVE_GROUP,
                     variables: {
-                        groupId: this.groupId,
-                        domain: this.domain,
-                        hostId: this.meshId
+                        groupId: groupId,
+                        domain: domain,
+                        hostId: hostId
                     }
                 });
-                log.info(`Mesh V2: Dissolved group ${this.groupId}`);
+                log.info(`Mesh V2: Dissolved group ${groupId}`);
             } else {
                 await this.client.mutate({
                     mutation: LEAVE_GROUP,
                     variables: {
-                        groupId: this.groupId,
-                        domain: this.domain,
-                        nodeId: this.meshId
+                        groupId: groupId,
+                        domain: domain,
+                        nodeId: nodeId
                     }
                 });
-                log.info(`Mesh V2: Left group ${this.groupId}`);
+                log.info(`Mesh V2: Left group ${groupId}`);
             }
         } catch (error) {
-            log.error(`Mesh V2: Error during leave/dissolve: ${error}`);
-        } finally {
-            this.cleanupAndDisconnect();
+            log.error(`Mesh V2: Error during leave/dissolve (background): ${error}`);
         }
     }
 
