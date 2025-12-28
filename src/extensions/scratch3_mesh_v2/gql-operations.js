@@ -22,8 +22,8 @@ const CREATE_DOMAIN = gql`
 `;
 
 const CREATE_GROUP = gql`
-  mutation CreateGroup($name: String!, $hostId: ID!, $domain: String!) {
-    createGroup(name: $name, hostId: $hostId, domain: $domain) {
+  mutation CreateGroup($name: String!, $hostId: ID!, $domain: String!, $maxConnectionTimeSeconds: Int) {
+    createGroup(name: $name, hostId: $hostId, domain: $domain, maxConnectionTimeSeconds: $maxConnectionTimeSeconds) {
       id
       domain
       fullId

@@ -2,10 +2,10 @@ const AWSAppSyncClient = require('aws-appsync').default;
 const gqlTag = require('graphql-tag');
 const gql = gqlTag.default || gqlTag;
 
-// TODO: Replace with actual configuration or environment variables
-const GRAPHQL_ENDPOINT = process.env.MESH_GRAPHQL_ENDPOINT || 'https://example.com/graphql';
-const REGION = process.env.MESH_AWS_REGION || 'us-east-1';
-const API_KEY = process.env.MESH_API_KEY || 'da2-example';
+// Production configuration for Smalruby 3 Mesh V2
+const GRAPHQL_ENDPOINT = process.env.MESH_GRAPHQL_ENDPOINT || 'https://mpe3yhgk6zdxfhjbay2vqcq5qe.appsync-api.ap-northeast-1.amazonaws.com/graphql';
+const REGION = process.env.MESH_AWS_REGION || 'ap-northeast-1';
+const API_KEY = process.env.MESH_API_KEY || 'da2-kdkm7p5cfzbr5jsikmoqvddowi';
 
 let client = null;
 
