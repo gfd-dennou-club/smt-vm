@@ -350,9 +350,21 @@ class MeshV2Service {
         const baseTime = new Date(sortedEvents[0].timestamp).getTime();
 
         // 各イベントをオフセットで発火
+        // Scratch VMの仕様上、同一メッセージのブロードキャストが同一フレーム（または極めて短い間隔）で
+        // 発生すると、実行中のスクリプトが再起動されてしまい、最後の1回しか動かないように見える。
+        // これを防ぐため、最小でも1msの間隔を空けて発火させる。
+        let lastScheduledOffset = -1;
+        const MIN_INTERVAL = 1; // ms
+
         sortedEvents.forEach(event => {
             const eventTime = new Date(event.timestamp).getTime();
-            const offset = eventTime - baseTime;
+            let offset = eventTime - baseTime;
+
+            // 前回の発火予定時刻よりもMIN_INTERVAL以上後に設定する
+            if (offset <= lastScheduledOffset) {
+                offset = lastScheduledOffset + MIN_INTERVAL;
+            }
+            lastScheduledOffset = offset;
 
             if (offset <= 0) {
                 log.info(`Mesh V2: Broadcasting received event immediately: ${event.name}`);
