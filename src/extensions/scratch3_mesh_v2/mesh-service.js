@@ -43,7 +43,7 @@ class MeshV2Service {
         this.groupName = null;
         this.expiresAt = null;
         this.isHost = false;
-        
+
         this.subscriptions = [];
         this.connectionTimer = null;
         this.heartbeatTimer = null;
@@ -130,7 +130,7 @@ class MeshV2Service {
 
     async createGroup (groupName) {
         if (!this.client) throw new Error('Client not initialized');
-        
+
         try {
             if (!this.domain) {
                 await this.createDomain();
@@ -167,7 +167,7 @@ class MeshV2Service {
 
     async listGroups () {
         if (!this.client) throw new Error('Client not initialized');
-        
+
         try {
             if (!this.domain) {
                 await this.createDomain();
@@ -352,9 +352,9 @@ class MeshV2Service {
         // 各イベントをオフセットで発火
         // Scratch VMの仕様上、同一メッセージのブロードキャストが同一フレーム（または極めて短い間隔）で
         // 発生すると、実行中のスクリプトが再起動されてしまい、最後の1回しか動かないように見える。
-        // これを防ぐため、最小でも1msの間隔を空けて発火させる。
+        // これを防ぐため、最小でも17ms（約60fpsの1フレーム分）の間隔を空けて発火させる。
         let lastScheduledOffset = -1;
-        const MIN_INTERVAL = 1; // ms
+        const MIN_INTERVAL = 17; // ms
 
         sortedEvents.forEach(event => {
             const eventTime = new Date(event.timestamp).getTime();
@@ -367,10 +367,12 @@ class MeshV2Service {
             lastScheduledOffset = offset;
 
             if (offset <= 0) {
-                log.info(`Mesh V2: Broadcasting received event immediately: ${event.name}`);
+                log.info(`Mesh V2: Broadcasting received event immediately: ${event.name} ` +
+                    `(original timestamp: ${event.timestamp})`);
                 this.broadcastEvent(event);
             } else {
-                log.info(`Mesh V2: Scheduling received event: ${event.name} (offset: ${offset}ms)`);
+                log.info(`Mesh V2: Scheduling received event: ${event.name} (offset: ${offset}ms, ` +
+                    `original timestamp: ${event.timestamp})`);
                 setTimeout(() => {
                     this.broadcastEvent(event);
                 }, offset);
@@ -379,6 +381,7 @@ class MeshV2Service {
     }
 
     broadcastEvent (event) {
+        log.info(`Mesh V2: Executing broadcastEvent for: ${event.name}`);
         try {
             const args = {
                 BROADCAST_OPTION: {
@@ -391,6 +394,7 @@ class MeshV2Service {
                 if (!util.sequencer) {
                     util.sequencer = this.runtime.sequencer;
                 }
+                log.info(`Mesh V2: Triggering event_broadcast: ${event.name}`);
                 this.blocks.opcodeFunctions.event_broadcast(args, util);
             } else {
                 log.warn(`Mesh V2: No BlockUtility instance available for broadcast: ${event.name}`);

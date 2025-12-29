@@ -83,9 +83,13 @@ class Scratch3EventBlocks {
             args.BROADCAST_OPTION.id, args.BROADCAST_OPTION.name);
         if (broadcastVar) {
             const broadcastOption = broadcastVar.name;
-            util.startHats('event_whenbroadcastreceived', {
+            const log = require('../util/log');
+            log.info(`vm Mesh V2 Debug: [OPCODE] broadcast calling startHats for ${broadcastOption}`);
+            const startedThreads = util.startHats('event_whenbroadcastreceived', {
                 BROADCAST_OPTION: broadcastOption
             });
+            log.info(`vm Mesh V2 Debug: [OPCODE] broadcast started ` +
+                `${startedThreads.length} threads for ${broadcastOption}`);
         }
     }
 
@@ -96,14 +100,18 @@ class Scratch3EventBlocks {
         }
         if (util.stackFrame.broadcastVar) {
             const broadcastOption = util.stackFrame.broadcastVar.name;
+            const log = require('../util/log');
             // Have we run before, starting threads?
             if (!util.stackFrame.startedThreads) {
                 // No - start hats for this broadcast.
+                log.info(`vm Mesh V2 Debug: [OPCODE] broadcastAndWait calling startHats for ${broadcastOption}`);
                 util.stackFrame.startedThreads = util.startHats(
                     'event_whenbroadcastreceived', {
                         BROADCAST_OPTION: broadcastOption
                     }
                 );
+                log.info(`vm Mesh V2 Debug: [OPCODE] broadcastAndWait started ` +
+                    `${util.stackFrame.startedThreads.length} threads for ${broadcastOption}`);
                 if (util.stackFrame.startedThreads.length === 0) {
                     // Nothing was started.
                     return;
