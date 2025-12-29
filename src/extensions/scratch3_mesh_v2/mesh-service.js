@@ -14,7 +14,6 @@ const {
     REPORT_DATA,
     FIRE_EVENTS,
     ON_DATA_UPDATE,
-    ON_EVENT,
     ON_BATCH_EVENT,
     ON_GROUP_DISSOLVE
 } = require('./gql-operations');
@@ -294,14 +293,6 @@ class MeshV2Service {
             error: err => log.error(`Mesh V2: Data subscription error: ${err}`)
         });
 
-        const eventSub = this.client.subscribe({
-            query: ON_EVENT,
-            variables
-        }).subscribe({
-            next: result => this.handleEvent(result.data.onEventInGroup),
-            error: err => log.error(`Mesh V2: Event subscription error: ${err}`)
-        });
-
         const batchEventSub = this.client.subscribe({
             query: ON_BATCH_EVENT,
             variables
@@ -321,7 +312,7 @@ class MeshV2Service {
             error: err => log.error(`Mesh V2: Dissolve subscription error: ${err}`)
         });
 
-        this.subscriptions.push(dataSub, eventSub, batchEventSub, dissolveSub);
+        this.subscriptions.push(dataSub, batchEventSub, dissolveSub);
     }
 
     stopSubscriptions () {
@@ -340,11 +331,6 @@ class MeshV2Service {
         nodeStatus.data.forEach(item => {
             this.remoteData[nodeId][item.key] = item.value;
         });
-    }
-
-    handleEvent (event) {
-        if (!event || event.firedByNodeId === this.meshId) return;
-        this.broadcastEvent(event);
     }
 
     handleBatchEvent (batchEvent) {
