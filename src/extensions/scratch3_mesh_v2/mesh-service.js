@@ -12,9 +12,9 @@ const {
     RENEW_HEARTBEAT,
     SEND_MEMBER_HEARTBEAT,
     REPORT_DATA,
-    FIRE_EVENT,
+    FIRE_EVENTS,
     ON_DATA_UPDATE,
-    ON_EVENT,
+    ON_BATCH_EVENT,
     ON_GROUP_DISSOLVE
 } = require('./gql-operations');
 
@@ -43,7 +43,7 @@ class MeshV2Service {
         this.groupName = null;
         this.expiresAt = null;
         this.isHost = false;
-        
+
         this.subscriptions = [];
         this.connectionTimer = null;
         this.heartbeatTimer = null;
@@ -55,6 +55,11 @@ class MeshV2Service {
         // Rate limiters
         this.dataRateLimiter = new RateLimiter(4, 250); // 4 times/sec, 250ms interval
         this.eventRateLimiter = new RateLimiter(2, 500); // 2 times/sec, 500ms interval
+
+        // Event queue for batch sending: { eventName, payload, firedAt } の配列
+        this.eventQueue = [];
+        this.eventBatchInterval = 250;
+        this.eventBatchTimer = null;
 
         // Last sent data to detect changes
         this.lastSentData = {};
@@ -125,7 +130,7 @@ class MeshV2Service {
 
     async createGroup (groupName) {
         if (!this.client) throw new Error('Client not initialized');
-        
+
         try {
             if (!this.domain) {
                 await this.createDomain();
@@ -149,6 +154,7 @@ class MeshV2Service {
 
             this.startSubscriptions();
             this.startHeartbeat();
+            this.startEventBatchTimer();
             this.startConnectionTimer();
 
             log.info(`Mesh V2: Created group ${this.groupName} (${this.groupId}) in domain ${this.domain}`);
@@ -161,7 +167,7 @@ class MeshV2Service {
 
     async listGroups () {
         if (!this.client) throw new Error('Client not initialized');
-        
+
         try {
             if (!this.domain) {
                 await this.createDomain();
@@ -207,6 +213,7 @@ class MeshV2Service {
 
             this.startSubscriptions();
             this.startHeartbeat(); // Start heartbeat for member too
+            this.startEventBatchTimer();
             this.startConnectionTimer();
 
             log.info(`Mesh V2: Joined group ${this.groupId} in domain ${this.domain}`);
@@ -260,6 +267,7 @@ class MeshV2Service {
     cleanup () {
         this.stopSubscriptions();
         this.stopHeartbeat();
+        this.stopEventBatchTimer();
         this.stopConnectionTimer();
         this.groupId = null;
         this.groupName = null;
@@ -285,12 +293,12 @@ class MeshV2Service {
             error: err => log.error(`Mesh V2: Data subscription error: ${err}`)
         });
 
-        const eventSub = this.client.subscribe({
-            query: ON_EVENT,
+        const batchEventSub = this.client.subscribe({
+            query: ON_BATCH_EVENT,
             variables
         }).subscribe({
-            next: result => this.handleEvent(result.data.onEventInGroup),
-            error: err => log.error(`Mesh V2: Event subscription error: ${err}`)
+            next: result => this.handleBatchEvent(result.data.onBatchEventInGroup),
+            error: err => log.error(`Mesh V2: Batch event subscription error: ${err}`)
         });
 
         const dissolveSub = this.client.subscribe({
@@ -304,7 +312,7 @@ class MeshV2Service {
             error: err => log.error(`Mesh V2: Dissolve subscription error: ${err}`)
         });
 
-        this.subscriptions.push(dataSub, eventSub, dissolveSub);
+        this.subscriptions.push(dataSub, batchEventSub, dissolveSub);
     }
 
     stopSubscriptions () {
@@ -325,10 +333,55 @@ class MeshV2Service {
         });
     }
 
-    handleEvent (event) {
-        if (!event || event.firedByNodeId === this.meshId) return;
-        log.info(`Mesh V2: Received event ${event.name} from ${event.firedByNodeId}`);
+    handleBatchEvent (batchEvent) {
+        if (!batchEvent || batchEvent.firedByNodeId === this.meshId) return;
 
+        const events = batchEvent.events ?
+            batchEvent.events.filter(event => event.firedByNodeId !== this.meshId) :
+            [];
+        if (events.length === 0) return;
+
+        log.info(`Mesh V2: Received ${events.length} events from ${batchEvent.firedByNodeId}`);
+
+        // タイムスタンプでソート
+        const sortedEvents = events.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+        // 最初のイベントのタイムスタンプを0とする
+        const baseTime = new Date(sortedEvents[0].timestamp).getTime();
+
+        // 各イベントをオフセットで発火
+        // Scratch VMの仕様上、同一メッセージのブロードキャストが同一フレーム（または極めて短い間隔）で
+        // 発生すると、実行中のスクリプトが再起動されてしまい、最後の1回しか動かないように見える。
+        // これを防ぐため、最小でも17ms（約60fpsの1フレーム分）の間隔を空けて発火させる。
+        let lastScheduledOffset = -1;
+        const MIN_INTERVAL = 17; // ms
+
+        sortedEvents.forEach(event => {
+            const eventTime = new Date(event.timestamp).getTime();
+            let offset = eventTime - baseTime;
+
+            // 前回の発火予定時刻よりもMIN_INTERVAL以上後に設定する
+            if (offset <= lastScheduledOffset) {
+                offset = lastScheduledOffset + MIN_INTERVAL;
+            }
+            lastScheduledOffset = offset;
+
+            if (offset <= 0) {
+                log.info(`Mesh V2: Broadcasting received event immediately: ${event.name} ` +
+                    `(original timestamp: ${event.timestamp})`);
+                this.broadcastEvent(event);
+            } else {
+                log.info(`Mesh V2: Scheduling received event: ${event.name} (offset: ${offset}ms, ` +
+                    `original timestamp: ${event.timestamp})`);
+                setTimeout(() => {
+                    this.broadcastEvent(event);
+                }, offset);
+            }
+        });
+    }
+
+    broadcastEvent (event) {
+        log.info(`Mesh V2: Executing broadcastEvent for: ${event.name}`);
         try {
             const args = {
                 BROADCAST_OPTION: {
@@ -337,12 +390,75 @@ class MeshV2Service {
                 }
             };
             const util = BlockUtility.lastInstance();
-            if (!util.sequencer) {
-                util.sequencer = this.runtime.sequencer;
+            if (util) {
+                if (!util.sequencer) {
+                    util.sequencer = this.runtime.sequencer;
+                }
+                log.info(`Mesh V2: Triggering event_broadcast: ${event.name}`);
+                this.blocks.opcodeFunctions.event_broadcast(args, util);
+            } else {
+                log.warn(`Mesh V2: No BlockUtility instance available for broadcast: ${event.name}`);
             }
-            this.blocks.opcodeFunctions.event_broadcast(args, util);
         } catch (error) {
             log.error(`Mesh V2: Failed to broadcast event: ${error}`);
+        }
+    }
+
+    startEventBatchTimer () {
+        this.stopEventBatchTimer();
+        this.eventBatchTimer = setInterval(() => {
+            this.processBatchEvents();
+        }, this.eventBatchInterval);
+    }
+
+    stopEventBatchTimer () {
+        if (this.eventBatchTimer) {
+            clearInterval(this.eventBatchTimer);
+            this.eventBatchTimer = null;
+        }
+    }
+
+    async processBatchEvents () {
+        if (this.eventQueue.length === 0) return;
+
+        // キューから全イベントを取り出す
+        const events = this.eventQueue.splice(0);
+        log.info(`Mesh V2: Processing ${events.length} queued events for sending`);
+
+        try {
+            // ペイロードサイズ制限を考慮して分割送信（約1,000イベントごと）
+            const MAX_BATCH_SIZE = 1000;
+            while (events.length > 0) {
+                const batch = events.splice(0, MAX_BATCH_SIZE);
+                await this.fireEventsBatch(batch);
+            }
+        } catch (error) {
+            log.error(`Mesh V2: Failed to process batch events: ${error}`);
+        }
+    }
+
+    async fireEventsBatch (events) {
+        if (!this.groupId || !this.client || events.length === 0) return;
+
+        try {
+            // データ送信完了を待つ
+            await this.dataRateLimiter.waitForCompletion();
+
+            log.info(`Mesh V2: Sending batch of ${events.length} events to group ${this.groupId}`);
+            await this.client.mutate({
+                mutation: FIRE_EVENTS,
+                variables: {
+                    groupId: this.groupId,
+                    domain: this.domain,
+                    nodeId: this.meshId,
+                    events: events
+                }
+            });
+        } catch (error) {
+            log.error(`Mesh V2: Failed to fire batch events: ${error}`);
+            if (this.shouldDisconnectOnError(error)) {
+                this.cleanupAndDisconnect();
+            }
         }
     }
 
@@ -497,31 +613,19 @@ class MeshV2Service {
         }
     }
 
-    async fireEvent (eventName, payload = '') {
-        if (!this.groupId || !this.client) return;
-
-        try {
-            // Wait for data transmission to complete
-            await this.dataRateLimiter.waitForCompletion();
-
-            await this.eventRateLimiter.send({eventName, payload}, async data => {
-                await this.client.mutate({
-                    mutation: FIRE_EVENT,
-                    variables: {
-                        groupId: this.groupId,
-                        domain: this.domain,
-                        nodeId: this.meshId,
-                        eventName: data.eventName,
-                        payload: data.payload
-                    }
-                });
-            });
-        } catch (error) {
-            log.error(`Mesh V2: Failed to fire event: ${error}`);
-            if (this.shouldDisconnectOnError(error)) {
-                this.cleanupAndDisconnect();
-            }
+    fireEvent (eventName, payload = '') {
+        if (!this.groupId || !this.client) {
+            log.warn(`Mesh V2: Cannot fire event ${eventName} - groupId: ${this.groupId}, client: ${!!this.client}`);
+            return;
         }
+
+        log.info(`Mesh V2: Queuing event for sending: ${eventName}`);
+        // キューに追加（発火日時を記録）
+        this.eventQueue.push({
+            eventName: eventName,
+            payload: payload,
+            firedAt: new Date().toISOString()
+        });
     }
 
     getRemoteVariable (name) {

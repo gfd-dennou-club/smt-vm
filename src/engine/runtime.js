@@ -2051,6 +2051,10 @@ class Runtime extends EventEmitter {
                             // stack click threads and hat threads can coexist
                             !this.threads[i].stackClick
                         ) {
+                            if (requestedHatOpcode === 'event_whenbroadcastreceived') {
+                                log.info(`vm Mesh V2 Debug: [RESTART] Thread for hat ${requestedHatOpcode} ` +
+                                    `at block ${topBlockId} for target ${target.getName()}`);
+                            }
                             newThreads.push(
                                 this._restartThread(this.threads[i])
                             );
@@ -2068,12 +2072,20 @@ class Runtime extends EventEmitter {
                             !this.threads[j].stackClick &&
                             this.threads[j].status !== Thread.STATUS_DONE
                         ) {
+                            if (requestedHatOpcode === 'event_whenbroadcastreceived') {
+                                log.info(`vm Mesh V2 Debug: [SKIP] Thread for hat ${requestedHatOpcode} ` +
+                                    `at block ${topBlockId} already running for target ${target.getName()}`);
+                            }
                             // Some thread is already running.
                             return;
                         }
                     }
                 }
                 // Start the thread with this top block.
+                if (requestedHatOpcode === 'event_whenbroadcastreceived') {
+                    log.info(`vm Mesh V2 Debug: [START] New thread for hat ${requestedHatOpcode} ` +
+                        `at block ${topBlockId} for target ${target.getName()}`);
+                }
                 newThreads.push(this._pushThread(topBlockId, target));
             },
             optTarget

@@ -222,22 +222,22 @@ test('Mesh V2 Blocks', t => {
 
         // strongest: 3000s remaining
         const strongest = new Date(now + (3000 * 1000)).toISOString();
-        st.equal(blocks.calculateRssi(strongest), 0);
+        st.equal(blocks.calculateRssi(strongest, 3000), 0);
 
         // medium: 1500s remaining
         const medium = new Date(now + (1500 * 1000)).toISOString();
-        st.equal(blocks.calculateRssi(medium), -50);
+        st.equal(blocks.calculateRssi(medium, 3000), -50);
 
         // weakest: 0s remaining
         const weakest = new Date(now).toISOString();
-        st.equal(blocks.calculateRssi(weakest), -100);
+        st.equal(blocks.calculateRssi(weakest, 3000), -100);
 
-        // expired: -100s remaining
-        const expired = new Date(now - (100 * 1000)).toISOString();
-        st.equal(blocks.calculateRssi(expired), -100);
+        // expired: -10s remaining
+        const expired = new Date(now - (10 * 1000)).toISOString();
+        st.equal(blocks.calculateRssi(expired, 3000), -100);
 
-        // null/empty
-        st.equal(blocks.calculateRssi(null), 0);
+        // null handling
+        st.equal(blocks.calculateRssi(null, 3000), 0);
 
         st.test('with custom environment variable', sst => {
             const originalEnvValue = process.env.MESH_MAX_CONNECTION_TIME_SECONDS;
