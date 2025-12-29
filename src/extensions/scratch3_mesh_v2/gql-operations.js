@@ -119,6 +119,25 @@ const FIRE_EVENT = gql`
   }
 `;
 
+const FIRE_EVENTS = gql`
+  mutation FireEventsByNode($groupId: ID!, $domain: String!, $nodeId: ID!, $events: [EventInput!]!) {
+    fireEventsByNode(groupId: $groupId, domain: $domain, nodeId: $nodeId, events: $events) {
+      events {
+        name
+        firedByNodeId
+        groupId
+        domain
+        payload
+        timestamp
+      }
+      firedByNodeId
+      groupId
+      domain
+      timestamp
+    }
+  }
+`;
+
 const ON_DATA_UPDATE = gql`
   subscription OnDataUpdateInGroup($groupId: ID!, $domain: String!) {
     onDataUpdateInGroup(groupId: $groupId, domain: $domain) {
@@ -147,6 +166,25 @@ const ON_EVENT = gql`
   }
 `;
 
+const ON_BATCH_EVENT = gql`
+  subscription OnBatchEventInGroup($groupId: ID!, $domain: String!) {
+    onBatchEventInGroup(groupId: $groupId, domain: $domain) {
+      events {
+        name
+        firedByNodeId
+        groupId
+        domain
+        payload
+        timestamp
+      }
+      firedByNodeId
+      groupId
+      domain
+      timestamp
+    }
+  }
+`;
+
 const ON_GROUP_DISSOLVE = gql`
   subscription OnGroupDissolve($groupId: ID!, $domain: String!) {
     onGroupDissolve(groupId: $groupId, domain: $domain) {
@@ -168,7 +206,9 @@ module.exports = {
     SEND_MEMBER_HEARTBEAT,
     REPORT_DATA,
     FIRE_EVENT,
+    FIRE_EVENTS,
     ON_DATA_UPDATE,
     ON_EVENT,
+    ON_BATCH_EVENT,
     ON_GROUP_DISSOLVE
 };
