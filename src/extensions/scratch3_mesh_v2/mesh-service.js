@@ -12,7 +12,6 @@ const {
     RENEW_HEARTBEAT,
     SEND_MEMBER_HEARTBEAT,
     REPORT_DATA,
-    FIRE_EVENT,
     FIRE_EVENTS,
     ON_DATA_UPDATE,
     ON_EVENT,
@@ -355,9 +354,7 @@ class MeshV2Service {
         if (!events || events.length === 0) return;
 
         // タイムスタンプでソート
-        const sortedEvents = events.sort((a, b) => {
-            return new Date(a.timestamp) - new Date(b.timestamp);
-        });
+        const sortedEvents = events.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
         // 最初のイベントのタイムスタンプを0とする
         const baseTime = new Date(sortedEvents[0].timestamp).getTime();
@@ -606,7 +603,7 @@ class MeshV2Service {
         }
     }
 
-    async fireEvent (eventName, payload = '') {
+    fireEvent (eventName, payload = '') {
         if (!this.groupId || !this.client) {
             log.warn(`Mesh V2: Cannot fire event ${eventName} - groupId: ${this.groupId}, client: ${!!this.client}`);
             return;

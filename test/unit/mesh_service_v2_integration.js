@@ -2,24 +2,22 @@ const test = require('tap').test;
 const MeshV2Service = require('../../src/extensions/scratch3_mesh_v2/mesh-service');
 const BlockUtility = require('../../src/engine/block-utility');
 
-const createMockBlocks = (broadcastCallback) => {
-    return {
-        runtime: {
-            sequencer: {},
-            emit: () => {}
-        },
-        opcodeFunctions: {
-            event_broadcast: (args) => {
-                broadcastCallback(args.BROADCAST_OPTION.name);
-            }
+const createMockBlocks = broadcastCallback => ({
+    runtime: {
+        sequencer: {},
+        emit: () => {}
+    },
+    opcodeFunctions: {
+        event_broadcast: args => {
+            broadcastCallback(args.BROADCAST_OPTION.name);
         }
-    };
-};
+    }
+});
 
 test('MeshV2Service Integration: Batching and Timing', async t => {
     const broadcasted = [];
-    const blocks = createMockBlocks((name) => {
-        broadcasted.push({ name, time: Date.now() });
+    const blocks = createMockBlocks(name => {
+        broadcasted.push({name, time: Date.now()});
     });
 
     // Mock BlockUtility
@@ -39,7 +37,7 @@ test('MeshV2Service Integration: Batching and Timing', async t => {
 
     // Link sender and receiver through a mock client
     sender.client = {
-        mutate: async (options) => {
+        mutate: options => {
             // Simulate AppSync delivering the batch event to the receiver
             const batchEvent = {
                 firedByNodeId: sender.meshId,
@@ -51,18 +49,16 @@ test('MeshV2Service Integration: Batching and Timing', async t => {
                 }))
             };
             receiver.handleBatchEvent(batchEvent);
-            return { data: { fireEventsByNode: {} } };
+            return Promise.resolve({data: {fireEventsByNode: {}}});
         }
     };
 
-    const startTime = Date.now();
-    
     // 1. Fire events at intervals
-    await sender.fireEvent('e1');
+    sender.fireEvent('e1');
     await new Promise(r => setTimeout(r, 100));
-    await sender.fireEvent('e2');
+    sender.fireEvent('e2');
     await new Promise(r => setTimeout(r, 100));
-    await sender.fireEvent('e3');
+    sender.fireEvent('e3');
 
     // 2. Process batch (simulates timer trigger)
     await sender.processBatchEvents();
@@ -82,6 +78,7 @@ test('MeshV2Service Integration: Batching and Timing', async t => {
     t.ok(broadcasted[2].time - broadcasted[1].time >= 100, 'Interval between e2 and e3 should be at least 100ms');
 
     // Restore
+    // eslint-disable-next-line require-atomic-updates
     BlockUtility.lastInstance = originalLastInstance;
     t.end();
 });
@@ -94,20 +91,20 @@ test('MeshV2Service Integration: Splitting large batches', async t => {
 
     let mutateCount = 0;
     service.client = {
-        mutate: async (options) => {
+        mutate: options => {
             mutateCount++;
             if (mutateCount === 1) {
                 t.equal(options.variables.events.length, 1000, 'First batch should have 1000 events');
             } else if (mutateCount === 2) {
                 t.equal(options.variables.events.length, 500, 'Second batch should have 500 events');
             }
-            return { data: { fireEventsByNode: {} } };
+            return Promise.resolve({data: {fireEventsByNode: {}}});
         }
     };
 
     // Queue 1500 events
     for (let i = 0; i < 1500; i++) {
-        await service.fireEvent(`e${i}`);
+        service.fireEvent(`e${i}`);
     }
 
     await service.processBatchEvents();
