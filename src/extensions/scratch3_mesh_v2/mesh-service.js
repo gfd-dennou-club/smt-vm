@@ -336,8 +336,12 @@ class MeshV2Service {
     handleBatchEvent (batchEvent) {
         if (!batchEvent || batchEvent.firedByNodeId === this.meshId) return;
 
-        const events = batchEvent.events;
-        if (!events || events.length === 0) return;
+        const events = batchEvent.events ?
+            batchEvent.events.filter(event => event.firedByNodeId !== this.meshId) :
+            [];
+        if (events.length === 0) return;
+
+        log.info(`Mesh V2: Received ${events.length} events from ${batchEvent.firedByNodeId}`);
 
         // タイムスタンプでソート
         const sortedEvents = events.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
@@ -351,8 +355,10 @@ class MeshV2Service {
             const offset = eventTime - baseTime;
 
             if (offset <= 0) {
+                log.info(`Mesh V2: Broadcasting received event immediately: ${event.name}`);
                 this.broadcastEvent(event);
             } else {
+                log.info(`Mesh V2: Scheduling received event: ${event.name} (offset: ${offset}ms)`);
                 setTimeout(() => {
                     this.broadcastEvent(event);
                 }, offset);
@@ -375,7 +381,7 @@ class MeshV2Service {
                 }
                 this.blocks.opcodeFunctions.event_broadcast(args, util);
             } else {
-                log.warn('Mesh V2: No BlockUtility instance available for broadcast');
+                log.warn(`Mesh V2: No BlockUtility instance available for broadcast: ${event.name}`);
             }
         } catch (error) {
             log.error(`Mesh V2: Failed to broadcast event: ${error}`);
@@ -401,6 +407,7 @@ class MeshV2Service {
 
         // キューから全イベントを取り出す
         const events = this.eventQueue.splice(0);
+        log.info(`Mesh V2: Processing ${events.length} queued events for sending`);
 
         try {
             // ペイロードサイズ制限を考慮して分割送信（約1,000イベントごと）
@@ -421,6 +428,7 @@ class MeshV2Service {
             // データ送信完了を待つ
             await this.dataRateLimiter.waitForCompletion();
 
+            log.info(`Mesh V2: Sending batch of ${events.length} events to group ${this.groupId}`);
             await this.client.mutate({
                 mutation: FIRE_EVENTS,
                 variables: {
@@ -595,6 +603,7 @@ class MeshV2Service {
             return;
         }
 
+        log.info(`Mesh V2: Queuing event for sending: ${eventName}`);
         // キューに追加（発火日時を記録）
         this.eventQueue.push({
             eventName: eventName,
