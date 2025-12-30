@@ -66,25 +66,40 @@ test('MeshV2Service Integration: Batching and Timing', async t => {
 
     // 3. Verify queuing
     t.equal(receiver.pendingBroadcasts.length, 3, 'Events should be queued');
-    t.equal(receiver.pendingBroadcasts[0].name, 'e1');
-    t.equal(receiver.pendingBroadcasts[1].name, 'e2');
-    t.equal(receiver.pendingBroadcasts[2].name, 'e3');
+    t.equal(receiver.pendingBroadcasts[0].event.name, 'e1');
+    t.equal(receiver.pendingBroadcasts[1].event.name, 'e2');
+    t.equal(receiver.pendingBroadcasts[2].event.name, 'e3');
 
     // 4. Process events via BEFORE_STEP simulation
-    receiver.processNextBroadcast();
-    t.equal(broadcasted.length, 1);
-    t.equal(broadcasted[0].name, 'e1');
-    t.equal(receiver.pendingBroadcasts.length, 2);
+    // Mock Date.now to control elapsed time
+    const realDateNow = Date.now;
+    const startTime = realDateNow();
+    let currentTime = startTime;
+    Date.now = () => currentTime;
 
-    receiver.processNextBroadcast();
-    t.equal(broadcasted.length, 2);
-    t.equal(broadcasted[1].name, 'e2');
-    t.equal(receiver.pendingBroadcasts.length, 1);
+    try {
+        // Initially, only e1 should be ready (offset 0)
+        receiver.processNextBroadcast();
+        t.equal(broadcasted.length, 1);
+        t.equal(broadcasted[0].name, 'e1');
+        t.equal(receiver.pendingBroadcasts.length, 2);
 
-    receiver.processNextBroadcast();
-    t.equal(broadcasted.length, 3);
-    t.equal(broadcasted[2].name, 'e3');
-    t.equal(receiver.pendingBroadcasts.length, 0);
+        // Advance time to 150ms, e2 should be ready (offset ~100ms)
+        currentTime = startTime + 150;
+        receiver.processNextBroadcast();
+        t.equal(broadcasted.length, 2);
+        t.equal(broadcasted[1].name, 'e2');
+        t.equal(receiver.pendingBroadcasts.length, 1);
+
+        // Advance time to 300ms, e3 should be ready (offset ~200ms)
+        currentTime = startTime + 300;
+        receiver.processNextBroadcast();
+        t.equal(broadcasted.length, 3);
+        t.equal(broadcasted[2].name, 'e3');
+        t.equal(receiver.pendingBroadcasts.length, 0);
+    } finally {
+        Date.now = realDateNow;
+    }
 
     t.end();
 });

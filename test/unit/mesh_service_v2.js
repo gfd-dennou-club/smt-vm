@@ -111,9 +111,61 @@ test('MeshV2Service Batch Events', t => {
 
         // Should be queued, not broadcasted immediately
         st.equal(service.pendingBroadcasts.length, 3);
-        st.equal(service.pendingBroadcasts[0].name, 'event1');
-        st.equal(service.pendingBroadcasts[1].name, 'event2');
-        st.equal(service.pendingBroadcasts[2].name, 'event3');
+        st.equal(service.pendingBroadcasts[0].event.name, 'event1');
+        st.equal(service.pendingBroadcasts[0].offsetMs, 0);
+        st.equal(service.pendingBroadcasts[1].event.name, 'event2');
+        st.equal(service.pendingBroadcasts[1].offsetMs, 100);
+        st.equal(service.pendingBroadcasts[2].event.name, 'event3');
+        st.equal(service.pendingBroadcasts[2].offsetMs, 200);
+
+        st.end();
+    });
+
+    t.test('processNextBroadcast processes one event per frame even for short gaps', st => {
+        const blocks = createMockBlocks();
+        const service = new MeshV2Service(blocks, 'node1', 'domain1');
+        const broadcasted = [];
+        service.broadcastEvent = event => broadcasted.push(event.name);
+
+        // 3 events with very short gaps (all < 1ms relative to previous)
+        const batchEvent = {
+            firedByNodeId: 'node2',
+            events: [
+                {name: 'e1', timestamp: '2025-12-30T00:00:00.000Z'},
+                {name: 'e2', timestamp: '2025-12-30T00:00:00.0001Z'},
+                {name: 'e3', timestamp: '2025-12-30T00:00:00.0002Z'}
+            ]
+        };
+
+        const realDateNow = Date.now;
+        const startTime = 1000000;
+        const currentTime = startTime;
+        Date.now = () => currentTime;
+
+        try {
+            service.handleBatchEvent(batchEvent);
+            st.equal(service.pendingBroadcasts.length, 3);
+
+            // Frame 1: Should broadcast e1
+            service.processNextBroadcast();
+            st.equal(broadcasted.length, 1);
+            st.equal(broadcasted[0], 'e1');
+            st.equal(service.pendingBroadcasts.length, 2);
+
+            // Frame 2: Should broadcast e2
+            service.processNextBroadcast();
+            st.equal(broadcasted.length, 2);
+            st.equal(broadcasted[1], 'e2');
+            st.equal(service.pendingBroadcasts.length, 1);
+
+            // Frame 3: Should broadcast e3
+            service.processNextBroadcast();
+            st.equal(broadcasted.length, 3);
+            st.equal(broadcasted[2], 'e3');
+            st.equal(service.pendingBroadcasts.length, 0);
+        } finally {
+            Date.now = realDateNow;
+        }
 
         st.end();
     });

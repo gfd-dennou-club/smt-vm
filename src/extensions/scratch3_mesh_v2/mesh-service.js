@@ -64,8 +64,10 @@ class MeshV2Service {
         // Last sent data to detect changes
         this.lastSentData = {};
 
-        // イベントキュー: タイムスタンプ順にソート済みのイベント配列
+        // イベントキュー: {event, offsetMs} の配列
         this.pendingBroadcasts = [];
+        this.batchStartTime = null; // バッチ処理開始時刻（実時間）
+        this.lastBroadcastOffset = 0; // 最後に処理したイベントのオフセット（ms）
 
         // runtimeのBEFORE_STEPイベントにフック
         // boundメソッドを保持（cleanup時にoff()で使用）
@@ -281,6 +283,8 @@ class MeshV2Service {
 
         // キューをクリア
         this.pendingBroadcasts = [];
+        this.batchStartTime = null;
+        this.lastBroadcastOffset = 0;
 
         this.stopSubscriptions();
         this.stopHeartbeat();
@@ -363,27 +367,101 @@ class MeshV2Service {
         // タイムスタンプでソート
         const sortedEvents = events.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
+        // 最初のイベントを基準にオフセットを計算
+        const baseTime = new Date(sortedEvents[0].timestamp).getTime();
+
         // キューに追加（setTimeoutは使わない）
         sortedEvents.forEach(event => {
-            this.pendingBroadcasts.push(event);
-            log.info(`Mesh V2: Queued event: ${event.name} (original timestamp: ${event.timestamp})`);
+            const eventTime = new Date(event.timestamp).getTime();
+            const offsetMs = eventTime - baseTime;
+
+            this.pendingBroadcasts.push({
+                event: event,
+                offsetMs: offsetMs // 元のタイミング情報を保持
+            });
+            log.info(`Mesh V2: Queued event: ${event.name} ` +
+                `(offset: ${offsetMs}ms, original timestamp: ${event.timestamp})`);
         });
+
+        // バッチ処理開始時刻を記録（最初のイベント追加時のみ）
+        if (this.batchStartTime === null && this.pendingBroadcasts.length > 0) {
+            this.batchStartTime = Date.now();
+            this.lastBroadcastOffset = 0;
+        }
 
         log.info(`Mesh V2: Total pending broadcasts: ${this.pendingBroadcasts.length}`);
     }
 
     /**
-     * Process the next pending broadcast event.
+     * Process pending broadcast events that should fire based on elapsed real time.
      * Called once per frame via BEFORE_STEP event.
+     *
+     * Strategy:
+     * - Events with offsetMs close to each other (< 1ms) are processed in the same frame (at most 1)
+     * - Events separated by frame intervals (>= 16.67ms) wait for real time to elapse
      */
     processNextBroadcast () {
-        if (this.pendingBroadcasts.length === 0) return;
+        if (this.pendingBroadcasts.length === 0) {
+            // キューが空になったらリセット
+            this.batchStartTime = null;
+            this.lastBroadcastOffset = 0;
+            return;
+        }
 
-        // フレームごとに1つずつbroadcast
-        const event = this.pendingBroadcasts.shift();
-        log.info(`Mesh V2: Broadcasting queued event: ${event.name} ` +
-            `(${this.pendingBroadcasts.length} remaining in queue)`);
-        this.broadcastEvent(event);
+        const now = Date.now();
+        const elapsedMs = this.batchStartTime ? now - this.batchStartTime : 0;
+
+        // 処理すべきイベントを収集（タイミングが来ているもの）
+        const eventsToProcess = [];
+
+        while (this.pendingBroadcasts.length > 0) {
+            const {event, offsetMs} = this.pendingBroadcasts[0];
+
+            // まだタイミングが来ていない場合は待機
+            if (offsetMs > elapsedMs) {
+                log.info(`Mesh V2: Waiting for event ${event.name} ` +
+                    `(needs ${offsetMs}ms, elapsed ${elapsedMs}ms)`);
+                break;
+            }
+
+            // タイミングが来たイベントをキューから取り出し
+            const item = this.pendingBroadcasts.shift();
+            eventsToProcess.push(item);
+
+            // 次のイベントとの間隔をチェック
+            if (this.pendingBroadcasts.length > 0) {
+                const nextOffset = this.pendingBroadcasts[0].offsetMs;
+                const gap = nextOffset - offsetMs;
+
+                // 次のイベントが1ms以内なら同じフレームで処理対象とする（が実際には1個しか処理しない）
+                // それ以外は次のフレームまで待機
+                if (gap >= 1) {
+                    break;
+                }
+            }
+        }
+
+        // 収集したイベントを処理
+        if (eventsToProcess.length > 0) {
+            // フレームごとに1つのブロードキャストのみ実行（スレッド再起動回避）
+            const {event, offsetMs} = eventsToProcess[0];
+
+            log.info(`Mesh V2: Broadcasting event: ${event.name} ` +
+                `(offset: ${offsetMs}ms, elapsed: ${elapsedMs}ms, ` +
+                `${eventsToProcess.length - 1} similar events batched, ` +
+                `${this.pendingBroadcasts.length} remaining in queue)`);
+
+            this.broadcastEvent(event);
+            this.lastBroadcastOffset = offsetMs;
+
+            // 1ms以内の追加イベントは次のフレームで処理
+            // （同じフレームで複数ブロードキャストしない制約）
+            eventsToProcess.slice(1)
+                .reverse()
+                .forEach(item => {
+                    this.pendingBroadcasts.unshift(item);
+                });
+        }
     }
 
     broadcastEvent (event) {
