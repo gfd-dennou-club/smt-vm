@@ -1,11 +1,17 @@
 const test = require('tap').test;
 const MeshV2Service = require('../../../src/extensions/scratch3_mesh_v2/mesh-service');
-const {REPORT_DATA, CREATE_GROUP, JOIN_GROUP} = require('../../../src/extensions/scratch3_mesh_v2/gql-operations');
+const {
+    REPORT_DATA,
+    CREATE_GROUP,
+    JOIN_GROUP,
+    LIST_GROUP_STATUSES
+} = require('../../../src/extensions/scratch3_mesh_v2/gql-operations');
 const Variable = require('../../../src/engine/variable');
 
 // Mock MeshClient
 const mockClient = {
     mutate: null,
+    query: null,
     subscribe: () => ({
         subscribe: () => ({
             unsubscribe: () => {}
@@ -56,6 +62,8 @@ test('MeshV2Service Variable Sync Integration', async t => {
         return Promise.resolve({data: {}});
     };
 
+    mockClient.query = () => Promise.resolve({data: {listGroupStatuses: []}});
+
     const blocks = createMockBlocks();
     const service = new MeshV2Service(blocks, 'node1', 'domain1');
     service.client = mockClient;
@@ -73,9 +81,7 @@ test('MeshV2Service Variable Sync Integration', async t => {
 
     // Cleanup for next test
     reportDataPayload = null;
-    service.stopHeartbeat();
-    service.stopEventBatchTimer();
-    service.stopConnectionTimer();
+    service.cleanup();
 
     // Test joinGroup with a NEW service instance
     const service2 = new MeshV2Service(blocks, 'node2', 'domain1');
@@ -104,9 +110,63 @@ test('MeshV2Service Variable Sync Integration', async t => {
     t.ok(reportDataPayload, 'REPORT_DATA should be called on joinGroup');
     t.equal(reportDataPayload.length, 2);
     
-    service2.stopHeartbeat();
-    service2.stopEventBatchTimer();
-    service2.stopConnectionTimer();
+    service2.cleanup();
 
+    t.end();
+});
+
+test('MeshV2Service fetch existing nodes data on joinGroup', async t => {
+    const blocks = {
+        runtime: {
+            getTargetForStage: () => ({variables: {}}),
+            on: () => {},
+            off: () => {}
+        }
+    };
+
+    mockClient.mutate = ({mutation}) => {
+        if (mutation === JOIN_GROUP) {
+            return Promise.resolve({
+                data: {
+                    joinGroup: {
+                        domain: 'domain1',
+                        heartbeatIntervalSeconds: 60
+                    }
+                }
+            });
+        }
+        return Promise.resolve({data: {}});
+    };
+
+    mockClient.query = ({query, variables}) => {
+        if (query === LIST_GROUP_STATUSES) {
+            return Promise.resolve({
+                data: {
+                    listGroupStatuses: [
+                        {
+                            nodeId: 'host-node',
+                            groupId: variables.groupId,
+                            domain: variables.domain,
+                            data: [
+                                {key: 'hostVar', value: '100'}
+                            ],
+                            timestamp: '2025-12-30T12:00:00Z'
+                        }
+                    ]
+                }
+            });
+        }
+        return Promise.resolve({data: {}});
+    };
+
+    const service = new MeshV2Service(blocks, 'member-node', 'domain1');
+    service.client = mockClient;
+
+    await service.joinGroup('group1', 'domain1', 'groupName');
+
+    t.ok(service.remoteData['host-node'], 'Should have data from host-node');
+    t.equal(service.remoteData['host-node'].hostVar, '100', 'Should have correct variable value from host');
+
+    service.cleanup();
     t.end();
 });

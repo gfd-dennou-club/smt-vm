@@ -195,6 +195,21 @@ const ON_GROUP_DISSOLVE = gql`
   }
 `;
 
+const LIST_GROUP_STATUSES = gql`
+  query ListGroupStatuses($groupId: ID!, $domain: String!) {
+    listGroupStatuses(groupId: $groupId, domain: $domain) {
+      nodeId
+      groupId
+      domain
+      data {
+        key
+        value
+      }
+      timestamp
+    }
+  }
+`;
+
 module.exports = {
     LIST_GROUPS_BY_DOMAIN,
     CREATE_DOMAIN,
@@ -210,5 +225,6 @@ module.exports = {
     ON_DATA_UPDATE,
     ON_EVENT,
     ON_BATCH_EVENT,
-    ON_GROUP_DISSOLVE
+    ON_GROUP_DISSOLVE,
+    LIST_GROUP_STATUSES
 };

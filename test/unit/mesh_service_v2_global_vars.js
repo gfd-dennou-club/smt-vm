@@ -122,9 +122,7 @@ test('MeshV2Service Global Variables', t => {
         await service.createGroup('groupName');
 
         st.ok(sendAllCalled);
-        service.stopHeartbeat();
-        service.stopEventBatchTimer();
-        service.stopConnectionTimer();
+        service.cleanup();
 
         st.end();
     });
@@ -141,6 +139,7 @@ test('MeshV2Service Global Variables', t => {
                     }
                 }
             }),
+            query: () => Promise.resolve({data: {listGroupStatuses: []}}),
             subscribe: () => ({
                 subscribe: () => ({unsubscribe: () => {}})
             })
@@ -155,9 +154,7 @@ test('MeshV2Service Global Variables', t => {
         await service.joinGroup('groupId', 'domain1', 'groupName');
 
         st.ok(sendAllCalled);
-        service.stopHeartbeat();
-        service.stopEventBatchTimer();
-        service.stopConnectionTimer();
+        service.cleanup();
 
         st.end();
     });
