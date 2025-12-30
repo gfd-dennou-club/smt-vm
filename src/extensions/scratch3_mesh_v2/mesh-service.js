@@ -57,7 +57,6 @@ class MeshV2Service {
             enableMerge: true,
             mergeKeyField: 'key'
         });
-        this.eventRateLimiter = new RateLimiter(2, 500); // 2 times/sec, 500ms interval
 
         // Event queue for batch sending: { eventName, payload, firedAt } の配列
         this.eventQueue = [];
@@ -77,7 +76,11 @@ class MeshV2Service {
         this._processNextBroadcastBound = this.processNextBroadcast.bind(this);
         this.runtime.on('BEFORE_STEP', this._processNextBroadcastBound);
 
-        // Fixed reference for RateLimiter merge comparison
+        /**
+         * Bound reference to _reportData for RateLimiter merge comparison.
+         * This ensures consistent sendFunction reference across multiple calls.
+         * @private
+         */
         this._reportDataBound = this._reportData.bind(this);
 
         this.disconnectCallback = null;

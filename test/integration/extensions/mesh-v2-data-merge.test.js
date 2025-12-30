@@ -56,6 +56,56 @@ test('MeshV2Service Data Merge Integration', async t => {
     t.end();
 });
 
+test('MeshV2Service Multiple Variables Merge Integration', async t => {
+    let mutateCount = 0;
+    const mutations = [];
+    
+    mockClient.mutate = async ({mutation, variables}) => {
+        if (mutation === REPORT_DATA) {
+            mutateCount++;
+            mutations.push(JSON.parse(JSON.stringify(variables.data)));
+            await new Promise(resolve => setTimeout(resolve, 50));
+        }
+        return {data: {}};
+    };
+
+    const service = new MeshV2Service({
+        runtime: {
+            on: () => {},
+            off: () => {}
+        }
+    }, 'node1', 'domain1');
+    service.groupId = 'group1';
+    service.client = mockClient;
+
+    // First call: starts immediately
+    service.sendData([{key: 'v1', value: 1}]);
+
+    // Subsequent calls: should be merged
+    service.sendData([{key: 'v1', value: 2}]);
+    service.sendData([{key: 'v2', value: 10}]);
+    service.sendData([{key: 'v1', value: 3}]);
+    service.sendData([{key: 'v2', value: 20}]);
+
+    await service.dataRateLimiter.waitForCompletion();
+
+    t.equal(mutateCount, 2, 'Should result in 2 API calls');
+    t.same(mutations[0], [{key: 'v1', value: 1}]);
+    
+    // The merged payload should contain the latest value for each key.
+    // Order might depend on implementation, but values must be latest.
+    const lastMutation = mutations[1];
+    t.equal(lastMutation.length, 2, 'Merged payload should have 2 unique keys');
+    
+    const v1Item = lastMutation.find(i => i.key === 'v1');
+    const v2Item = lastMutation.find(i => i.key === 'v2');
+    
+    t.equal(v1Item.value, 3, 'v1 should have the latest value');
+    t.equal(v2Item.value, 20, 'v2 should have the latest value');
+    
+    t.end();
+});
+
 test('MeshV2Service Data Unchanged Detection', async t => {
 
     let mutateCount = 0;
