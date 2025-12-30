@@ -23,7 +23,6 @@ test('MeshV2Service Integration: Batching and Timing', async t => {
     });
 
     // Mock BlockUtility
-    const originalLastInstance = BlockUtility.lastInstance;
     BlockUtility.lastInstance = () => ({
         sequencer: blocks.runtime.sequencer
     });
