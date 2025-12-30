@@ -2,6 +2,7 @@ const log = require('../../util/log');
 const {getClient} = require('./mesh-client');
 const RateLimiter = require('./rate-limiter');
 const BlockUtility = require('../../engine/block-utility');
+const Variable = require('../../engine/variable');
 const {
     LIST_GROUPS_BY_DOMAIN,
     CREATE_DOMAIN,
@@ -176,6 +177,8 @@ class MeshV2Service {
             this.startEventBatchTimer();
             this.startConnectionTimer();
 
+            await this.sendAllGlobalVariables();
+
             log.info(`Mesh V2: Created group ${this.groupName} (${this.groupId}) in domain ${this.domain}`);
             return group;
         } catch (error) {
@@ -234,6 +237,8 @@ class MeshV2Service {
             this.startHeartbeat(); // Start heartbeat for member too
             this.startEventBatchTimer();
             this.startConnectionTimer();
+
+            await this.sendAllGlobalVariables();
 
             log.info(`Mesh V2: Joined group ${this.groupId} in domain ${this.domain}`);
             return node;
@@ -731,6 +736,44 @@ class MeshV2Service {
             payload: payload,
             firedAt: new Date().toISOString()
         });
+    }
+
+    /**
+     * Get all global scalar variables.
+     * @returns {Array} Array of {key, value} objects.
+     */
+    getGlobalVariables () {
+        const stage = this.runtime.getTargetForStage();
+        if (!stage || !stage.variables) return [];
+
+        const variables = [];
+        for (const varId in stage.variables) {
+            const currVar = stage.variables[varId];
+            if (currVar.type === Variable.SCALAR_TYPE) {
+                variables.push({
+                    key: currVar.name,
+                    value: String(currVar.value)
+                });
+            }
+        }
+        return variables;
+    }
+
+    /**
+     * Send all global variables to other nodes in the group.
+     * @returns {Promise<void>} A promise that resolves when variables are queued for sending.
+     */
+    async sendAllGlobalVariables () {
+        if (!this.groupId || !this.client) return;
+
+        const allVariables = this.getGlobalVariables();
+        if (allVariables.length === 0) {
+            log.info('Mesh V2: No global variables to send');
+            return;
+        }
+
+        await this.sendData(allVariables);
+        log.info(`Mesh V2: Sent ${allVariables.length} global variables`);
     }
 
     getRemoteVariable (name) {
