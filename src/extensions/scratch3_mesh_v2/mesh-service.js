@@ -2,6 +2,7 @@ const log = require('../../util/log');
 const {getClient} = require('./mesh-client');
 const RateLimiter = require('./rate-limiter');
 const BlockUtility = require('../../engine/block-utility');
+const Variable = require('../../engine/variable');
 const {
     LIST_GROUPS_BY_DOMAIN,
     CREATE_DOMAIN,
@@ -15,7 +16,8 @@ const {
     FIRE_EVENTS,
     ON_DATA_UPDATE,
     ON_BATCH_EVENT,
-    ON_GROUP_DISSOLVE
+    ON_GROUP_DISSOLVE,
+    LIST_GROUP_STATUSES
 } = require('./gql-operations');
 
 const CONNECTION_TIMEOUT = 50 * 60 * 1000; // 50 minutes in milliseconds
@@ -47,6 +49,7 @@ class MeshV2Service {
         this.subscriptions = [];
         this.connectionTimer = null;
         this.heartbeatTimer = null;
+        this.dataSyncTimer = null;
         this.memberHeartbeatInterval = 120; // Default 2 min
 
         // Data from other nodes: { nodeId: { key: value } }
@@ -175,6 +178,9 @@ class MeshV2Service {
             this.startHeartbeat();
             this.startEventBatchTimer();
             this.startConnectionTimer();
+            this.startPeriodicDataSync();
+
+            await this.sendAllGlobalVariables();
 
             log.info(`Mesh V2: Created group ${this.groupName} (${this.groupId}) in domain ${this.domain}`);
             return group;
@@ -234,6 +240,10 @@ class MeshV2Service {
             this.startHeartbeat(); // Start heartbeat for member too
             this.startEventBatchTimer();
             this.startConnectionTimer();
+            this.startPeriodicDataSync();
+
+            await this.sendAllGlobalVariables();
+            await this.fetchAllNodesData();
 
             log.info(`Mesh V2: Joined group ${this.groupId} in domain ${this.domain}`);
             return node;
@@ -299,6 +309,7 @@ class MeshV2Service {
         this.stopHeartbeat();
         this.stopEventBatchTimer();
         this.stopConnectionTimer();
+        this.stopPeriodicDataSync();
         this.groupId = null;
         this.groupName = null;
         this.expiresAt = null;
@@ -731,6 +742,105 @@ class MeshV2Service {
             payload: payload,
             firedAt: new Date().toISOString()
         });
+    }
+
+    /**
+     * Fetch data from all nodes in the group.
+     * @returns {Promise<void>} A promise that resolves when data is fetched and updated.
+     */
+    async fetchAllNodesData () {
+        if (!this.groupId || !this.client) return;
+
+        try {
+            const result = await this.client.query({
+                query: LIST_GROUP_STATUSES,
+                variables: {
+                    groupId: this.groupId,
+                    domain: this.domain
+                },
+                fetchPolicy: 'network-only'
+            });
+
+            const nodeStatuses = result.data.listGroupStatuses;
+
+            // Update remoteData
+            nodeStatuses.forEach(status => {
+                if (status.nodeId === this.meshId) return;
+
+                if (!this.remoteData[status.nodeId]) {
+                    this.remoteData[status.nodeId] = {};
+                }
+                status.data.forEach(item => {
+                    this.remoteData[status.nodeId][item.key] = item.value;
+                });
+            });
+
+            log.info(`Mesh V2: Fetched data from ${nodeStatuses.length} nodes`);
+        } catch (error) {
+            log.error(`Mesh V2: Failed to fetch group data: ${error}`);
+        }
+    }
+
+    /**
+     * Start periodic data synchronization to ensure data consistency.
+     */
+    startPeriodicDataSync () {
+        this.stopPeriodicDataSync();
+
+        // Sync every 5 minutes
+        this.dataSyncTimer = setInterval(() => {
+            log.info('Mesh V2: Periodic data sync');
+            this.fetchAllNodesData();
+        }, 5 * 60 * 1000);
+    }
+
+    /**
+     * Stop periodic data synchronization.
+     */
+    stopPeriodicDataSync () {
+        if (this.dataSyncTimer) {
+            log.info('Mesh V2: Stopping periodic data sync timer');
+            clearInterval(this.dataSyncTimer);
+            this.dataSyncTimer = null;
+        }
+    }
+
+    /**
+     * Get all global scalar variables.
+     * @returns {Array} Array of {key, value} objects.
+     */
+    getGlobalVariables () {
+        const stage = this.runtime.getTargetForStage();
+        if (!stage || !stage.variables) return [];
+
+        const variables = [];
+        for (const varId in stage.variables) {
+            const currVar = stage.variables[varId];
+            if (currVar.type === Variable.SCALAR_TYPE) {
+                variables.push({
+                    key: currVar.name,
+                    value: String(currVar.value)
+                });
+            }
+        }
+        return variables;
+    }
+
+    /**
+     * Send all global variables to other nodes in the group.
+     * @returns {Promise<void>} A promise that resolves when variables are queued for sending.
+     */
+    async sendAllGlobalVariables () {
+        if (!this.groupId || !this.client) return;
+
+        const allVariables = this.getGlobalVariables();
+        if (allVariables.length === 0) {
+            log.info('Mesh V2: No global variables to send');
+            return;
+        }
+
+        await this.sendData(allVariables);
+        log.info(`Mesh V2: Sent ${allVariables.length} global variables`);
     }
 
     getRemoteVariable (name) {
