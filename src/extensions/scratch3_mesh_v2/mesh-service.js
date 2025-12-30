@@ -53,7 +53,10 @@ class MeshV2Service {
         this.remoteData = {};
 
         // Rate limiters
-        this.dataRateLimiter = new RateLimiter(4, 250); // 4 times/sec, 250ms interval
+        this.dataRateLimiter = new RateLimiter(4, 250, {
+            enableMerge: true,
+            mergeKeyField: 'key'
+        });
         this.eventRateLimiter = new RateLimiter(2, 500); // 2 times/sec, 500ms interval
 
         // Event queue for batch sending: { eventName, payload, firedAt } の配列
@@ -73,6 +76,9 @@ class MeshV2Service {
         // boundメソッドを保持（cleanup時にoff()で使用）
         this._processNextBroadcastBound = this.processNextBroadcast.bind(this);
         this.runtime.on('BEFORE_STEP', this._processNextBroadcastBound);
+
+        // Fixed reference for RateLimiter merge comparison
+        this._reportDataBound = this._reportData.bind(this);
 
         this.disconnectCallback = null;
     }
@@ -667,34 +673,46 @@ class MeshV2Service {
     async sendData (dataArray) {
         if (!this.groupId || !this.client) return;
 
+        const unchanged = this.isDataUnchanged(dataArray);
+        log.info(`Mesh V2: sendData called with ${dataArray.length} items: ` +
+            `${JSON.stringify(dataArray)} (unchanged: ${unchanged})`);
+
         // Change detection
-        if (this.isDataUnchanged(dataArray)) {
+        if (unchanged) {
             return;
         }
 
         try {
-            await this.dataRateLimiter.send(dataArray, async payload => {
-                await this.client.mutate({
-                    mutation: REPORT_DATA,
-                    variables: {
-                        groupId: this.groupId,
-                        domain: this.domain,
-                        nodeId: this.meshId,
-                        data: payload
-                    }
-                });
-
-                // Update last sent data on success
-                payload.forEach(item => {
-                    this.lastSentData[item.key] = item.value;
-                });
-            });
+            await this.dataRateLimiter.send(dataArray, this._reportDataBound);
         } catch (error) {
             log.error(`Mesh V2: Failed to send data: ${error}`);
             if (this.shouldDisconnectOnError(error)) {
                 this.cleanupAndDisconnect();
             }
         }
+    }
+
+    /**
+     * Internal method to send data to the server.
+     * Used as sendFunction in dataRateLimiter.
+     * @param {Array} payload - Array of {key, value} objects.
+     * @private
+     */
+    async _reportData (payload) {
+        await this.client.mutate({
+            mutation: REPORT_DATA,
+            variables: {
+                groupId: this.groupId,
+                domain: this.domain,
+                nodeId: this.meshId,
+                data: payload
+            }
+        });
+
+        // Update last sent data on success
+        payload.forEach(item => {
+            this.lastSentData[item.key] = item.value;
+        });
     }
 
     fireEvent (eventName, payload = '') {

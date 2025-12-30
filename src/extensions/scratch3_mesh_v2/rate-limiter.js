@@ -1,15 +1,25 @@
+const log = require('../../util/log');
+
 /* istanbul ignore next */
 class RateLimiter {
     /**
      * @param {number} maxPerSecond - Maximum number of requests per second.
      * @param {number} intervalMs - Minimum interval between requests in milliseconds.
+     * @param {object} options - Optional parameters.
+     * @param {boolean} options.enableMerge - Whether to merge data in the queue (default: false).
+     * @param {string} options.mergeKeyField - Field name to use as merge key (default: 'key').
      */
-    constructor (maxPerSecond, intervalMs) {
+    constructor (maxPerSecond, intervalMs, options = {}) {
         this.maxPerSecond = maxPerSecond;
         this.intervalMs = intervalMs;
         this.queue = [];
         this.lastSendTime = 0;
         this.processing = false;
+
+        // New options for data merging
+        this.enableMerge = options.enableMerge || false;
+        this.mergeKeyField = options.mergeKeyField || 'key';
+        this.requestCount = 0;
     }
 
     /**
@@ -20,9 +30,96 @@ class RateLimiter {
      */
     send (data, sendFunction) {
         return new Promise((resolve, reject) => {
-            this.queue.push({data, resolve, reject, sendFunction});
+            if (this.enableMerge && Array.isArray(data)) {
+                // Merge mode: Update item in queue if same key exists
+                this.mergeIntoQueue(data, sendFunction, resolve, reject);
+            } else {
+                // Normal mode: Always push to queue
+                this.queue.push({data, resolve, reject, sendFunction});
+            }
+
+            log.info(`RateLimiter: ${this.enableMerge ? 'Processed' : 'Added'} to queue ` +
+                `(size: ${this.queue.length}, enableMerge: ${this.enableMerge})`);
+
             this.processQueue();
         });
+    }
+
+    /**
+     * Merge data into existing queue item if possible.
+     * @param {Array} dataArray - New data to merge.
+     * @param {Function} sendFunction - Function associated with the data.
+     * @param {Function} resolve - Promise resolve callback.
+     * @param {Function} reject - Promise reject callback.
+     */
+    mergeIntoQueue (dataArray, sendFunction, resolve, reject) {
+        let merged = false;
+
+        // Find the last item in queue with same sendFunction
+        for (let i = this.queue.length - 1; i >= 0; i--) {
+            const queueItem = this.queue[i];
+
+            if (queueItem.sendFunction === sendFunction) {
+                const existingData = queueItem.data;
+                const mergedData = this.mergeData(existingData, dataArray);
+
+                log.info(`RateLimiter: Merging data - ` +
+                    `before: ${JSON.stringify(existingData)}, ` +
+                    `after: ${JSON.stringify(mergedData)}`);
+
+                queueItem.data = mergedData;
+
+                // Chain resolve and reject
+                const originalResolve = queueItem.resolve;
+                queueItem.resolve = result => {
+                    originalResolve(result);
+                    resolve(result);
+                };
+
+                const originalReject = queueItem.reject;
+                queueItem.reject = error => {
+                    originalReject(error);
+                    reject(error);
+                };
+
+                merged = true;
+                break;
+            }
+        }
+
+        if (!merged) {
+            this.queue.push({data: dataArray, resolve, reject, sendFunction});
+        }
+    }
+
+    /**
+     * Merge two arrays of data using mergeKeyField.
+     * @param {Array} existingData - Existing data items.
+     * @param {Array} newData - New data items.
+     * @returns {Array} - Merged data items.
+     */
+    mergeData (existingData, newData) {
+        const dataMap = new Map();
+
+        // Add existing data
+        if (Array.isArray(existingData)) {
+            existingData.forEach(item => {
+                if (item && typeof item === 'object' && this.mergeKeyField in item) {
+                    dataMap.set(item[this.mergeKeyField], item);
+                }
+            });
+        }
+
+        // Overwrite with new data
+        if (Array.isArray(newData)) {
+            newData.forEach(item => {
+                if (item && typeof item === 'object' && this.mergeKeyField in item) {
+                    dataMap.set(item[this.mergeKeyField], item);
+                }
+            });
+        }
+
+        return Array.from(dataMap.values());
     }
 
     /**
@@ -63,6 +160,10 @@ class RateLimiter {
             }
 
             const item = this.queue.shift();
+            this.requestCount++;
+            log.info(`RateLimiter: Sending request #${this.requestCount} ` +
+                `(queue remaining: ${this.queue.length})`);
+
             try {
                 const result = await item.sendFunction(item.data);
                 this.lastSendTime = Date.now();
