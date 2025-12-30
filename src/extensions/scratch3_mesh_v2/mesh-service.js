@@ -64,6 +64,14 @@ class MeshV2Service {
         // Last sent data to detect changes
         this.lastSentData = {};
 
+        // イベントキュー: タイムスタンプ順にソート済みのイベント配列
+        this.pendingBroadcasts = [];
+
+        // runtimeのBEFORE_STEPイベントにフック
+        // boundメソッドを保持（cleanup時にoff()で使用）
+        this._processNextBroadcastBound = this.processNextBroadcast.bind(this);
+        this.runtime.on('BEFORE_STEP', this._processNextBroadcastBound);
+
         this.disconnectCallback = null;
     }
 
@@ -265,6 +273,15 @@ class MeshV2Service {
     }
 
     cleanup () {
+        // BEFORE_STEPイベントリスナーを削除
+        if (this._processNextBroadcastBound) {
+            this.runtime.off('BEFORE_STEP', this._processNextBroadcastBound);
+            this._processNextBroadcastBound = null;
+        }
+
+        // キューをクリア
+        this.pendingBroadcasts = [];
+
         this.stopSubscriptions();
         this.stopHeartbeat();
         this.stopEventBatchTimer();
@@ -346,38 +363,27 @@ class MeshV2Service {
         // タイムスタンプでソート
         const sortedEvents = events.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
-        // 最初のイベントのタイムスタンプを0とする
-        const baseTime = new Date(sortedEvents[0].timestamp).getTime();
-
-        // 各イベントをオフセットで発火
-        // Scratch VMの仕様上、同一メッセージのブロードキャストが同一フレーム（または極めて短い間隔）で
-        // 発生すると、実行中のスクリプトが再起動されてしまい、最後の1回しか動かないように見える。
-        // これを防ぐため、最小でも17ms（約60fpsの1フレーム分）の間隔を空けて発火させる。
-        let lastScheduledOffset = -1;
-        const MIN_INTERVAL = 17; // ms
-
+        // キューに追加（setTimeoutは使わない）
         sortedEvents.forEach(event => {
-            const eventTime = new Date(event.timestamp).getTime();
-            let offset = eventTime - baseTime;
-
-            // 前回の発火予定時刻よりもMIN_INTERVAL以上後に設定する
-            if (offset <= lastScheduledOffset) {
-                offset = lastScheduledOffset + MIN_INTERVAL;
-            }
-            lastScheduledOffset = offset;
-
-            if (offset <= 0) {
-                log.info(`Mesh V2: Broadcasting received event immediately: ${event.name} ` +
-                    `(original timestamp: ${event.timestamp})`);
-                this.broadcastEvent(event);
-            } else {
-                log.info(`Mesh V2: Scheduling received event: ${event.name} (offset: ${offset}ms, ` +
-                    `original timestamp: ${event.timestamp})`);
-                setTimeout(() => {
-                    this.broadcastEvent(event);
-                }, offset);
-            }
+            this.pendingBroadcasts.push(event);
+            log.info(`Mesh V2: Queued event: ${event.name} (original timestamp: ${event.timestamp})`);
         });
+
+        log.info(`Mesh V2: Total pending broadcasts: ${this.pendingBroadcasts.length}`);
+    }
+
+    /**
+     * Process the next pending broadcast event.
+     * Called once per frame via BEFORE_STEP event.
+     */
+    processNextBroadcast () {
+        if (this.pendingBroadcasts.length === 0) return;
+
+        // フレームごとに1つずつbroadcast
+        const event = this.pendingBroadcasts.shift();
+        log.info(`Mesh V2: Broadcasting queued event: ${event.name} ` +
+            `(${this.pendingBroadcasts.length} remaining in queue)`);
+        this.broadcastEvent(event);
     }
 
     broadcastEvent (event) {

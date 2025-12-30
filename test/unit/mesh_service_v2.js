@@ -6,7 +6,9 @@ const BlockUtility = require('../../src/engine/block-utility');
 const createMockBlocks = () => ({
     runtime: {
         sequencer: {},
-        emit: () => {}
+        emit: () => {},
+        on: () => {},
+        off: () => {}
     },
     opcodeFunctions: {
         event_broadcast: () => {}
@@ -87,46 +89,27 @@ test('MeshV2Service Batch Events', t => {
         st.end();
     });
 
-    t.test('handleBatchEvent broadcast events with timing', async st => {
+    t.test('handleBatchEvent broadcast events with timing', st => {
         const blocks = createMockBlocks();
-        const broadcasted = [];
-        blocks.opcodeFunctions.event_broadcast = args => {
-            broadcasted.push(args.BROADCAST_OPTION.name);
-        };
-
-        // Setup mock BlockUtility
-        mockUtil = {
-            sequencer: blocks.runtime.sequencer
-        };
-
         const service = new MeshV2Service(blocks, 'node1', 'domain1');
-        service.stopEventBatchTimer();
-        service.groupId = 'group1';
+        const events = [
+            { name: 'event1', timestamp: '2025-12-30T00:00:00.000Z' },
+            { name: 'event2', timestamp: '2025-12-30T00:00:00.100Z' },
+            { name: 'event3', timestamp: '2025-12-30T00:00:00.200Z' }
+        ];
 
-        const now = Date.now();
         const batchEvent = {
             firedByNodeId: 'node2',
-            events: [
-                {name: 'event1', timestamp: new Date(now).toISOString()},
-                {name: 'event2', timestamp: new Date(now + 100).toISOString()},
-                {name: 'event3', timestamp: new Date(now + 200).toISOString()}
-            ]
+            events: events
         };
 
         service.handleBatchEvent(batchEvent);
 
-        // Immediate broadcast for first event (offset 0)
-        st.equal(broadcasted.length, 1);
-        st.equal(broadcasted[0], 'event1');
-
-        // Wait for others
-        await new Promise(resolve => setTimeout(resolve, 150));
-        st.equal(broadcasted.length, 2);
-        st.equal(broadcasted[1], 'event2');
-
-        await new Promise(resolve => setTimeout(resolve, 100));
-        st.equal(broadcasted.length, 3);
-        st.equal(broadcasted[2], 'event3');
+        // Should be queued, not broadcasted immediately
+        st.equal(service.pendingBroadcasts.length, 3);
+        st.equal(service.pendingBroadcasts[0].name, 'event1');
+        st.equal(service.pendingBroadcasts[1].name, 'event2');
+        st.equal(service.pendingBroadcasts[2].name, 'event3');
 
         st.end();
     });
