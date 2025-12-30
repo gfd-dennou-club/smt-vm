@@ -5,7 +5,9 @@ const BlockUtility = require('../../src/engine/block-utility');
 const createMockBlocks = broadcastCallback => ({
     runtime: {
         sequencer: {},
-        emit: () => {}
+        emit: () => {},
+        on: () => {},
+        off: () => {}
     },
     opcodeFunctions: {
         event_broadcast: args => {
@@ -21,7 +23,6 @@ test('MeshV2Service Integration: Batching and Timing', async t => {
     });
 
     // Mock BlockUtility
-    const originalLastInstance = BlockUtility.lastInstance;
     BlockUtility.lastInstance = () => ({
         sequencer: blocks.runtime.sequencer
     });
@@ -63,23 +64,43 @@ test('MeshV2Service Integration: Batching and Timing', async t => {
     // 2. Process batch (simulates timer trigger)
     await sender.processBatchEvents();
 
-    // 3. Verify timing reproduction
-    t.equal(broadcasted.length, 1, 'First event should be broadcasted immediately');
-    t.equal(broadcasted[0].name, 'e1');
+    // 3. Verify queuing
+    t.equal(receiver.pendingBroadcasts.length, 3, 'Events should be queued');
+    t.equal(receiver.pendingBroadcasts[0].event.name, 'e1');
+    t.equal(receiver.pendingBroadcasts[1].event.name, 'e2');
+    t.equal(receiver.pendingBroadcasts[2].event.name, 'e3');
 
-    await new Promise(r => setTimeout(r, 150));
-    t.equal(broadcasted.length, 2, 'Second event should be broadcasted after ~100ms');
-    t.equal(broadcasted[1].name, 'e2');
-    t.ok(broadcasted[1].time - broadcasted[0].time >= 100, 'Interval between e1 and e2 should be at least 100ms');
+    // 4. Process events via BEFORE_STEP simulation
+    // Mock Date.now to control elapsed time
+    const realDateNow = Date.now;
+    const startTime = realDateNow();
+    let currentTime = startTime;
+    Date.now = () => currentTime;
 
-    await new Promise(r => setTimeout(r, 100));
-    t.equal(broadcasted.length, 3, 'Third event should be broadcasted after ~200ms total');
-    t.equal(broadcasted[2].name, 'e3');
-    t.ok(broadcasted[2].time - broadcasted[1].time >= 100, 'Interval between e2 and e3 should be at least 100ms');
+    try {
+        // Initially, only e1 should be ready (offset 0)
+        receiver.processNextBroadcast();
+        t.equal(broadcasted.length, 1);
+        t.equal(broadcasted[0].name, 'e1');
+        t.equal(receiver.pendingBroadcasts.length, 2);
 
-    // Restore
-    // eslint-disable-next-line require-atomic-updates
-    BlockUtility.lastInstance = originalLastInstance;
+        // Advance time to 150ms, e2 should be ready (offset ~100ms)
+        currentTime = startTime + 150;
+        receiver.processNextBroadcast();
+        t.equal(broadcasted.length, 2);
+        t.equal(broadcasted[1].name, 'e2');
+        t.equal(receiver.pendingBroadcasts.length, 1);
+
+        // Advance time to 300ms, e3 should be ready (offset ~200ms)
+        currentTime = startTime + 300;
+        receiver.processNextBroadcast();
+        t.equal(broadcasted.length, 3);
+        t.equal(broadcasted[2].name, 'e3');
+        t.equal(receiver.pendingBroadcasts.length, 0);
+    } finally {
+        Date.now = realDateNow;
+    }
+
     t.end();
 });
 

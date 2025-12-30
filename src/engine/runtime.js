@@ -519,6 +519,14 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Event name for when a frame step is about to begin.
+     * @const {string}
+     */
+    static get BEFORE_STEP () {
+        return 'BEFORE_STEP';
+    }
+
+    /**
      * Event name for target being stopped by a stop for target call.
      * Used by blocks that need to stop individual targets.
      * @const {string}
@@ -2314,6 +2322,8 @@ class Runtime extends EventEmitter {
             }
             this.profiler.start(stepProfilerId);
         }
+
+        this.emit(Runtime.BEFORE_STEP);
 
         // Clean up threads that were told to stop during or since the last step
         this.threads = this.threads.filter(thread => !thread.isKilled);
