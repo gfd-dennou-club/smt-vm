@@ -17,10 +17,6 @@ const blockIconURI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAYA
 
 const MESH_V2_HOST_ID = 'meshV2_host';
 
-const MESH_V2_MAX_CONNECTION_TIME_SECONDS =
-    (typeof process !== 'undefined' && process.env.MESH_MAX_CONNECTION_TIME_SECONDS) ?
-        Number(process.env.MESH_MAX_CONNECTION_TIME_SECONDS) : 3000;
-
 const MESH_ID_LABEL_CHARACTERS = {
     0: 'い',
     1: 'し',
@@ -88,16 +84,16 @@ class Scratch3MeshV2Blocks {
 
     /**
      * Calculate RSSI based on time remaining until expiresAt
-     * @param {string} expiresAt - ISO 8601 timestamp
-     * @param {number} maxConnectionTimeSeconds - Maximum connection time in seconds (default: 3000)
+     * @param {object} group - Group object containing createdAt and expiresAt
      * @returns {number} RSSI value in range -100 to 0 (higher = stronger signal)
      */
-    calculateRssi (expiresAt, maxConnectionTimeSeconds = MESH_V2_MAX_CONNECTION_TIME_SECONDS) {
-        if (!expiresAt) return 0;
+    calculateRssi (group) {
+        if (!group || !group.expiresAt || !group.createdAt) return 0;
         const now = Date.now();
-        const expiresAtMs = new Date(expiresAt).getTime();
+        const expiresAtMs = new Date(group.expiresAt).getTime();
+        const createdAtMs = new Date(group.createdAt).getTime();
         const timeRemaining = expiresAtMs - now;
-        const maxConnectionTimeMs = maxConnectionTimeSeconds * 1000;
+        const maxConnectionTimeMs = expiresAtMs - createdAtMs;
 
         // Calculate percentage: more time remaining = higher percentage
         // Range: 0-100
@@ -218,7 +214,7 @@ class Scratch3MeshV2Blocks {
                     default: 'Join Mesh V2 [{ MESH_ID }]',
                     description: 'label for joining Mesh in connect modal for Mesh V2 extension'
                 }, {MESH_ID: this.makeMeshIdLabel(group.name)}),
-                rssi: this.calculateRssi(group.expiresAt),
+                rssi: this.calculateRssi(group),
                 domain: group.domain
             }));
 
