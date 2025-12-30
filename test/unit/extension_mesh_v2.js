@@ -220,46 +220,39 @@ test('Mesh V2 Blocks', t => {
         const blocks = new MeshV2Blocks(mockRuntime);
         const now = Date.now();
 
-        // strongest: 3000s remaining
-        const strongest = new Date(now + (3000 * 1000)).toISOString();
-        st.equal(blocks.calculateRssi(strongest, 3000), 0);
+        // strongest: 3000s remaining, max is 3000s
+        const strongest = {
+            createdAt: new Date(now).toISOString(),
+            expiresAt: new Date(now + (3000 * 1000)).toISOString()
+        };
+        st.equal(blocks.calculateRssi(strongest), 0);
 
-        // medium: 1500s remaining
-        const medium = new Date(now + (1500 * 1000)).toISOString();
-        st.equal(blocks.calculateRssi(medium, 3000), -50);
+        // medium: 1500s remaining, max is 3000s
+        const medium = {
+            createdAt: new Date(now - (1500 * 1000)).toISOString(),
+            expiresAt: new Date(now + (1500 * 1000)).toISOString()
+        };
+        st.equal(blocks.calculateRssi(medium), -50);
 
-        // weakest: 0s remaining
-        const weakest = new Date(now).toISOString();
-        st.equal(blocks.calculateRssi(weakest, 3000), -100);
+        // weakest: 0s remaining, max is 3000s
+        const weakest = {
+            createdAt: new Date(now - (3000 * 1000)).toISOString(),
+            expiresAt: new Date(now).toISOString()
+        };
+        st.equal(blocks.calculateRssi(weakest), -100);
 
-        // expired: -10s remaining
-        const expired = new Date(now - (10 * 1000)).toISOString();
-        st.equal(blocks.calculateRssi(expired, 3000), -100);
+        // expired: -10s remaining, max is 3000s
+        const expired = {
+            createdAt: new Date(now - (3010 * 1000)).toISOString(),
+            expiresAt: new Date(now - (10 * 1000)).toISOString()
+        };
+        st.equal(blocks.calculateRssi(expired), -100);
 
-        // null handling
-        st.equal(blocks.calculateRssi(null, 3000), 0);
-
-        st.test('with custom environment variable', sst => {
-            const originalEnvValue = process.env.MESH_MAX_CONNECTION_TIME_SECONDS;
-            process.env.MESH_MAX_CONNECTION_TIME_SECONDS = '6000';
-            try {
-                // We need to re-require or manually trigger the logic that reads the env var
-                // But the constant is defined at the top level of the module.
-                // For testing purposes, we can just pass it as an argument to calculateRssi
-                // OR we can test the value of MESH_V2_MAX_CONNECTION_TIME_SECONDS if it was exported.
-                // Since it's not exported, let's test by passing it.
-                const customStrongest = new Date(now + (6000 * 1000)).toISOString();
-                sst.equal(blocks.calculateRssi(customStrongest, 6000), 0);
-                sst.equal(blocks.calculateRssi(new Date(now + (3000 * 1000)).toISOString(), 6000), -50);
-            } finally {
-                if (originalEnvValue) {
-                    process.env.MESH_MAX_CONNECTION_TIME_SECONDS = originalEnvValue;
-                } else {
-                    delete process.env.MESH_MAX_CONNECTION_TIME_SECONDS;
-                }
-            }
-            sst.end();
-        });
+        // null/incomplete object handling
+        st.equal(blocks.calculateRssi(null), 0);
+        st.equal(blocks.calculateRssi({}), 0);
+        st.equal(blocks.calculateRssi({createdAt: new Date().toISOString()}), 0);
+        st.equal(blocks.calculateRssi({expiresAt: new Date().toISOString()}), 0);
 
         st.end();
     });
