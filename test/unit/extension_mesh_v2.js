@@ -20,7 +20,8 @@ const createMockRuntime = () => {
         constructor: {
             PERIPHERAL_LIST_UPDATE: 'PERIPHERAL_LIST_UPDATE',
             PERIPHERAL_CONNECTED: 'PERIPHERAL_CONNECTED',
-            PERIPHERAL_CONNECTION_ERROR_ID: 'PERIPHERAL_CONNECTION_ERROR_ID'
+            PERIPHERAL_CONNECTION_ERROR_ID: 'PERIPHERAL_CONNECTION_ERROR_ID',
+            PERIPHERAL_REQUEST_ERROR: 'PERIPHERAL_REQUEST_ERROR'
         }
     };
     const stage = {
@@ -147,6 +148,39 @@ test('Mesh V2 Blocks', t => {
         setImmediate(() => {
             st.equal(mockRuntime.lastEmittedEvent, 'PERIPHERAL_CONNECTED');
             st.equal(blocks.meshService.domain, 'scanned-domain');
+            st.end();
+        });
+    });
+
+    t.test('connect as host failure', st => {
+        const mockRuntime = createMockRuntime();
+        const blocks = new MeshV2Blocks(mockRuntime);
+
+        // Mock service method to fail
+        blocks.meshService.createGroup = () => Promise.reject(new Error('Connection failed'));
+
+        blocks.connect('meshV2_host');
+
+        setImmediate(() => {
+            st.equal(mockRuntime.lastEmittedEvent, 'PERIPHERAL_REQUEST_ERROR');
+            st.deepEqual(mockRuntime.lastEmittedData, {extensionId: 'meshV2'});
+            st.end();
+        });
+    });
+
+    t.test('connect as peer failure', st => {
+        const mockRuntime = createMockRuntime();
+        const blocks = new MeshV2Blocks(mockRuntime);
+        blocks.discoveredGroups = [{id: 'group1', name: 'Group 1', domain: 'scanned-domain'}];
+
+        // Mock service method to fail
+        blocks.meshService.joinGroup = () => Promise.reject(new Error('Connection failed'));
+
+        blocks.connect('group1');
+
+        setImmediate(() => {
+            st.equal(mockRuntime.lastEmittedEvent, 'PERIPHERAL_REQUEST_ERROR');
+            st.deepEqual(mockRuntime.lastEmittedData, {extensionId: 'meshV2'});
             st.end();
         });
     });

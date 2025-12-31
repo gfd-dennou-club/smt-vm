@@ -251,7 +251,9 @@ class Scratch3MeshV2Blocks {
                 /* istanbul ignore next */
                 .catch(err => {
                     log.error(`Mesh V2: Connect (host) failed: ${err}`);
-                    this.runtime.emit(this.runtime.constructor.PERIPHERAL_CONNECTION_ERROR_ID, id);
+                    this.runtime.emit(this.runtime.constructor.PERIPHERAL_REQUEST_ERROR, {
+                        extensionId: Scratch3MeshV2Blocks.EXTENSION_ID
+                    });
                 });
         } else {
             const group = this.discoveredGroups && this.discoveredGroups.find(g => g.id === id);
@@ -263,7 +265,9 @@ class Scratch3MeshV2Blocks {
                 /* istanbul ignore next */
                 .catch(err => {
                     log.error(`Mesh V2: Connect (peer) failed: ${err}`);
-                    this.runtime.emit(this.runtime.constructor.PERIPHERAL_CONNECTION_ERROR_ID, id);
+                    this.runtime.emit(this.runtime.constructor.PERIPHERAL_REQUEST_ERROR, {
+                        extensionId: Scratch3MeshV2Blocks.EXTENSION_ID
+                    });
                 });
         }
     }
