@@ -416,10 +416,7 @@ class MeshV2Service {
      */
     processNextBroadcast () {
         if (!this.groupId) {
-            // 切断されている場合はキューをクリアして終了
-            this.pendingBroadcasts = [];
-            this.batchStartTime = null;
-            this.lastBroadcastOffset = 0;
+            // 切断されている場合はなにもしない
             return;
         }
 
