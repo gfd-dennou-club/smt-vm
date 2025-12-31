@@ -59,8 +59,12 @@ class Scratch3MeshV2Blocks {
         try {
             createClient();
             this.meshService = new MeshV2Service(this, this.nodeId, this.domain);
-            this.meshService.setDisconnectCallback(() => {
-                this.setConnectionState('disconnected');
+            this.meshService.setDisconnectCallback(reason => {
+                if (reason === 'GroupNotFound' || reason === 'expired') {
+                    this.setConnectionState('error');
+                } else {
+                    this.setConnectionState('disconnected');
+                }
             });
             log.info(`Mesh V2: Initialized with domain ${this.domain || 'null (auto)'} and nodeId ${this.nodeId}`);
 
@@ -224,6 +228,17 @@ class Scratch3MeshV2Blocks {
                 });
         } else {
             const group = this.discoveredGroups && this.discoveredGroups.find(g => g.id === id);
+
+            // Validate expiration before joining
+            if (group && group.expiresAt) {
+                const expiresAtMs = new Date(group.expiresAt).getTime();
+                if (expiresAtMs <= Date.now()) {
+                    log.error('Mesh V2: Cannot join expired group');
+                    this.setConnectionState('error');
+                    return;
+                }
+            }
+
             const domain = group ? group.domain : null;
             const groupName = group ? group.name : id;
             this.meshService.joinGroup(id, domain, groupName).then(() => {
