@@ -36,7 +36,7 @@ const runMultiGroupLoadTest = async function (config) {
                 nodeName: `node-${g}-${n}`,
                 appsyncEndpoint: process.env.MESH_GRAPHQL_ENDPOINT || process.env.APPSYNC_ENDPOINT,
                 apiKey: process.env.MESH_API_KEY || process.env.APPSYNC_API_KEY,
-                domain: 'load-test'
+                domain: `test-domain-${Date.now()}`
             });
 
             client.onDataUpdate(data => {
@@ -58,12 +58,41 @@ const runMultiGroupLoadTest = async function (config) {
 
     console.log('クライアント接続中...');
     const batchSize = 20;
-    const allClients = groups.flatMap(g => g.clients);
-    for (let i = 0; i < allClients.length; i += batchSize) {
-        const batch = allClients.slice(i, i + batchSize);
-        await Promise.all(batch.map(c => c.connect()));
-        await Promise.all(batch.map(c => c.subscribeToEvents()));
-        console.log(`${Math.min(i + batchSize, allClients.length)}/${allClients.length} クライアント接続・サブスクライブ完了`);
+
+    // Create groups in batches
+    for (let g = 0; g < groups.length; g += batchSize) {
+        const groupBatch = groups.slice(g, Math.min(g + batchSize, groups.length));
+
+        // Each group's first client (host) creates the group
+        await Promise.all(groupBatch.map(async group => {
+            await group.clients[0].connect();
+            const createdGroup = await group.clients[0].createGroup(group.groupId);
+            const actualGroupId = createdGroup.id;
+            const actualDomain = createdGroup.domain;
+
+            // Update all other clients in this group with the actual group ID and domain
+            for (let i = 1; i < group.clients.length; i++) {
+                group.clients[i].groupId = actualGroupId;
+                group.clients[i].domain = actualDomain;
+            }
+
+            console.log(`Host created group: ${actualGroupId} in domain: ${actualDomain}`);
+        }));
+
+        // Remaining clients join their respective groups
+        for (const group of groupBatch) {
+            for (let i = 1; i < group.clients.length; i++) {
+                await group.clients[i].connect();
+                await group.clients[i].join();
+            }
+        }
+
+        // All clients subscribe to events
+        for (const group of groupBatch) {
+            await Promise.all(group.clients.map(c => c.subscribeToEvents()));
+        }
+
+        console.log(`${Math.min(g + batchSize, groups.length)}/${groups.length} グループ作成・接続・サブスクライブ完了`);
         await sleep(200);
     }
 
@@ -139,9 +168,8 @@ const runMultiGroupLoadTest = async function (config) {
     clearInterval(progressInterval);
 
     console.log('クライアント切断中...');
-    for (let i = 0; i < allClients.length; i += batchSize) {
-        const batch = allClients.slice(i, i + batchSize);
-        await Promise.all(batch.map(c => c.disconnect()));
+    for (const group of groups) {
+        await Promise.all(group.clients.map(c => c.disconnect()));
     }
 
     return metrics.generateReport();

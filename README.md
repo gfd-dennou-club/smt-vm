@@ -105,6 +105,7 @@ npm run coverage
 ```
 
 ## Load Testing (MESH v2)
+
 To run the load testing scripts for MESH v2, you need to install separate dependencies in the `test/load-test` directory:
 
 ```bash
@@ -112,23 +113,39 @@ cd test/load-test
 npm install
 ```
 
-Then you can run the scenarios:
+Set environment variables:
 
 ```bash
-# Data update load test
-node mesh-v2-data-update-load.js
-
-# Event notification load test
-node mesh-v2-event-load.js
-
-# Multi-group load test
-node mesh-v2-multi-group-load.js
-
-# Generate report from the latest results
-node mesh-v2-load-report.js
+export MESH_GRAPHQL_ENDPOINT="https://your-appsync-endpoint.amazonaws.com/graphql"
+export MESH_API_KEY="your-api-key"
 ```
 
+Run the tests using npm scripts:
+
+```bash
+# Data update load test (4 nodes, 4 updates/sec/node, 1 minute)
+npm run test:data-update
+
+# Event notification load test (4 nodes, 4 events/sec/node, 1 minute)
+npm run test:event
+
+# Multi-group load test (2 groups by default)
+npm run test:multi-group
+
+# Multi-group with custom group count
+npm run test:multi-group -- --groups=10
+
+# Run all tests
+npm run test:all
+
+# Generate report from results
+npm run report -- --input=results.json
+```
+
+For detailed documentation, see [test/load-test/README.md](test/load-test/README.md).
+
 ## Publishing to GitHub Pages
+
 ```bash
 npm run deploy
 ```
@@ -136,9 +153,11 @@ npm run deploy
 This will push the currently built playground to the gh-pages branch of the
 currently tracked remote.  If you would like to change where to push to, add
 a repo url argument:
+
 ```bash
 npm run deploy -- -r <your repo url>
 ```
 
 ## Donate
+
 We provide [Scratch](https://scratch.mit.edu) free of charge, and want to keep it that way! Please consider making a [donation](https://secure.donationpay.org/scratchfoundation/) to support our continued engineering, design, community, and resource development efforts. Donations of any size are appreciated. Thank you!

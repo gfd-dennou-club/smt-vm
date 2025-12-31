@@ -30,7 +30,7 @@ const runEventLoadTest = async function (config) {
                 nodeName: `node-${g}-${n}`,
                 appsyncEndpoint: process.env.MESH_GRAPHQL_ENDPOINT || process.env.APPSYNC_ENDPOINT,
                 apiKey: process.env.MESH_API_KEY || process.env.APPSYNC_API_KEY,
-                domain: 'load-test'
+                domain: `test-domain-${Date.now()}`
             });
 
             client.onEvent(event => {
@@ -48,8 +48,28 @@ const runEventLoadTest = async function (config) {
 
     console.log('Connecting clients and subscribing to events...');
     for (const group of groups) {
-        await Promise.all(group.clients.map(c => c.connect()));
+        // First client (host) creates the group
+        await group.clients[0].connect();
+        const createdGroup = await group.clients[0].createGroup(group.groupId);
+        const actualGroupId = createdGroup.id;
+        const actualDomain = createdGroup.domain;
+        console.log(`Host created group: ${actualGroupId} in domain: ${actualDomain}`);
+
+        // Update all other clients with the actual group ID and domain
+        for (let i = 1; i < group.clients.length; i++) {
+            group.clients[i].groupId = actualGroupId;
+            group.clients[i].domain = actualDomain;
+        }
+
+        // Remaining clients join the group
+        for (let i = 1; i < group.clients.length; i++) {
+            await group.clients[i].connect();
+            await group.clients[i].join();
+        }
+
+        // All clients subscribe to events
         await Promise.all(group.clients.map(c => c.subscribeToEvents()));
+        console.log(`Group ${actualGroupId}: all ${group.clients.length} clients connected and subscribed`);
         await sleep(100);
     }
 

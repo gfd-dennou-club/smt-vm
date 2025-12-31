@@ -14,9 +14,10 @@
   },
   "scripts": {
     "setup": "npm install",
-    "run:data-update": "node scenario-data-update.js",
-    "run:event-notification": "node scenario-event-notification.js",
-    "run:multi-group": "node scenario-multi-group.js",
-    "report": "node generate-report.js"
+    "test:data-update": "node mesh-v2-data-update-load.js",
+    "test:event": "node mesh-v2-event-load.js",
+    "test:multi-group": "node mesh-v2-multi-group-load.js",
+    "test:all": "npm run test:data-update && npm run test:event && npm run test:multi-group",
+    "report": "node mesh-v2-load-report.js"
   }
 }

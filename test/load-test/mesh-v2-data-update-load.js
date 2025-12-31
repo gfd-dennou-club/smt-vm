@@ -29,18 +29,35 @@ const runDataUpdateLoadTest = async function (config) {
                 nodeName: `node-${g}-${n}`,
                 appsyncEndpoint: process.env.MESH_GRAPHQL_ENDPOINT || process.env.APPSYNC_ENDPOINT,
                 apiKey: process.env.MESH_API_KEY || process.env.APPSYNC_API_KEY,
-                domain: 'load-test'
+                domain: `test-domain-${Date.now()}`
             });
             clients.push(client);
         }
     }
 
     console.log('Connecting clients...');
-    // Connect in batches to avoid overwhelming the local machine/network
     const batchSize = 10;
-    for (let i = 0; i < clients.length; i += batchSize) {
-        const batch = clients.slice(i, i + batchSize);
+
+    // First client (host) creates the group
+    console.log('Host (client 0) creating group...');
+    await clients[0].connect();
+    const createdGroup = await clients[0].createGroup(clients[0].groupId);
+    const actualGroupId = createdGroup.id;
+    const actualDomain = createdGroup.domain;
+    console.log(`Host created group: ${actualGroupId} in domain: ${actualDomain}`);
+
+    // Update all other clients with the actual group ID and domain
+    for (let i = 1; i < clients.length; i++) {
+        clients[i].groupId = actualGroupId;
+        clients[i].domain = actualDomain;
+    }
+
+    // Remaining clients join the group
+    for (let i = 1; i < clients.length; i += batchSize) {
+        const batch = clients.slice(i, Math.min(i + batchSize, clients.length));
         await Promise.all(batch.map(c => c.connect()));
+        await Promise.all(batch.map(c => c.join()));
+        console.log(`${Math.min(i + batchSize, clients.length)}/${clients.length} clients connected and joined`);
         if (i + batchSize < clients.length) await sleep(100);
     }
 

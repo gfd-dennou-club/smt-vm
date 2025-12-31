@@ -5,13 +5,17 @@ const {getMainDefinition} = require('@apollo/client/utilities');
 const ws = require('ws');
 const fetch = require('cross-fetch');
 const {
+    CREATE_GROUP,
     JOIN_GROUP,
+    DISSOLVE_GROUP,
+    LEAVE_GROUP,
     REPORT_DATA,
     FIRE_EVENTS,
     ON_DATA_UPDATE,
     ON_BATCH_EVENT,
-    SEND_MEMBER_HEARTBEAT
-} = require('../../src/extensions/scratch3_mesh_v2/gql-operations');
+    SEND_MEMBER_HEARTBEAT,
+    RENEW_HEARTBEAT
+} = require('../../../src/extensions/scratch3_mesh_v2/gql-operations');
 
 class MeshClientSimulator {
     constructor (options) {
@@ -27,6 +31,7 @@ class MeshClientSimulator {
         this.subscriptions = [];
         this.onDataUpdateHandler = null;
         this.onEventHandler = null;
+        this.isHost = false;
     }
 
     async connect () {
@@ -84,18 +89,74 @@ class MeshClientSimulator {
             link,
             cache: new InMemoryCache(),
             defaultOptions: {
-                watchQuery: {fetchPolicy: 'no-cache'},
-                query: {fetchPolicy: 'no-cache'}
+                watchQuery: {
+                    fetchPolicy: 'no-cache',
+                    errorPolicy: 'all'
+                },
+                query: {
+                    fetchPolicy: 'no-cache',
+                    errorPolicy: 'all',
+                    timeout: 30000
+                },
+                mutate: {
+                    errorPolicy: 'all',
+                    timeout: 30000
+                }
             }
         });
 
-        // Join group if groupId is provided
-        if (this.groupId) {
-            await this.join();
+        await Promise.resolve(); // satisfy require-await
+    }
+
+    async createGroup (groupName, maxConnectionTimeSeconds = 600) {
+        if (!this.client) throw new Error('Client not initialized');
+
+        try {
+            const result = await this.client.mutate({
+                mutation: CREATE_GROUP,
+                variables: {
+                    name: groupName || this.groupId,
+                    hostId: this.nodeId,
+                    domain: this.domain,
+                    maxConnectionTimeSeconds: maxConnectionTimeSeconds
+                }
+            });
+
+            if (!result.data || !result.data.createGroup) {
+                const errorMsg = result.error && result.error.errors ?
+                    JSON.stringify(result.error.errors) : 'Unknown error';
+                throw new Error(`CreateGroup returned null: ${errorMsg}`);
+            }
+
+            const group = result.data.createGroup;
+            this.groupId = group.id;
+            this.groupName = group.name;
+            this.domain = group.domain;
+            this.isHost = true;
+            console.log(
+                `Client ${this.nodeId} created group ${this.groupName} (${this.groupId}) ` +
+                `with ${maxConnectionTimeSeconds}s expiry`
+            );
+
+            // Send initial heartbeat to keep group alive
+            await this.renewHeartbeat();
+
+            return group;
+        } catch (error) {
+            console.error(`Client ${this.nodeId} failed to create group ${groupName}:`, error.message);
+            if (error.graphQLErrors) {
+                console.error('GraphQL Errors:', JSON.stringify(error.graphQLErrors, null, 2));
+            }
+            if (error.networkError) {
+                console.error('Network Error:', error.networkError);
+            }
+            throw error;
         }
     }
 
     async join () {
+        if (!this.client) throw new Error('Client not initialized');
+
         try {
             const result = await this.client.mutate({
                 mutation: JOIN_GROUP,
@@ -107,9 +168,11 @@ class MeshClientSimulator {
             });
             const node = result.data.joinGroup;
             this.domain = node.domain;
+            console.log(`Client ${this.nodeId} joined group ${this.groupId}`);
             return node;
         } catch (error) {
             console.error(`Client ${this.nodeId} failed to join group ${this.groupId}:`, error.message);
+            console.error('Full error:', error);
             throw error;
         }
     }
@@ -122,7 +185,7 @@ class MeshClientSimulator {
             variables: {groupId: this.groupId, domain: this.domain}
         }).subscribe({
             next: result => {
-                if (this.onDataUpdateHandler) {
+                if (this.onDataUpdateHandler && result.data && result.data.onDataUpdateInGroup) {
                     this.onDataUpdateHandler(result.data.onDataUpdateInGroup);
                 }
             },
@@ -134,9 +197,11 @@ class MeshClientSimulator {
             variables: {groupId: this.groupId, domain: this.domain}
         }).subscribe({
             next: result => {
-                if (this.onEventHandler) {
+                if (this.onEventHandler && result.data && result.data.onBatchEventInGroup) {
                     const batch = result.data.onBatchEventInGroup;
-                    batch.events.forEach(event => this.onEventHandler(event));
+                    if (batch && batch.events) {
+                        batch.events.forEach(event => this.onEventHandler(event));
+                    }
                 }
             },
             error: err => console.error('Subscription error (event):', err)
@@ -203,9 +268,79 @@ class MeshClientSimulator {
         });
     }
 
+    async renewHeartbeat () {
+        if (!this.isHost) {
+            throw new Error('Only host can renew heartbeat');
+        }
+        await Promise.resolve(); // satisfy require-await
+        return this.client.mutate({
+            mutation: RENEW_HEARTBEAT,
+            variables: {
+                groupId: this.groupId,
+                domain: this.domain,
+                hostId: this.nodeId
+            }
+        });
+    }
+
+    async dissolveGroup () {
+        if (!this.client || !this.isHost) {
+            throw new Error('Only host can dissolve group');
+        }
+
+        try {
+            await this.client.mutate({
+                mutation: DISSOLVE_GROUP,
+                variables: {
+                    groupId: this.groupId,
+                    domain: this.domain
+                }
+            });
+            console.log(`Client ${this.nodeId} dissolved group ${this.groupId}`);
+        } catch (error) {
+            console.error(`Client ${this.nodeId} failed to dissolve group ${this.groupId}:`, error.message);
+            throw error;
+        }
+    }
+
+    async leaveGroup () {
+        if (!this.client || this.isHost) {
+            throw new Error('Host should use dissolveGroup instead');
+        }
+
+        try {
+            await this.client.mutate({
+                mutation: LEAVE_GROUP,
+                variables: {
+                    groupId: this.groupId,
+                    domain: this.domain,
+                    nodeId: this.nodeId
+                }
+            });
+            console.log(`Client ${this.nodeId} left group ${this.groupId}`);
+        } catch (error) {
+            console.error(`Client ${this.nodeId} failed to leave group ${this.groupId}:`, error.message);
+            throw error;
+        }
+    }
+
     async disconnect () {
         this.subscriptions.forEach(sub => sub.unsubscribe());
         this.subscriptions = [];
+
+        // Cleanup group membership before disconnecting
+        if (this.groupId && this.client) {
+            try {
+                if (this.isHost) {
+                    await this.dissolveGroup();
+                } else {
+                    await this.leaveGroup();
+                }
+            } catch (error) {
+                console.error(`Error during group cleanup:`, error.message);
+            }
+        }
+
         if (this.client) {
             this.client.stop();
             await Promise.resolve();
