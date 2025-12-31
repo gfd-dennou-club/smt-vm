@@ -188,7 +188,7 @@ test('MeshV2Service Batch Events', t => {
         st.end();
     });
 
-    t.test('processNextBroadcast clears queue when disconnected', st => {
+    t.test('processNextBroadcast does nothing when disconnected', st => {
         const blocks = createMockBlocks();
         const service = new MeshV2Service(blocks, 'node1', 'domain1');
         service.groupId = null; // Disconnected
@@ -197,11 +197,37 @@ test('MeshV2Service Batch Events', t => {
         service.batchStartTime = Date.now();
         service.lastBroadcastOffset = 10;
 
+        const queueLengthBefore = service.pendingBroadcasts.length;
+        const batchStartBefore = service.batchStartTime;
+        const offsetBefore = service.lastBroadcastOffset;
+
         service.processNextBroadcast();
 
-        st.equal(service.pendingBroadcasts.length, 0, 'Queue should be cleared when disconnected');
-        st.equal(service.batchStartTime, null, 'batchStartTime should be reset when disconnected');
-        st.equal(service.lastBroadcastOffset, 0, 'lastBroadcastOffset should be reset when disconnected');
+        // When disconnected, processNextBroadcast should not modify state
+        st.equal(service.pendingBroadcasts.length, queueLengthBefore,
+            'Queue should remain unchanged when disconnected');
+        st.equal(service.batchStartTime, batchStartBefore,
+            'batchStartTime should remain unchanged when disconnected');
+        st.equal(service.lastBroadcastOffset, offsetBefore,
+            'lastBroadcastOffset should remain unchanged when disconnected');
+
+        st.end();
+    });
+
+    t.test('cleanup clears event queue', st => {
+        const blocks = createMockBlocks();
+        const service = new MeshV2Service(blocks, 'node1', 'domain1');
+        service.groupId = 'group1';
+
+        service.pendingBroadcasts.push({event: {name: 'e1'}, offsetMs: 0});
+        service.batchStartTime = Date.now();
+        service.lastBroadcastOffset = 10;
+
+        service.cleanup();
+
+        st.equal(service.pendingBroadcasts.length, 0, 'Queue should be cleared by cleanup');
+        st.equal(service.batchStartTime, null, 'batchStartTime should be reset by cleanup');
+        st.equal(service.lastBroadcastOffset, 0, 'lastBroadcastOffset should be reset by cleanup');
 
         st.end();
     });
