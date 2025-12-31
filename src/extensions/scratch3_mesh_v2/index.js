@@ -126,31 +126,12 @@ class Scratch3MeshV2Blocks {
                             defaultValue: ''
                         }
                     }
-                },
-                {
-                    opcode: 'fireMeshEvent',
-                    text: formatMessage({
-                        id: 'mesh.fireMeshEvent',
-                        default: 'send [BROADCAST_OPTION]',
-                        description: 'Fire a mesh event'
-                    }),
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-                        BROADCAST_OPTION: {
-                            type: ArgumentType.STRING,
-                            menu: 'broadcastMessages'
-                        }
-                    }
                 }
             ],
             menus: {
                 variableNames: {
                     acceptReporters: true,
                     items: 'getVariableNamesMenuItems'
-                },
-                broadcastMessages: {
-                    acceptReporters: true,
-                    items: 'getBroadcastMessagesMenuItems'
                 }
             }
         };
@@ -168,19 +149,6 @@ class Scratch3MeshV2Blocks {
         const names = Object.values(this.meshService.remoteData)
             .reduce((acc, nodeData) => acc.concat(Object.keys(nodeData)), []);
         return [' '].concat([...new Set(names)]);
-    }
-
-    /* istanbul ignore next */
-    fireMeshEvent (args) {
-        if (!this.meshService) return;
-        return this.meshService.fireEvent(args.BROADCAST_OPTION);
-    }
-
-    /* istanbul ignore next */
-    getBroadcastMessagesMenuItems () {
-        const messages = this.runtime.getAllVarNamesOfType(Variable.BROADCAST_MESSAGE_TYPE);
-        if (messages.length < 1) return [' '];
-        return messages;
     }
 
     /* istanbul ignore next */
