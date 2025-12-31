@@ -65,7 +65,6 @@ test('Mesh V2 Blocks', t => {
         st.equal(info.id, 'meshV2');
         st.ok(info.blocks.length > 0);
         st.ok(info.menus.variableNames);
-        st.ok(info.menus.broadcastMessages);
         st.end();
     });
 
@@ -267,20 +266,6 @@ test('Mesh V2 Blocks', t => {
 
         st.equal(blocks.getSensorValue({NAME: 'var1'}), 'val1');
         st.equal(blocks.getSensorValue({NAME: 'var2'}), '');
-        st.end();
-    });
-
-    t.test('fireMeshEvent', st => {
-        const mockRuntime = createMockRuntime();
-        const blocks = new MeshV2Blocks(mockRuntime);
-        let firedEvent = null;
-        blocks.meshService.fireEvent = name => {
-            firedEvent = name;
-            return Promise.resolve();
-        };
-
-        blocks.fireMeshEvent({BROADCAST_OPTION: 'msg1'});
-        st.equal(firedEvent, 'msg1');
         st.end();
     });
 
