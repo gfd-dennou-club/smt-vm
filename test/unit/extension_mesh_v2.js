@@ -20,7 +20,9 @@ const createMockRuntime = () => {
         constructor: {
             PERIPHERAL_LIST_UPDATE: 'PERIPHERAL_LIST_UPDATE',
             PERIPHERAL_CONNECTED: 'PERIPHERAL_CONNECTED',
-            PERIPHERAL_CONNECTION_ERROR_ID: 'PERIPHERAL_CONNECTION_ERROR_ID'
+            PERIPHERAL_DISCONNECTED: 'PERIPHERAL_DISCONNECTED',
+            PERIPHERAL_CONNECTION_ERROR_ID: 'PERIPHERAL_CONNECTION_ERROR_ID',
+            PERIPHERAL_REQUEST_ERROR: 'PERIPHERAL_REQUEST_ERROR'
         }
     };
     const stage = {
@@ -149,6 +151,110 @@ test('Mesh V2 Blocks', t => {
             st.equal(blocks.meshService.domain, 'scanned-domain');
             st.end();
         });
+    });
+
+    t.test('connect as host failure', st => {
+        const mockRuntime = createMockRuntime();
+        const blocks = new MeshV2Blocks(mockRuntime);
+
+        // Mock service method to fail
+        blocks.meshService.createGroup = () => Promise.reject(new Error('Connection failed'));
+
+        blocks.connect('meshV2_host');
+
+        setImmediate(() => {
+            st.equal(mockRuntime.lastEmittedEvent, 'PERIPHERAL_REQUEST_ERROR');
+            st.deepEqual(mockRuntime.lastEmittedData, {extensionId: 'meshV2'});
+            st.equal(blocks.connectionState, 'error');
+            st.end();
+        });
+    });
+
+    t.test('connect as peer failure', st => {
+        const mockRuntime = createMockRuntime();
+        const blocks = new MeshV2Blocks(mockRuntime);
+        blocks.discoveredGroups = [{id: 'group1', name: 'Group 1', domain: 'scanned-domain'}];
+
+        // Mock service method to fail
+        blocks.meshService.joinGroup = () => Promise.reject(new Error('Connection failed'));
+
+        blocks.connect('group1');
+
+        setImmediate(() => {
+            st.equal(mockRuntime.lastEmittedEvent, 'PERIPHERAL_REQUEST_ERROR');
+            st.deepEqual(mockRuntime.lastEmittedData, {extensionId: 'meshV2'});
+            st.equal(blocks.connectionState, 'error');
+            st.end();
+        });
+    });
+
+    t.test('connection state transitions', st => {
+        const mockRuntime = createMockRuntime();
+        const blocks = new MeshV2Blocks(mockRuntime);
+
+        // Initial state
+        st.equal(blocks.connectionState, 'disconnected');
+
+        // Test error state transition
+        blocks.setConnectionState('error');
+        st.equal(blocks.connectionState, 'error');
+        st.equal(mockRuntime.lastEmittedEvent, 'PERIPHERAL_REQUEST_ERROR');
+        st.deepEqual(mockRuntime.lastEmittedData, {extensionId: 'meshV2'});
+
+        // Test connected state transition
+        blocks.setConnectionState('connected');
+        st.equal(blocks.connectionState, 'connected');
+        st.equal(mockRuntime.lastEmittedEvent, 'PERIPHERAL_CONNECTED');
+
+        // Test disconnected state transition
+        blocks.setConnectionState('disconnected');
+        st.equal(blocks.connectionState, 'disconnected');
+        st.equal(mockRuntime.lastEmittedEvent, 'PERIPHERAL_DISCONNECTED');
+
+        st.end();
+    });
+
+    t.test('connection state: error does not emit PERIPHERAL_DISCONNECTED', st => {
+        const mockRuntime = createMockRuntime();
+        const blocks = new MeshV2Blocks(mockRuntime);
+        const events = [];
+
+        // Track all emitted events
+        const originalEmit = mockRuntime.emit;
+        mockRuntime.emit = (event, data) => {
+            events.push({event, data});
+            return originalEmit(event, data);
+        };
+
+        // Transition to error state
+        blocks.setConnectionState('error');
+
+        // Verify only PERIPHERAL_REQUEST_ERROR was emitted
+        st.equal(events.length, 1);
+        st.equal(events[0].event, 'PERIPHERAL_REQUEST_ERROR');
+        st.deepEqual(events[0].data, {extensionId: 'meshV2'});
+
+        st.end();
+    });
+
+    t.test('disconnect from error state', st => {
+        const mockRuntime = createMockRuntime();
+        const blocks = new MeshV2Blocks(mockRuntime);
+
+        // Set to error state
+        blocks.setConnectionState('error');
+        st.equal(blocks.connectionState, 'error');
+
+        // Mock leaveGroup
+        blocks.meshService.leaveGroup = () => {};
+
+        // Disconnect
+        blocks.disconnect();
+
+        st.equal(blocks.connectionState, 'disconnected');
+        st.equal(mockRuntime.lastEmittedEvent, 'PERIPHERAL_DISCONNECTED');
+
+        st.end();
     });
 
     t.test('getSensorValue', st => {

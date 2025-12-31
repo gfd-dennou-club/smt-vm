@@ -54,14 +54,13 @@ class Scratch3MeshV2Blocks {
         this.runtime = runtime;
         this.domain = getDomainFromUrl();
         this.nodeId = uuidv4().replaceAll('-', '');
+        this.connectionState = 'disconnected';
 
         try {
             createClient();
             this.meshService = new MeshV2Service(this, this.nodeId, this.domain);
             this.meshService.setDisconnectCallback(() => {
-                this.runtime.emit(this.runtime.constructor.PERIPHERAL_DISCONNECTED, {
-                    extensionId: Scratch3MeshV2Blocks.EXTENSION_ID
-                });
+                this.setConnectionState('disconnected');
             });
             log.info(`Mesh V2: Initialized with domain ${this.domain || 'null (auto)'} and nodeId ${this.nodeId}`);
 
@@ -244,33 +243,70 @@ class Scratch3MeshV2Blocks {
 
         if (!this.meshService) return;
 
+        this.setConnectionState('connecting');
+
         if (id === MESH_V2_HOST_ID) {
             this.meshService.createGroup(this.nodeId).then(() => {
-                this.runtime.emit(this.runtime.constructor.PERIPHERAL_CONNECTED);
+                this.setConnectionState('connected');
             })
                 /* istanbul ignore next */
                 .catch(err => {
                     log.error(`Mesh V2: Connect (host) failed: ${err}`);
-                    this.runtime.emit(this.runtime.constructor.PERIPHERAL_CONNECTION_ERROR_ID, id);
+                    this.setConnectionState('error');
                 });
         } else {
             const group = this.discoveredGroups && this.discoveredGroups.find(g => g.id === id);
             const domain = group ? group.domain : null;
             const groupName = group ? group.name : id;
             this.meshService.joinGroup(id, domain, groupName).then(() => {
-                this.runtime.emit(this.runtime.constructor.PERIPHERAL_CONNECTED);
+                this.setConnectionState('connected');
             })
                 /* istanbul ignore next */
                 .catch(err => {
                     log.error(`Mesh V2: Connect (peer) failed: ${err}`);
-                    this.runtime.emit(this.runtime.constructor.PERIPHERAL_CONNECTION_ERROR_ID, id);
+                    this.setConnectionState('error');
                 });
+        }
+    }
+
+    /**
+     * Set the connection state and emit appropriate events.
+     * @param {string} state - The new connection state ('disconnected', 'scanning', 'connecting', 'connected', 'error')
+     */
+    setConnectionState (state) {
+        const prevState = this.connectionState;
+        log.info(`Mesh V2: Connection state transition: ${prevState} -> ${state}`);
+        this.connectionState = state;
+
+        switch (state) {
+        case 'connected':
+            this.runtime.emit(this.runtime.constructor.PERIPHERAL_CONNECTED);
+            break;
+        case 'error':
+            // Emit error event only, do not emit PERIPHERAL_DISCONNECTED
+            this.runtime.emit(this.runtime.constructor.PERIPHERAL_REQUEST_ERROR, {
+                extensionId: Scratch3MeshV2Blocks.EXTENSION_ID
+            });
+            break;
+        case 'disconnected':
+            // Emit error event if we were connecting
+            if (prevState === 'connecting') {
+                this.runtime.emit(this.runtime.constructor.PERIPHERAL_REQUEST_ERROR, {
+                    extensionId: Scratch3MeshV2Blocks.EXTENSION_ID
+                });
+            }
+            // Always emit disconnected event
+            this.runtime.emit(this.runtime.constructor.PERIPHERAL_DISCONNECTED, {
+                extensionId: Scratch3MeshV2Blocks.EXTENSION_ID
+            });
+            break;
         }
     }
 
     /* istanbul ignore next */
     disconnect () {
         if (this.meshService) {
+            this.setConnectionState('disconnected');
             this.meshService.leaveGroup();
         }
     }
