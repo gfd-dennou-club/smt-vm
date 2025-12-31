@@ -104,6 +104,30 @@ npm test
 npm run coverage
 ```
 
+## Load Testing (MESH v2)
+To run the load testing scripts for MESH v2, you need to install separate dependencies in the `test/load-test` directory:
+
+```bash
+cd test/load-test
+npm install
+```
+
+Then you can run the scenarios:
+
+```bash
+# Data update load test
+node mesh-v2-data-update-load.js
+
+# Event notification load test
+node mesh-v2-event-load.js
+
+# Multi-group load test
+node mesh-v2-multi-group-load.js
+
+# Generate report from the latest results
+node mesh-v2-load-report.js
+```
+
 ## Publishing to GitHub Pages
 ```bash
 npm run deploy
