@@ -124,6 +124,7 @@ test('MeshV2Service Batch Events', t => {
     t.test('processNextBroadcast processes one event per frame even for short gaps', st => {
         const blocks = createMockBlocks();
         const service = new MeshV2Service(blocks, 'node1', 'domain1');
+        service.groupId = 'group1';
         const broadcasted = [];
         service.broadcastEvent = event => broadcasted.push(event.name);
 
@@ -166,6 +167,78 @@ test('MeshV2Service Batch Events', t => {
         } finally {
             Date.now = realDateNow;
         }
+
+        st.end();
+    });
+
+    t.test('cleanup does not remove BEFORE_STEP listener', st => {
+        const blocks = createMockBlocks();
+        let offCalled = false;
+        blocks.runtime.off = event => {
+            if (event === 'BEFORE_STEP') offCalled = true;
+        };
+        const service = new MeshV2Service(blocks, 'node1', 'domain1');
+        service.groupId = 'group1';
+
+        st.ok(service._processNextBroadcastBound);
+        service.cleanup();
+        st.notOk(offCalled, 'off should not be called for BEFORE_STEP in cleanup');
+        st.ok(service._processNextBroadcastBound, '_processNextBroadcastBound should still exist after cleanup');
+
+        st.end();
+    });
+
+    t.test('processNextBroadcast clears queue when disconnected', st => {
+        const blocks = createMockBlocks();
+        const service = new MeshV2Service(blocks, 'node1', 'domain1');
+        service.groupId = null; // Disconnected
+
+        service.pendingBroadcasts.push({event: {name: 'e1'}, offsetMs: 0});
+        service.batchStartTime = Date.now();
+        service.lastBroadcastOffset = 10;
+
+        service.processNextBroadcast();
+
+        st.equal(service.pendingBroadcasts.length, 0, 'Queue should be cleared when disconnected');
+        st.equal(service.batchStartTime, null, 'batchStartTime should be reset when disconnected');
+        st.equal(service.lastBroadcastOffset, 0, 'lastBroadcastOffset should be reset when disconnected');
+
+        st.end();
+    });
+
+    t.test('reconnect flow: events processed after reconnect', st => {
+        const blocks = createMockBlocks();
+        const service = new MeshV2Service(blocks, 'node1', 'domain1');
+        const broadcasted = [];
+        service.broadcastEvent = event => broadcasted.push(event.name);
+
+        // 1. Initial connection
+        service.groupId = 'group1';
+        service.handleBatchEvent({
+            firedByNodeId: 'node2',
+            events: [{name: 'e1', timestamp: new Date().toISOString()}]
+        });
+        service.processNextBroadcast();
+        st.equal(broadcasted.length, 1);
+        st.equal(broadcasted[0], 'e1');
+
+        // 2. Disconnect
+        service.cleanup();
+        st.equal(service.groupId, null);
+        st.ok(service._processNextBroadcastBound, 'Listener bound function still exists');
+
+        // 3. Reconnect
+        service.groupId = 'group2';
+        service.handleBatchEvent({
+            firedByNodeId: 'node2',
+            events: [{name: 'e2', timestamp: new Date().toISOString()}]
+        });
+
+        // Simulating BEFORE_STEP call
+        service._processNextBroadcastBound();
+
+        st.equal(broadcasted.length, 2);
+        st.equal(broadcasted[1], 'e2');
 
         st.end();
     });

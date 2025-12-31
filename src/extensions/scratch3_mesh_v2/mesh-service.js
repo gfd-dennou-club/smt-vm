@@ -294,12 +294,6 @@ class MeshV2Service {
     }
 
     cleanup () {
-        // BEFORE_STEPイベントリスナーを削除
-        if (this._processNextBroadcastBound) {
-            this.runtime.off('BEFORE_STEP', this._processNextBroadcastBound);
-            this._processNextBroadcastBound = null;
-        }
-
         // キューをクリア
         this.pendingBroadcasts = [];
         this.batchStartTime = null;
@@ -421,6 +415,14 @@ class MeshV2Service {
      * - Events separated by frame intervals (>= 16.67ms) wait for real time to elapse
      */
     processNextBroadcast () {
+        if (!this.groupId) {
+            // 切断されている場合はキューをクリアして終了
+            this.pendingBroadcasts = [];
+            this.batchStartTime = null;
+            this.lastBroadcastOffset = 0;
+            return;
+        }
+
         if (this.pendingBroadcasts.length === 0) {
             // キューが空になったらリセット
             this.batchStartTime = null;
