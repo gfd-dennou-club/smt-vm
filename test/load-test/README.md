@@ -149,6 +149,68 @@ Based on [GitHub Issue #68](https://github.com/smalruby/scratch-vm/issues/68):
 - **Error handling**: Comprehensive error logging and null-checking
 - **Metrics collection**: TPS, latency percentiles, event delivery tracking
 
+## DynamoDB Performance Monitoring
+
+### Checking DynamoDB Metrics
+
+Use the provided script to check DynamoDB performance and throttling:
+
+```bash
+# 基本的な使い方（過去1時間のメトリクスを確認）
+./check-dynamodb-metrics.sh <テーブル名>
+
+# 過去2時間のメトリクスを確認
+./check-dynamodb-metrics.sh <テーブル名> 2
+
+# 例：mesh-v2-groups-table の確認
+./check-dynamodb-metrics.sh mesh-v2-groups-table
+```
+
+### 確認項目
+
+スクリプトは以下のメトリクスを自動的にチェックします：
+
+1. **スロットリング発生数** (ThrottledRequests) - 最重要
+   - 期待値: 0（スロットリングなし）
+   - 0より大きい場合、キャパシティ不足を示す
+
+2. **読み込みキャパシティ消費量** (ConsumedReadCapacityUnits)
+   - 平均値と最大値を表示
+   - 負荷テスト中の読み取り負荷を確認
+
+3. **書き込みキャパシティ消費量** (ConsumedWriteCapacityUnits)
+   - 平均値と最大値を表示
+   - 負荷テスト中の書き込み負荷を確認
+
+4. **システムエラー** (SystemErrors)
+   - 期待値: 0
+   - DynamoDB側の問題を示す
+
+5. **ユーザーエラー** (UserErrors)
+   - 期待値: 0または非常に少ない
+   - アプリケーション側のエラーを示す
+
+### テーブル名の確認方法
+
+```bash
+# 利用可能なDynamoDBテーブル一覧を表示
+aws dynamodb list-tables --output table
+
+# CloudFormationスタックからテーブル名を取得
+aws cloudformation describe-stacks \
+  --stack-name <スタック名> \
+  --query 'Stacks[0].Outputs[?OutputKey==`GroupsTableName`].OutputValue' \
+  --output text
+```
+
+### オンデマンドモードの確認
+
+スクリプトは自動的に課金モードを表示します。期待される出力：
+
+```
+BillingMode: PAY_PER_REQUEST
+```
+
 ## Troubleshooting
 
 ### Error: "maxConnectionTimeSeconds cannot exceed 600"
@@ -162,6 +224,15 @@ Groups require periodic heartbeats. The implementation automatically sends an in
 ### Error: "Group not found" with old UUID
 
 If tests are reusing the same domain name, stale groups may cause conflicts. The tests now use unique domain names per run: `test-domain-${Date.now()}`
+
+### DynamoDB Throttling Detected
+
+If `check-dynamodb-metrics.sh` reports throttled requests:
+
+1. Check if on-demand mode is enabled (should be `PAY_PER_REQUEST`)
+2. Review the load pattern - sudden spikes may cause temporary throttling
+3. Consider implementing exponential backoff in client code
+4. Check AWS Service Quotas for DynamoDB limits
 
 ## Report Generation
 
