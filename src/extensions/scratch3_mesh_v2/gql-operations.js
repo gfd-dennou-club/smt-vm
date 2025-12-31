@@ -106,19 +106,6 @@ const REPORT_DATA = gql`
   }
 `;
 
-const FIRE_EVENT = gql`
-  mutation FireEventByNode($groupId: ID!, $domain: String!, $nodeId: ID!, $eventName: String!, $payload: String) {
-    fireEventByNode(groupId: $groupId, domain: $domain, nodeId: $nodeId, eventName: $eventName, payload: $payload) {
-      name
-      firedByNodeId
-      groupId
-      domain
-      payload
-      timestamp
-    }
-  }
-`;
-
 const FIRE_EVENTS = gql`
   mutation FireEventsByNode($groupId: ID!, $domain: String!, $nodeId: ID!, $events: [EventInput!]!) {
     fireEventsByNode(groupId: $groupId, domain: $domain, nodeId: $nodeId, events: $events) {
@@ -148,19 +135,6 @@ const ON_DATA_UPDATE = gql`
         key
         value
       }
-      timestamp
-    }
-  }
-`;
-
-const ON_EVENT = gql`
-  subscription OnEventInGroup($groupId: ID!, $domain: String!) {
-    onEventInGroup(groupId: $groupId, domain: $domain) {
-      name
-      firedByNodeId
-      groupId
-      domain
-      payload
       timestamp
     }
   }
@@ -220,10 +194,8 @@ module.exports = {
     RENEW_HEARTBEAT,
     SEND_MEMBER_HEARTBEAT,
     REPORT_DATA,
-    FIRE_EVENT,
     FIRE_EVENTS,
     ON_DATA_UPDATE,
-    ON_EVENT,
     ON_BATCH_EVENT,
     ON_GROUP_DISSOLVE,
     LIST_GROUP_STATUSES
