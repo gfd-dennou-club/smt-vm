@@ -106,43 +106,7 @@ npm run coverage
 
 ## Load Testing (MESH v2)
 
-To run the load testing scripts for MESH v2, you need to install separate dependencies in the `test/load-test` directory:
-
-```bash
-cd test/load-test
-npm install
-```
-
-Set environment variables:
-
-```bash
-export MESH_GRAPHQL_ENDPOINT="https://your-appsync-endpoint.amazonaws.com/graphql"
-export MESH_API_KEY="your-api-key"
-```
-
-Run the tests using npm scripts:
-
-```bash
-# Data update load test (4 nodes, 4 updates/sec/node, 1 minute)
-npm run test:data-update
-
-# Event notification load test (4 nodes, 4 events/sec/node, 1 minute)
-npm run test:event
-
-# Multi-group load test (2 groups by default)
-npm run test:multi-group
-
-# Multi-group with custom group count
-npm run test:multi-group -- --groups=10
-
-# Run all tests
-npm run test:all
-
-# Generate report from results
-npm run report -- --input=results.json
-```
-
-For detailed documentation, see [test/load-test/README.md](test/load-test/README.md).
+Load tests are located in `test/load-test`. For setup and how to run tests, see [test/load-test/README.md](test/load-test/README.md).
 
 ## Publishing to GitHub Pages
 
