@@ -93,17 +93,17 @@ class MeshV2Service {
      * Check if the error indicates the group/node is no longer valid.
      * Uses errorType from GraphQL response for robust error detection.
      * @param {Error} error - The error to check.
-     * @returns {boolean} true if should disconnect.
+     * @returns {string|null} The error reason if should disconnect, null otherwise.
      */
     shouldDisconnectOnError (error) {
-        if (!error) return false;
+        if (!error) return null;
 
         // Primary check: GraphQL errorType (most reliable)
         if (error.graphQLErrors && error.graphQLErrors.length > 0) {
             const errorType = error.graphQLErrors[0].errorType;
             if (DISCONNECT_ERROR_TYPES.has(errorType)) {
                 log.info(`Mesh V2: Disconnecting due to errorType: ${errorType}`);
-                return true;
+                return errorType;
             }
         }
 
@@ -115,21 +115,21 @@ class MeshV2Service {
                 message.includes('expired') ||
                 message.includes('unauthorized')) {
                 log.warn('Mesh V2: Disconnecting based on error message (fallback). Consider checking errorType.');
-                return true;
+                return 'expired';
             }
         }
 
-        return false;
+        return null;
     }
 
     setDisconnectCallback (callback) {
         this.disconnectCallback = callback;
     }
 
-    cleanupAndDisconnect () {
+    cleanupAndDisconnect (reason = 'unknown') {
         this.cleanup();
         if (this.disconnectCallback) {
-            this.disconnectCallback();
+            this.disconnectCallback(reason);
         }
     }
 
@@ -231,6 +231,7 @@ class MeshV2Service {
             this.groupId = groupId;
             this.groupName = groupName || groupId;
             this.domain = node.domain; // Update domain from server
+            this.expiresAt = node.expiresAt;
             this.isHost = false;
             if (node.heartbeatIntervalSeconds) {
                 this.memberHeartbeatInterval = node.heartbeatIntervalSeconds;
@@ -559,8 +560,9 @@ class MeshV2Service {
             });
         } catch (error) {
             log.error(`Mesh V2: Failed to fire batch events: ${error}`);
-            if (this.shouldDisconnectOnError(error)) {
-                this.cleanupAndDisconnect();
+            const reason = this.shouldDisconnectOnError(error);
+            if (reason) {
+                this.cleanupAndDisconnect(reason);
             }
         }
     }
@@ -608,8 +610,9 @@ class MeshV2Service {
             return result.data.renewHeartbeat;
         } catch (error) {
             log.error(`Mesh V2: Heartbeat renewal failed: ${error}`);
-            if (this.shouldDisconnectOnError(error)) {
-                this.cleanupAndDisconnect();
+            const reason = this.shouldDisconnectOnError(error);
+            if (reason) {
+                this.cleanupAndDisconnect(reason);
             }
         }
     }
@@ -641,8 +644,9 @@ class MeshV2Service {
             return result.data.sendMemberHeartbeat;
         } catch (error) {
             log.error(`Mesh V2: Member heartbeat failed: ${error}`);
-            if (this.shouldDisconnectOnError(error)) {
-                this.cleanupAndDisconnect();
+            const reason = this.shouldDisconnectOnError(error);
+            if (reason) {
+                this.cleanupAndDisconnect(reason);
             }
         }
     }
@@ -699,8 +703,9 @@ class MeshV2Service {
             await this.dataRateLimiter.send(dataArray, this._reportDataBound);
         } catch (error) {
             log.error(`Mesh V2: Failed to send data: ${error}`);
-            if (this.shouldDisconnectOnError(error)) {
-                this.cleanupAndDisconnect();
+            const reason = this.shouldDisconnectOnError(error);
+            if (reason) {
+                this.cleanupAndDisconnect(reason);
             }
         }
     }
