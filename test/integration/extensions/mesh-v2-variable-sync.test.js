@@ -165,7 +165,7 @@ test('MeshV2Service fetch existing nodes data on joinGroup', async t => {
     await service.joinGroup('group1', 'domain1', 'groupName');
 
     t.ok(service.remoteData['host-node'], 'Should have data from host-node');
-    t.equal(service.remoteData['host-node'].hostVar, '100', 'Should have correct variable value from host');
+    t.equal(service.remoteData['host-node'].hostVar.value, '100', 'Should have correct variable value from host');
 
     service.cleanup();
     t.end();

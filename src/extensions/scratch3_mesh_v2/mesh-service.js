@@ -52,7 +52,7 @@ class MeshV2Service {
         this.dataSyncTimer = null;
         this.memberHeartbeatInterval = 120; // Default 2 min
 
-        // Data from other nodes: { nodeId: { key: value } }
+        // Data from other nodes: { nodeId: { key: { value: string, timestamp: number } } }
         this.remoteData = {};
 
         // Rate limiters
@@ -365,7 +365,10 @@ class MeshV2Service {
         }
 
         nodeStatus.data.forEach(item => {
-            this.remoteData[nodeId][item.key] = item.value;
+            this.remoteData[nodeId][item.key] = {
+                value: item.value,
+                timestamp: Date.now() // Add timestamp
+            };
         });
     }
 
@@ -775,7 +778,10 @@ class MeshV2Service {
                     this.remoteData[status.nodeId] = {};
                 }
                 status.data.forEach(item => {
-                    this.remoteData[status.nodeId][item.key] = item.value;
+                    this.remoteData[status.nodeId][item.key] = {
+                        value: item.value,
+                        timestamp: Date.now()
+                    };
                 });
             });
 
@@ -848,13 +854,20 @@ class MeshV2Service {
     }
 
     getRemoteVariable (name) {
+        let latestValue = null;
+        let latestTimestamp = 0;
+
         // Search across all nodes for the variable name
         for (const nodeId in this.remoteData) {
             if (Object.prototype.hasOwnProperty.call(this.remoteData[nodeId], name)) {
-                return this.remoteData[nodeId][name];
+                const data = this.remoteData[nodeId][name];
+                if (data.timestamp > latestTimestamp) {
+                    latestTimestamp = data.timestamp;
+                    latestValue = data.value;
+                }
             }
         }
-        return null;
+        return latestValue;
     }
 }
 
