@@ -311,31 +311,58 @@ class Scratch3MeshV2Blocks {
     connectedMessage () {
         if (this.meshService && this.meshService.groupId) {
             const meshIdLabel = this.makeMeshIdLabel(this.meshService.groupName);
-            const expiresAt = this.formatExpiresAt(this.meshService.expiresAt);
 
             if (this.meshService.isHost) {
                 return formatMessage({
                     id: 'mesh.registeredHost',
-                    default: 'Registered Host Mesh [{ MESH_ID }] ({ EXPIRES_AT })',
+                    default: 'Registered Host Mesh [{ MESH_ID }]',
                     description: 'label for registered Host Mesh in connect modal for Mesh extension'
+                }, {
+                    MESH_ID: meshIdLabel
+                });
+            }
+            return formatMessage({
+                id: 'mesh.joinedMesh',
+                default: 'Joined Mesh [{ MESH_ID }]',
+                description: 'label for joined Mesh in connect modal for Mesh extension'
+            }, {MESH_ID: meshIdLabel});
+        }
+        return formatMessage({
+            id: 'mesh.notConnected',
+            default: 'Not connected',
+            description: 'label for not connected in connect modal for Mesh extension'
+        });
+    }
+
+    /* istanbul ignore next */
+    menuMessage () {
+        if (this.meshService && this.meshService.groupId) {
+            const meshIdLabel = this.makeMeshIdLabel(this.meshService.groupName);
+            const expiresAt = this.formatExpiresAt(this.meshService.expiresAt);
+
+            if (this.meshService.isHost) {
+                return formatMessage({
+                    id: 'mesh.registeredHostMenu',
+                    default: '{ MESH_ID } ({ EXPIRES_AT })',
+                    description: 'concise label for registered Host Mesh in menu bar'
                 }, {
                     MESH_ID: meshIdLabel,
                     EXPIRES_AT: expiresAt
                 });
             }
             return formatMessage({
-                id: 'mesh.joinedMesh',
-                default: 'Joined Mesh [{ MESH_ID }] ({ EXPIRES_AT })',
-                description: 'label for joined Mesh in connect modal for Mesh extension'
+                id: 'mesh.joinedMeshMenu',
+                default: '{ MESH_ID } ({ EXPIRES_AT })',
+                description: 'concise label for joined Mesh in menu bar'
             }, {
                 MESH_ID: meshIdLabel,
                 EXPIRES_AT: expiresAt
             });
         }
         return formatMessage({
-            id: 'mesh.notConnected',
+            id: 'mesh.notConnectedMenu',
             default: 'Not connected',
-            description: 'label for not connected in connect modal for Mesh extension'
+            description: 'concise label for not connected in menu bar'
         });
     }
 
