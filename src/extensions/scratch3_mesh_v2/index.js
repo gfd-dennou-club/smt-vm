@@ -303,32 +303,20 @@ class Scratch3MeshV2Blocks {
     connectedMessage () {
         if (this.meshService && this.meshService.groupId) {
             const meshIdLabel = this.makeMeshIdLabel(this.meshService.groupName);
-            const expiresAt = this.meshService.expiresAt ?
-                new Date(this.meshService.expiresAt).toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                }) : null;
 
             if (this.meshService.isHost) {
-                const expiresAtMessage = expiresAt ? formatMessage({
-                    id: 'mesh.expiresAtV2',
-                    default: ' (Expires at { TIME })',
-                    description: 'label for expiration time in connect modal for Mesh V2 extension'
-                }, {TIME: expiresAt}) : '';
-
                 return formatMessage({
-                    id: 'mesh.registeredHostV2',
-                    default: 'Registered Host Mesh V2 [{ MESH_ID }]{ EXPIRES_AT }',
-                    description: 'label for registered Host Mesh in connect modal for Mesh V2 extension'
+                    id: 'mesh.registeredHost',
+                    default: 'Registered Host Mesh [{ MESH_ID }]',
+                    description: 'label for registered Host Mesh in connect modal for Mesh extension'
                 }, {
-                    MESH_ID: meshIdLabel,
-                    EXPIRES_AT: expiresAtMessage
+                    MESH_ID: meshIdLabel
                 });
             }
             return formatMessage({
-                id: 'mesh.joinedMeshV2',
-                default: 'Joined Mesh V2 [{ MESH_ID }]',
-                description: 'label for joined Mesh in connect modal for Mesh V2 extension'
+                id: 'mesh.joinedMesh',
+                default: 'Joined Mesh [{ MESH_ID }]',
+                description: 'label for joined Mesh in connect modal for Mesh extension'
             }, {MESH_ID: meshIdLabel});
         }
         return formatMessage({
