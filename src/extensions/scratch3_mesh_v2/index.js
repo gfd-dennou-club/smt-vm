@@ -299,25 +299,38 @@ class Scratch3MeshV2Blocks {
         return !!(this.meshService && this.meshService.groupId);
     }
 
+    formatExpiresAt (expiresAt) {
+        if (!expiresAt) return '';
+        const date = new Date(expiresAt);
+        const h = String(date.getHours()).padStart(2, '0');
+        const m = String(date.getMinutes()).padStart(2, '0');
+        return `${h}:${m}`;
+    }
+
     /* istanbul ignore next */
     connectedMessage () {
         if (this.meshService && this.meshService.groupId) {
             const meshIdLabel = this.makeMeshIdLabel(this.meshService.groupName);
+            const expiresAt = this.formatExpiresAt(this.meshService.expiresAt);
 
             if (this.meshService.isHost) {
                 return formatMessage({
                     id: 'mesh.registeredHost',
-                    default: 'Registered Host Mesh [{ MESH_ID }]',
+                    default: 'Registered Host Mesh [{ MESH_ID }] ({ EXPIRES_AT })',
                     description: 'label for registered Host Mesh in connect modal for Mesh extension'
                 }, {
-                    MESH_ID: meshIdLabel
+                    MESH_ID: meshIdLabel,
+                    EXPIRES_AT: expiresAt
                 });
             }
             return formatMessage({
                 id: 'mesh.joinedMesh',
-                default: 'Joined Mesh [{ MESH_ID }]',
+                default: 'Joined Mesh [{ MESH_ID }] ({ EXPIRES_AT })',
                 description: 'label for joined Mesh in connect modal for Mesh extension'
-            }, {MESH_ID: meshIdLabel});
+            }, {
+                MESH_ID: meshIdLabel,
+                EXPIRES_AT: expiresAt
+            });
         }
         return formatMessage({
             id: 'mesh.notConnected',
