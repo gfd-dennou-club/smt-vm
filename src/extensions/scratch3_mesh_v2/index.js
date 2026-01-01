@@ -181,9 +181,9 @@ class Scratch3MeshV2Blocks {
             const peripherals = validGroups.map(group => ({
                 peripheralId: group.id,
                 name: formatMessage({
-                    id: 'mesh.clientPeripheralNameV2',
-                    default: 'Join Mesh V2 [{ MESH_ID }]',
-                    description: 'label for joining Mesh in connect modal for Mesh V2 extension'
+                    id: 'mesh.clientPeripheralName',
+                    default: 'Join Mesh [{ MESH_ID }]',
+                    description: 'label for "Join Mesh" in connect modal for Mesh extension'
                 }, {MESH_ID: this.makeMeshIdLabel(group.name)}),
                 rssi: this.calculateRssi(group),
                 domain: group.domain
@@ -193,9 +193,9 @@ class Scratch3MeshV2Blocks {
             peripherals.unshift({
                 peripheralId: MESH_V2_HOST_ID,
                 name: formatMessage({
-                    id: 'mesh.hostPeripheralNameV2',
-                    default: 'Become Mesh V2 Host [{ MESH_ID }]',
-                    description: 'label for becoming Host Mesh in connect modal for Mesh V2 extension'
+                    id: 'mesh.hostPeripheralName',
+                    default: 'Become Mesh Host [{ MESH_ID }]',
+                    description: 'label for becoming Host Mesh in connect modal for Mesh extension'
                 }, {MESH_ID: this.makeMeshIdLabel(this.nodeId)}),
                 rssi: 0
             });
@@ -320,9 +320,9 @@ class Scratch3MeshV2Blocks {
             }, {MESH_ID: meshIdLabel});
         }
         return formatMessage({
-            id: 'mesh.notConnectedV2',
-            default: 'Not connected (Mesh V2)',
-            description: 'label for not connected in connect modal for Mesh V2 extension'
+            id: 'mesh.notConnected',
+            default: 'Not connected',
+            description: 'label for not connected in connect modal for Mesh extension'
         });
     }
 
