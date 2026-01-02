@@ -160,7 +160,7 @@ test('MeshV2Service Batch Events', t => {
         st.end();
     });
 
-    t.test('processNextBroadcast processes all events in one frame if their timing arrived', st => {
+    t.test('processNextBroadcast processes events in one frame if their timing arrived and they are within 33ms', st => {
         const blocks = createMockBlocks();
         const service = new MeshV2Service(blocks, 'node1', 'domain1');
         service.groupId = 'group1';
@@ -187,11 +187,100 @@ test('MeshV2Service Batch Events', t => {
             st.equal(service.pendingBroadcasts.length, 3);
 
             // Frame 1: Should broadcast all events because offsetMs (0) <= elapsedMs (0)
+            // and they are within 33ms window.
             service.processNextBroadcast();
             st.equal(broadcasted.length, 3);
             st.equal(broadcasted[0], 'e1');
             st.equal(broadcasted[1], 'e2');
             st.equal(broadcasted[2], 'e3');
+            st.equal(service.pendingBroadcasts.length, 0);
+        } finally {
+            Date.now = realDateNow;
+        }
+
+        st.end();
+    });
+
+    t.test('processNextBroadcast respects 33ms window when handling backlog', st => {
+        const blocks = createMockBlocks();
+        const service = new MeshV2Service(blocks, 'node1', 'domain1');
+        service.groupId = 'group1';
+        const broadcasted = [];
+        service.broadcastEvent = event => broadcasted.push(event.name);
+
+        // Events spaced 20ms apart: 0ms, 20ms, 40ms, 60ms
+        const batchEvent = {
+            firedByNodeId: 'node2',
+            events: [
+                {name: 'e1', timestamp: '2025-12-30T00:00:00.000Z'}, // offset 0
+                {name: 'e2', timestamp: '2025-12-30T00:00:00.020Z'}, // offset 20
+                {name: 'e3', timestamp: '2025-12-30T00:00:00.040Z'}, // offset 40
+                {name: 'e4', timestamp: '2025-12-30T00:00:00.060Z'}  // offset 60
+            ]
+        };
+
+        const realDateNow = Date.now;
+        const startTime = 1000000;
+        let currentTime = startTime;
+        Date.now = () => currentTime;
+
+        try {
+            service.handleBatchEvent(batchEvent);
+            st.equal(service.pendingBroadcasts.length, 4);
+
+            // Simulation: Backlog exists. Current time is 100ms after start.
+            // elapsedMs = 100. All events are technically "due".
+            currentTime = startTime + 100;
+
+            // Frame 1: Should process e1, e2 (within 33ms of e1). e3 is at 40ms, so it's split.
+            service.processNextBroadcast();
+            st.equal(broadcasted.length, 2);
+            st.equal(broadcasted[0], 'e1');
+            st.equal(broadcasted[1], 'e2');
+            st.equal(service.pendingBroadcasts.length, 2);
+
+            // Frame 2: Should process e3, e4 (within 33ms of e3: 40 + 33 = 73).
+            service.processNextBroadcast();
+            st.equal(broadcasted.length, 4);
+            st.equal(broadcasted[2], 'e3');
+            st.equal(broadcasted[3], 'e4');
+            st.equal(service.pendingBroadcasts.length, 0);
+        } finally {
+            Date.now = realDateNow;
+        }
+
+        st.end();
+    });
+
+    t.test('processNextBroadcast processes many simultaneous events in one frame', st => {
+        const blocks = createMockBlocks();
+        const service = new MeshV2Service(blocks, 'node1', 'domain1');
+        service.groupId = 'group1';
+        const broadcasted = [];
+        service.broadcastEvent = event => broadcasted.push(event.name);
+
+        // 50 events all with the same timestamp
+        const events = [];
+        for (let i = 0; i < 50; i++) {
+            events.push({name: `e${i}`, timestamp: '2025-12-30T00:00:00.000Z'});
+        }
+
+        const batchEvent = {
+            firedByNodeId: 'node2',
+            events: events
+        };
+
+        const realDateNow = Date.now;
+        const startTime = 1000000;
+        Date.now = () => startTime;
+
+        try {
+            service.handleBatchEvent(batchEvent);
+            st.equal(service.pendingBroadcasts.length, 50);
+
+            // All 50 should be processed in one frame because they all have offset 0
+            service.processNextBroadcast();
+            st.equal(broadcasted.length, 50);
             st.equal(service.pendingBroadcasts.length, 0);
         } finally {
             Date.now = realDateNow;

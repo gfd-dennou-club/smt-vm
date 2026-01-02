@@ -496,7 +496,8 @@ class MeshV2Service {
      * Called once per frame via BEFORE_STEP event.
      *
      * Strategy:
-     * - Process all events whose timing has arrived (offsetMs <= elapsedMs)
+     * - Process events whose timing has arrived (offsetMs <= elapsedMs)
+     * - Limit processing to a 33ms window of event time per frame to avoid spikes
      * - Execute them in order (maintains event sequence)
      * - Different event types don't cause RESTART (different handlers)
      */
@@ -518,6 +519,7 @@ class MeshV2Service {
 
         // 処理すべきイベントを収集（タイミングが来ているもの）
         const eventsToProcess = [];
+        let windowBase = null;
 
         while (this.pendingBroadcasts.length > 0) {
             const {event, offsetMs} = this.pendingBroadcasts[0];
@@ -529,12 +531,22 @@ class MeshV2Service {
                 break;
             }
 
+            // 1フレーム(33ms)のウィンドウ制限を適用
+            // （バックログがある場合でも1フレームで大量のブロードキャストを避ける）
+            if (windowBase === null) {
+                windowBase = offsetMs;
+            } else if (offsetMs >= windowBase + 33) {
+                log.debug(`Mesh V2: Window limit reached (33ms). ` +
+                    `Remaining events will be processed in next frames.`);
+                break;
+            }
+
             // タイミングが来たイベントをキューから取り出し
             const item = this.pendingBroadcasts.shift();
             eventsToProcess.push(item);
         }
 
-        // 収集したイベントをすべて処理
+        // 収集したイベントを処理
         if (eventsToProcess.length > 0) {
             log.info(`Mesh V2: Broadcasting ${eventsToProcess.length} events ` +
                 `(${this.pendingBroadcasts.length} remaining in queue)`);
