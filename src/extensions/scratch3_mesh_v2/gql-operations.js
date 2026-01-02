@@ -42,6 +42,7 @@ const JOIN_GROUP = gql`
       name
       groupId
       domain
+      expiresAt
       heartbeatIntervalSeconds
     }
   }

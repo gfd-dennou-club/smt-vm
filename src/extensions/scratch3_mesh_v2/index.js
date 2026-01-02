@@ -299,6 +299,14 @@ class Scratch3MeshV2Blocks {
         return !!(this.meshService && this.meshService.groupId);
     }
 
+    formatExpiresAt (expiresAt) {
+        if (!expiresAt) return '';
+        const date = new Date(expiresAt);
+        const h = String(date.getHours()).padStart(2, '0');
+        const m = String(date.getMinutes()).padStart(2, '0');
+        return `${h}:${m}`;
+    }
+
     /* istanbul ignore next */
     connectedMessage () {
         if (this.meshService && this.meshService.groupId) {
@@ -323,6 +331,38 @@ class Scratch3MeshV2Blocks {
             id: 'mesh.notConnected',
             default: 'Not connected',
             description: 'label for not connected in connect modal for Mesh extension'
+        });
+    }
+
+    /* istanbul ignore next */
+    menuMessage () {
+        if (this.meshService && this.meshService.groupId) {
+            const meshIdLabel = this.makeMeshIdLabel(this.meshService.groupName);
+            const expiresAt = this.formatExpiresAt(this.meshService.expiresAt);
+
+            if (this.meshService.isHost) {
+                return formatMessage({
+                    id: 'mesh.registeredHostMenu',
+                    default: '{ MESH_ID } ({ EXPIRES_AT })',
+                    description: 'concise label for registered Host Mesh in menu bar'
+                }, {
+                    MESH_ID: meshIdLabel,
+                    EXPIRES_AT: expiresAt
+                });
+            }
+            return formatMessage({
+                id: 'mesh.joinedMeshMenu',
+                default: '{ MESH_ID } ({ EXPIRES_AT })',
+                description: 'concise label for joined Mesh in menu bar'
+            }, {
+                MESH_ID: meshIdLabel,
+                EXPIRES_AT: expiresAt
+            });
+        }
+        return formatMessage({
+            id: 'mesh.notConnectedMenu',
+            default: 'Not connected',
+            description: 'concise label for not connected in menu bar'
         });
     }
 
