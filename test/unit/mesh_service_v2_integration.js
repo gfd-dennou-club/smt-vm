@@ -109,6 +109,7 @@ test('MeshV2Service Integration: Splitting large batches', async t => {
     const service = new MeshV2Service(blocks, 'sender', 'domain');
     service.stopEventBatchTimer();
     service.groupId = 'group1';
+    service.MAX_EVENT_QUEUE_SIZE = 2000;
 
     let mutateCount = 0;
     service.client = {

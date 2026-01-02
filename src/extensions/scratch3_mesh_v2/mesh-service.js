@@ -66,6 +66,14 @@ class MeshV2Service {
         this.eventBatchInterval = 250;
         this.eventBatchTimer = null;
 
+        // Event queue limits
+        this.MAX_EVENT_QUEUE_SIZE = 100; // 最大100イベント
+        this.eventQueueStats = {
+            duplicatesSkipped: 0,
+            dropped: 0,
+            lastReportTime: Date.now()
+        };
+
         // Last sent data to detect changes
         this.lastSentData = {};
 
@@ -357,6 +365,14 @@ class MeshV2Service {
             log.info(`  Average cost per second: $${(totalCost / connectionDurationSeconds).toFixed(10)}`);
         }
 
+        // 統計情報を出力
+        if (this.eventQueueStats &&
+            (this.eventQueueStats.duplicatesSkipped > 0 || this.eventQueueStats.dropped > 0)) {
+            log.info(`Mesh V2: Final Event Queue Stats: ` +
+                `duplicates skipped=${this.eventQueueStats.duplicatesSkipped}, ` +
+                `dropped=${this.eventQueueStats.dropped}`);
+        }
+
         // キューをクリア
         this.pendingBroadcasts = [];
         this.batchStartTime = null;
@@ -480,8 +496,9 @@ class MeshV2Service {
      * Called once per frame via BEFORE_STEP event.
      *
      * Strategy:
-     * - Events with offsetMs close to each other (< 1ms) are processed in the same frame (at most 1)
-     * - Events separated by frame intervals (>= 16.67ms) wait for real time to elapse
+     * - Process all events whose timing has arrived (offsetMs <= elapsedMs)
+     * - Execute them in order (maintains event sequence)
+     * - Different event types don't cause RESTART (different handlers)
      */
     processNextBroadcast () {
         if (!this.groupId) {
@@ -507,7 +524,7 @@ class MeshV2Service {
 
             // まだタイミングが来ていない場合は待機
             if (offsetMs > elapsedMs) {
-                log.info(`Mesh V2: Waiting for event ${event.name} ` +
+                log.debug(`Mesh V2: Waiting for event ${event.name} ` +
                     `(needs ${offsetMs}ms, elapsed ${elapsedMs}ms)`);
                 break;
             }
@@ -515,40 +532,20 @@ class MeshV2Service {
             // タイミングが来たイベントをキューから取り出し
             const item = this.pendingBroadcasts.shift();
             eventsToProcess.push(item);
-
-            // 次のイベントとの間隔をチェック
-            if (this.pendingBroadcasts.length > 0) {
-                const nextOffset = this.pendingBroadcasts[0].offsetMs;
-                const gap = nextOffset - offsetMs;
-
-                // 次のイベントが1ms以内なら同じフレームで処理対象とする（が実際には1個しか処理しない）
-                // それ以外は次のフレームまで待機
-                if (gap >= 1) {
-                    break;
-                }
-            }
         }
 
-        // 収集したイベントを処理
+        // 収集したイベントをすべて処理
         if (eventsToProcess.length > 0) {
-            // フレームごとに1つのブロードキャストのみ実行（スレッド再起動回避）
-            const {event, offsetMs} = eventsToProcess[0];
+            log.info(`Mesh V2: Broadcasting ${eventsToProcess.length} events ` +
+                `(${this.pendingBroadcasts.length} remaining in queue)`);
 
-            log.info(`Mesh V2: Broadcasting event: ${event.name} ` +
-                `(offset: ${offsetMs}ms, elapsed: ${elapsedMs}ms, ` +
-                `${eventsToProcess.length - 1} similar events batched, ` +
-                `${this.pendingBroadcasts.length} remaining in queue)`);
+            eventsToProcess.forEach(({event, offsetMs}) => {
+                log.info(`Mesh V2: Broadcasting event: ${event.name} ` +
+                    `(offset: ${offsetMs}ms, elapsed: ${elapsedMs}ms)`);
 
-            this.broadcastEvent(event);
-            this.lastBroadcastOffset = offsetMs;
-
-            // 1ms以内の追加イベントは次のフレームで処理
-            // （同じフレームで複数ブロードキャストしない制約）
-            eventsToProcess.slice(1)
-                .reverse()
-                .forEach(item => {
-                    this.pendingBroadcasts.unshift(item);
-                });
+                this.broadcastEvent(event);
+                this.lastBroadcastOffset = offsetMs;
+            });
         }
     }
 
@@ -815,13 +812,60 @@ class MeshV2Service {
             return;
         }
 
-        log.info(`Mesh V2: Queuing event for sending: ${eventName}`);
+        // ステップ1: 重複チェック
+        const isDuplicate = this.eventQueue.some(item =>
+            item.eventName === eventName && item.payload === payload
+        );
+
+        if (isDuplicate) {
+            this.eventQueueStats.duplicatesSkipped++;
+            this.reportEventStatsIfNeeded();
+
+            log.debug(`Mesh V2: Event already in queue, skipping: ${eventName}`);
+            return;
+        }
+
+        // ステップ2: サイズ制限チェック（保険）
+        if (this.eventQueue.length >= this.MAX_EVENT_QUEUE_SIZE) {
+            const dropped = this.eventQueue.shift(); // 古いイベントを破棄（FIFO）
+            this.eventQueueStats.dropped++;
+
+            if (this.eventQueueStats.dropped % 10 === 1) { // 10イベントごとに警告
+                log.warn(`Mesh V2: Event queue full (${this.MAX_EVENT_QUEUE_SIZE}). ` +
+                    `Dropped ${this.eventQueueStats.dropped} events. ` +
+                    `Latest: ${dropped.eventName}`);
+            }
+        }
+
+        log.debug(`Mesh V2: Queuing event for sending: ${eventName} ` +
+            `(queue size: ${this.eventQueue.length})`);
+
         // キューに追加（発火日時を記録）
         this.eventQueue.push({
             eventName: eventName,
             payload: payload,
             firedAt: new Date().toISOString()
         });
+    }
+
+    /**
+     * Report event queue statistics if needed (every 10 seconds).
+     */
+    reportEventStatsIfNeeded () {
+        const now = Date.now();
+        const elapsed = now - this.eventQueueStats.lastReportTime;
+
+        if (elapsed >= 10000 &&
+            (this.eventQueueStats.duplicatesSkipped > 0 || this.eventQueueStats.dropped > 0)) {
+            log.info(`Mesh V2: Event Queue Stats (last ${(elapsed / 1000).toFixed(1)}s): ` +
+                `duplicates skipped=${this.eventQueueStats.duplicatesSkipped}, ` +
+                `dropped=${this.eventQueueStats.dropped}, ` +
+                `current queue size=${this.eventQueue.length}`);
+
+            this.eventQueueStats.duplicatesSkipped = 0;
+            this.eventQueueStats.dropped = 0;
+            this.eventQueueStats.lastReportTime = now;
+        }
     }
 
     /**
