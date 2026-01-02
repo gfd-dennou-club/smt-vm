@@ -160,7 +160,7 @@ test('MeshV2Service Batch Events', t => {
         st.end();
     });
 
-    t.test('processNextBroadcast processes events in one frame if their timing arrived and they are within 33ms', st => {
+    t.test('processNextBroadcast processes events in one frame if timing arrived and within 33ms', st => {
         const blocks = createMockBlocks();
         const service = new MeshV2Service(blocks, 'node1', 'domain1');
         service.groupId = 'group1';
@@ -215,7 +215,7 @@ test('MeshV2Service Batch Events', t => {
                 {name: 'e1', timestamp: '2025-12-30T00:00:00.000Z'}, // offset 0
                 {name: 'e2', timestamp: '2025-12-30T00:00:00.020Z'}, // offset 20
                 {name: 'e3', timestamp: '2025-12-30T00:00:00.040Z'}, // offset 40
-                {name: 'e4', timestamp: '2025-12-30T00:00:00.060Z'}  // offset 60
+                {name: 'e4', timestamp: '2025-12-30T00:00:00.060Z'} // offset 60
             ]
         };
 
