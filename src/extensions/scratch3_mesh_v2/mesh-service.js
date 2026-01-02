@@ -765,7 +765,7 @@ class MeshV2Service {
         if (!this.groupId || !this.client) return;
 
         const unchanged = this.isDataUnchanged(dataArray);
-        log.info(`Mesh V2: sendData called with ${dataArray.length} items: ` +
+        log.debug(`Mesh V2: sendData called with ${dataArray.length} items: ` +
             `${JSON.stringify(dataArray)} (unchanged: ${unchanged})`);
 
         // Change detection
