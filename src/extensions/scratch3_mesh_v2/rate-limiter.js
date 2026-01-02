@@ -20,6 +20,13 @@ class RateLimiter {
         this.enableMerge = options.enableMerge || false;
         this.mergeKeyField = options.mergeKeyField || 'key';
         this.requestCount = 0;
+
+        // Statistics
+        this.stats = {
+            totalSent: 0,
+            totalMerged: 0,
+            lastReportTime: Date.now()
+        };
     }
 
     /**
@@ -38,7 +45,7 @@ class RateLimiter {
                 this.queue.push({data, resolve, reject, sendFunction});
             }
 
-            log.info(`RateLimiter: ${this.enableMerge ? 'Processed' : 'Added'} to queue ` +
+            log.debug(`RateLimiter: ${this.enableMerge ? 'Processed' : 'Added'} to queue ` +
                 `(size: ${this.queue.length}, enableMerge: ${this.enableMerge})`);
 
             this.processQueue();
@@ -63,32 +70,61 @@ class RateLimiter {
                 const existingData = queueItem.data;
                 const mergedData = this.mergeData(existingData, dataArray);
 
-                log.info(`RateLimiter: Merging data - ` +
+                log.debug(`RateLimiter: Merging data - ` +
                     `before: ${JSON.stringify(existingData)}, ` +
                     `after: ${JSON.stringify(mergedData)}`);
 
                 queueItem.data = mergedData;
 
-                // Chain resolve and reject
-                const originalResolve = queueItem.resolve;
-                queueItem.resolve = result => {
-                    originalResolve(result);
-                    resolve(result);
-                };
+                // Use arrays to manage resolve/reject callbacks to avoid stack overflow
+                if (!queueItem.resolvers) {
+                    // Convert existing resolve/reject to arrays
+                    queueItem.resolvers = [queueItem.resolve];
+                    queueItem.rejecters = [queueItem.reject];
 
-                const originalReject = queueItem.reject;
-                queueItem.reject = error => {
-                    originalReject(error);
-                    reject(error);
-                };
+                    // Set new resolve/reject handlers that call all functions in the arrays
+                    queueItem.resolve = result => {
+                        queueItem.resolvers.forEach(r => r(result));
+                    };
+                    queueItem.reject = error => {
+                        queueItem.rejecters.forEach(r => r(error));
+                    };
+                }
+
+                // Add new callbacks to the arrays
+                queueItem.resolvers.push(resolve);
+                queueItem.rejecters.push(reject);
 
                 merged = true;
                 break;
             }
         }
 
-        if (!merged) {
+        if (merged) {
+            this.stats.totalMerged++;
+            this.reportStatsIfNeeded();
+        } else {
             this.queue.push({data: dataArray, resolve, reject, sendFunction});
+        }
+    }
+
+    /**
+     * Report statistics periodically.
+     * @private
+     */
+    reportStatsIfNeeded () {
+        const now = Date.now();
+        const elapsed = now - this.stats.lastReportTime;
+
+        // Output statistics every 10 seconds
+        if (elapsed >= 10000) {
+            log.info(`RateLimiter Stats (last ${(elapsed / 1000).toFixed(1)}s): ` +
+                `sent=${this.stats.totalSent}, merged=${this.stats.totalMerged}, ` +
+                `queue=${this.queue.length}`);
+
+            this.stats.totalSent = 0;
+            this.stats.totalMerged = 0;
+            this.stats.lastReportTime = now;
         }
     }
 
@@ -161,12 +197,14 @@ class RateLimiter {
 
             const item = this.queue.shift();
             this.requestCount++;
-            log.info(`RateLimiter: Sending request #${this.requestCount} ` +
+            log.debug(`RateLimiter: Sending request #${this.requestCount} ` +
                 `(queue remaining: ${this.queue.length})`);
 
             try {
                 const result = await item.sendFunction(item.data);
                 this.lastSendTime = Date.now();
+                this.stats.totalSent++;
+                this.reportStatsIfNeeded();
                 item.resolve(result);
             } catch (error) {
                 item.reject(error);
