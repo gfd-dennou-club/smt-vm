@@ -77,7 +77,6 @@ class Scratch3MeshV2Blocks {
         }
 
         this.runtime.registerPeripheralExtension(Scratch3MeshV2Blocks.EXTENSION_ID, this);
-        console.log('Scratch3MeshV2Blocks: constructor finished, registered as:', Scratch3MeshV2Blocks.EXTENSION_ID);
     }
 
     makeMeshIdLabel (meshId) {
