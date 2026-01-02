@@ -87,6 +87,19 @@ class MeshV2Service {
         this._reportDataBound = this._reportData.bind(this);
 
         this.disconnectCallback = null;
+
+        // Cost tracking
+        this.costTracking = {
+            connectionStartTime: null,
+            queryCount: 0, // LIST_GROUPS_BY_DOMAIN, LIST_GROUP_STATUSES
+            mutationCount: 0, // CREATE_DOMAIN, CREATE_GROUP, JOIN_GROUP, etc.
+            heartbeatCount: 0, // RENEW_HEARTBEAT, SEND_MEMBER_HEARTBEAT
+            reportDataCount: 0, // REPORT_DATA
+            fireEventsCount: 0, // FIRE_EVENTS
+            dataUpdateReceived: 0, // ON_DATA_UPDATE
+            batchEventReceived: 0, // ON_BATCH_EVENT
+            dissolveReceived: 0 // ON_GROUP_DISSOLVE
+        };
     }
 
     /**
@@ -137,6 +150,7 @@ class MeshV2Service {
         if (!this.client) throw new Error('Client not initialized');
 
         try {
+            this.costTracking.mutationCount++;
             const result = await this.client.mutate({
                 mutation: CREATE_DOMAIN
             });
@@ -158,6 +172,7 @@ class MeshV2Service {
                 await this.createDomain();
             }
 
+            this.costTracking.mutationCount++;
             const result = await this.client.mutate({
                 mutation: CREATE_GROUP,
                 variables: {
@@ -174,6 +189,7 @@ class MeshV2Service {
             this.expiresAt = group.expiresAt;
             this.isHost = true;
 
+            this.costTracking.connectionStartTime = Date.now();
             this.startSubscriptions();
             this.startHeartbeat();
             this.startEventBatchTimer();
@@ -198,6 +214,7 @@ class MeshV2Service {
                 await this.createDomain();
             }
 
+            this.costTracking.queryCount++;
             const result = await this.client.query({
                 query: LIST_GROUPS_BY_DOMAIN,
                 variables: {
@@ -218,6 +235,7 @@ class MeshV2Service {
         if (!this.client) throw new Error('Client not initialized');
 
         try {
+            this.costTracking.mutationCount++;
             const result = await this.client.mutate({
                 mutation: JOIN_GROUP,
                 variables: {
@@ -237,6 +255,7 @@ class MeshV2Service {
                 this.memberHeartbeatInterval = node.heartbeatIntervalSeconds;
             }
 
+            this.costTracking.connectionStartTime = Date.now();
             this.startSubscriptions();
             this.startHeartbeat(); // Start heartbeat for member too
             this.startEventBatchTimer();
@@ -269,6 +288,7 @@ class MeshV2Service {
 
         try {
             if (isHost) {
+                this.costTracking.mutationCount++;
                 await this.client.mutate({
                     mutation: DISSOLVE_GROUP,
                     variables: {
@@ -279,6 +299,7 @@ class MeshV2Service {
                 });
                 log.info(`Mesh V2: Dissolved group ${groupId}`);
             } else {
+                this.costTracking.mutationCount++;
                 await this.client.mutate({
                     mutation: LEAVE_GROUP,
                     variables: {
@@ -295,6 +316,47 @@ class MeshV2Service {
     }
 
     cleanup () {
+        // コスト計算とログ出力
+        if (this.costTracking.connectionStartTime) {
+            const connectionDurationSeconds = (Date.now() - this.costTracking.connectionStartTime) / 1000;
+            const connectionDurationMinutes = connectionDurationSeconds / 60;
+
+            // Query/Mutation costs
+            const queryCost = this.costTracking.queryCount * 0.000004;
+            const mutationCost = this.costTracking.mutationCount * 0.000004;
+
+            // Subscription message costs
+            const dataUpdateCost = this.costTracking.dataUpdateReceived * 0.000002;
+            const batchEventCost = this.costTracking.batchEventReceived * 0.000002;
+            const dissolveCost = this.costTracking.dissolveReceived * 0.000002;
+
+            // Subscription connection cost (3 subscriptions)
+            const connectionCost = (connectionDurationMinutes / 1000000) * 3 * 0.08;
+
+            const totalCost = queryCost + mutationCost + dataUpdateCost + batchEventCost +
+                dissolveCost + connectionCost;
+
+            log.info(`Mesh V2: Cost Summary for ${connectionDurationMinutes.toFixed(2)} minutes connection`);
+            log.info(`  Role: ${this.isHost ? 'Host' : 'Member'}`);
+            log.info(`  Queries: ${this.costTracking.queryCount} ops = $${queryCost.toFixed(8)}`);
+            log.info(`  Mutations: ${this.costTracking.mutationCount} ops = $${mutationCost.toFixed(8)}`);
+            log.info(`    - Heartbeats: ${this.costTracking.heartbeatCount}`);
+            log.info(`    - REPORT_DATA: ${this.costTracking.reportDataCount}`);
+            log.info(`    - FIRE_EVENTS: ${this.costTracking.fireEventsCount}`);
+            log.info(`  Subscription Messages:`);
+            log.info(`    - Data Updates: ${this.costTracking.dataUpdateReceived} msgs = ` +
+                `$${dataUpdateCost.toFixed(8)}`);
+            log.info(`    - Batch Events: ${this.costTracking.batchEventReceived} msgs = ` +
+                `$${batchEventCost.toFixed(8)}`);
+            log.info(`    - Dissolve: ${this.costTracking.dissolveReceived} msgs = ` +
+                `$${dissolveCost.toFixed(8)}`);
+            log.info(`  Subscription Connection: ${connectionDurationMinutes.toFixed(2)} min × 3 = ` +
+                `$${connectionCost.toFixed(8)}`);
+            log.info(`  TOTAL ESTIMATED COST: $${totalCost.toFixed(8)} ` +
+                `(${(totalCost * 1000000).toFixed(2)} per million operations equivalent)`);
+            log.info(`  Average cost per second: $${(totalCost / connectionDurationSeconds).toFixed(10)}`);
+        }
+
         // キューをクリア
         this.pendingBroadcasts = [];
         this.batchStartTime = null;
@@ -342,6 +404,7 @@ class MeshV2Service {
             variables
         }).subscribe({
             next: () => {
+                this.costTracking.dissolveReceived++;
                 log.info('Mesh V2: Group dissolved by host');
                 this.cleanupAndDisconnect();
             },
@@ -359,6 +422,7 @@ class MeshV2Service {
     handleDataUpdate (nodeStatus) {
         if (!nodeStatus || nodeStatus.nodeId === this.meshId) return;
 
+        this.costTracking.dataUpdateReceived++;
         const nodeId = nodeStatus.nodeId;
         if (!this.remoteData[nodeId]) {
             this.remoteData[nodeId] = {};
@@ -375,6 +439,7 @@ class MeshV2Service {
     handleBatchEvent (batchEvent) {
         if (!batchEvent || batchEvent.firedByNodeId === this.meshId) return;
 
+        this.costTracking.batchEventReceived++;
         const events = batchEvent.events ?
             batchEvent.events.filter(event => event.firedByNodeId !== this.meshId) :
             [];
@@ -551,6 +616,8 @@ class MeshV2Service {
             // データ送信完了を待つ
             await this.dataRateLimiter.waitForCompletion();
 
+            this.costTracking.mutationCount++;
+            this.costTracking.fireEventsCount++;
             log.info(`Mesh V2: Sending batch of ${events.length} events to group ${this.groupId}`);
             await this.client.mutate({
                 mutation: FIRE_EVENTS,
@@ -599,6 +666,8 @@ class MeshV2Service {
         if (!this.groupId || !this.client || !this.isHost) return;
 
         try {
+            this.costTracking.mutationCount++;
+            this.costTracking.heartbeatCount++;
             const result = await this.client.mutate({
                 mutation: RENEW_HEARTBEAT,
                 variables: {
@@ -624,6 +693,8 @@ class MeshV2Service {
         if (!this.groupId || !this.client || this.isHost) return;
 
         try {
+            this.costTracking.mutationCount++;
+            this.costTracking.heartbeatCount++;
             const result = await this.client.mutate({
                 mutation: SEND_MEMBER_HEARTBEAT,
                 variables: {
@@ -720,6 +791,8 @@ class MeshV2Service {
      * @private
      */
     async _reportData (payload) {
+        this.costTracking.mutationCount++;
+        this.costTracking.reportDataCount++;
         await this.client.mutate({
             mutation: REPORT_DATA,
             variables: {
@@ -759,6 +832,7 @@ class MeshV2Service {
         if (!this.groupId || !this.client) return;
 
         try {
+            this.costTracking.queryCount++;
             const result = await this.client.query({
                 query: LIST_GROUP_STATUSES,
                 variables: {
