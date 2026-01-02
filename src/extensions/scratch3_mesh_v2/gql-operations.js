@@ -64,7 +64,11 @@ const DISSOLVE_GROUP = gql`
     dissolveGroup(groupId: $groupId, domain: $domain, hostId: $hostId) {
       groupId
       domain
-      message
+      groupDissolve {
+        groupId
+        domain
+        message
+      }
     }
   }
 `;
@@ -95,14 +99,18 @@ const SEND_MEMBER_HEARTBEAT = gql`
 const REPORT_DATA = gql`
   mutation ReportDataByNode($groupId: ID!, $domain: String!, $nodeId: ID!, $data: [SensorDataInput!]!) {
     reportDataByNode(groupId: $groupId, domain: $domain, nodeId: $nodeId, data: $data) {
-      nodeId
       groupId
       domain
-      data {
-        key
-        value
+      nodeStatus {
+        nodeId
+        groupId
+        domain
+        data {
+          key
+          value
+        }
+        timestamp
       }
-      timestamp
     }
   }
 `;
@@ -110,62 +118,60 @@ const REPORT_DATA = gql`
 const FIRE_EVENTS = gql`
   mutation FireEventsByNode($groupId: ID!, $domain: String!, $nodeId: ID!, $events: [EventInput!]!) {
     fireEventsByNode(groupId: $groupId, domain: $domain, nodeId: $nodeId, events: $events) {
-      events {
-        name
+      groupId
+      domain
+      batchEvent {
+        events {
+          name
+          firedByNodeId
+          groupId
+          domain
+          payload
+          timestamp
+        }
         firedByNodeId
         groupId
         domain
-        payload
         timestamp
       }
-      firedByNodeId
-      groupId
-      domain
-      timestamp
     }
   }
 `;
 
-const ON_DATA_UPDATE = gql`
-  subscription OnDataUpdateInGroup($groupId: ID!, $domain: String!) {
-    onDataUpdateInGroup(groupId: $groupId, domain: $domain) {
-      nodeId
+const ON_MESSAGE_IN_GROUP = gql`
+  subscription OnMessageInGroup($groupId: ID!, $domain: String!) {
+    onMessageInGroup(groupId: $groupId, domain: $domain) {
       groupId
       domain
-      data {
-        key
-        value
+      nodeStatus {
+        nodeId
+        groupId
+        domain
+        data {
+          key
+          value
+        }
+        timestamp
       }
-      timestamp
-    }
-  }
-`;
-
-const ON_BATCH_EVENT = gql`
-  subscription OnBatchEventInGroup($groupId: ID!, $domain: String!) {
-    onBatchEventInGroup(groupId: $groupId, domain: $domain) {
-      events {
-        name
+      batchEvent {
+        events {
+          name
+          firedByNodeId
+          groupId
+          domain
+          payload
+          timestamp
+        }
         firedByNodeId
         groupId
         domain
-        payload
         timestamp
       }
-      firedByNodeId
-      groupId
-      domain
-      timestamp
-    }
-  }
-`;
-
-const ON_GROUP_DISSOLVE = gql`
-  subscription OnGroupDissolve($groupId: ID!, $domain: String!) {
-    onGroupDissolve(groupId: $groupId, domain: $domain) {
-      groupId
-      domain
-      message
+      groupDissolve {
+        groupId
+        domain
+        message
+      }
     }
   }
 `;
@@ -196,8 +202,6 @@ module.exports = {
     SEND_MEMBER_HEARTBEAT,
     REPORT_DATA,
     FIRE_EVENTS,
-    ON_DATA_UPDATE,
-    ON_BATCH_EVENT,
-    ON_GROUP_DISSOLVE,
+    ON_MESSAGE_IN_GROUP,
     LIST_GROUP_STATUSES
 };

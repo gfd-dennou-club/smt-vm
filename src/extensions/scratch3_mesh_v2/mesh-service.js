@@ -14,9 +14,7 @@ const {
     SEND_MEMBER_HEARTBEAT,
     REPORT_DATA,
     FIRE_EVENTS,
-    ON_DATA_UPDATE,
-    ON_BATCH_EVENT,
-    ON_GROUP_DISSOLVE,
+    ON_MESSAGE_IN_GROUP,
     LIST_GROUP_STATUSES
 } = require('./gql-operations');
 
@@ -399,35 +397,32 @@ class MeshV2Service {
             domain: this.domain
         };
 
-        const dataSub = this.client.subscribe({
-            query: ON_DATA_UPDATE,
+        const messageSub = this.client.subscribe({
+            query: ON_MESSAGE_IN_GROUP,
             variables
         }).subscribe({
-            next: result => this.handleDataUpdate(result.data.onDataUpdateInGroup),
-            error: err => log.error(`Mesh V2: Data subscription error: ${err}`)
-        });
+            next: result => {
+                const message = result.data.onMessageInGroup;
+                if (!message) return;
 
-        const batchEventSub = this.client.subscribe({
-            query: ON_BATCH_EVENT,
-            variables
-        }).subscribe({
-            next: result => this.handleBatchEvent(result.data.onBatchEventInGroup),
-            error: err => log.error(`Mesh V2: Batch event subscription error: ${err}`)
-        });
-
-        const dissolveSub = this.client.subscribe({
-            query: ON_GROUP_DISSOLVE,
-            variables
-        }).subscribe({
-            next: () => {
-                this.costTracking.dissolveReceived++;
-                log.info('Mesh V2: Group dissolved by host');
-                this.cleanupAndDisconnect();
+                // MeshMessage has three fields: nodeStatus, batchEvent, groupDissolve
+                // Only one field will be non-null per message
+                if (message.nodeStatus) {
+                    this.handleDataUpdate(message.nodeStatus);
+                } else if (message.batchEvent) {
+                    this.handleBatchEvent(message.batchEvent);
+                } else if (message.groupDissolve) {
+                    this.costTracking.dissolveReceived++;
+                    log.info('Mesh V2: Group dissolved by host');
+                    this.cleanupAndDisconnect();
+                } else {
+                    log.warn('Mesh V2: Received message with all fields null');
+                }
             },
-            error: err => log.error(`Mesh V2: Dissolve subscription error: ${err}`)
+            error: err => log.error(`Mesh V2: Subscription error: ${err}`)
         });
 
-        this.subscriptions.push(dataSub, batchEventSub, dissolveSub);
+        this.subscriptions.push(messageSub);
     }
 
     stopSubscriptions () {
@@ -622,8 +617,8 @@ class MeshV2Service {
         if (!this.groupId || !this.client || events.length === 0) return;
 
         try {
-            // データ送信完了を待つ
-            await this.dataRateLimiter.waitForCompletion();
+            // データ送信完了を待つ (Removed to prevent blocking, relying on unified subscription for order)
+            // await this.dataRateLimiter.waitForCompletion();
 
             this.costTracking.mutationCount++;
             this.costTracking.fireEventsCount++;
