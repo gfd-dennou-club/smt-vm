@@ -79,10 +79,10 @@ class MeshV2Service {
         this.remoteData = {};
 
         // Rate limiters
-        // Data update interval (default: 250ms, production: 1000ms)
+        // Data update interval (default: 1000ms)
         const dataInterval = parseEnvInt(
             process.env.MESH_DATA_UPDATE_INTERVAL_MS,
-            250, // default
+            1000, // default
             100, // min: 100ms
             10000 // max: 10 seconds
         );
@@ -93,10 +93,10 @@ class MeshV2Service {
 
         // Event queue for batch sending: { eventName, payload, firedAt } の配列
         this.eventQueue = [];
-        // Event batch interval (default: 250ms, production: 1000ms)
+        // Event batch interval (default: 1000ms)
         this.eventBatchInterval = parseEnvInt(
             process.env.MESH_EVENT_BATCH_INTERVAL_MS,
-            250, // default
+            1000, // default
             100, // min: 100ms
             10000 // max: 10 seconds
         );
@@ -690,19 +690,19 @@ class MeshV2Service {
         if (!this.groupId) return;
 
         log.info(`Mesh V2: Starting heartbeat timer (Role: ${this.isHost ? 'Host' : 'Member'})`);
-        // Use 15s for host, memberHeartbeatInterval for member (default 15s)
+        // Use 60s for host, memberHeartbeatInterval for member (default 120s)
         const hostInterval = parseEnvInt(
             process.env.MESH_HOST_HEARTBEAT_INTERVAL_SECONDS,
-            15, // default: 15 seconds
+            60, // default: 60 seconds
             1, // min: 1 second
             300 // max: 5 minutes
         ) * 1000;
 
         const memberDefaultInterval = parseEnvInt(
             process.env.MESH_MEMBER_HEARTBEAT_INTERVAL_SECONDS,
-            15, // default: 15 seconds
+            120, // default: 120 seconds
             1, // min: 1 second
-            300 // max: 5 minutes
+            600 // max: 10 minutes
         ) * 1000;
 
         const interval = this.isHost ? hostInterval : (this.memberHeartbeatInterval * 1000 || memberDefaultInterval);
