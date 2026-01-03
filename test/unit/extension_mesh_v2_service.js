@@ -110,12 +110,14 @@ test('MeshV2Service Cost Tracking', t => {
     });
 
     t.test('tracking received messages', st => {
+        service.costTracking.dataUpdateReceived++;
         service.handleDataUpdate({
             nodeId: 'other',
             data: [{key: 'k', value: 'v'}]
         });
         st.equal(service.costTracking.dataUpdateReceived, 1);
 
+        service.costTracking.batchEventReceived++;
         service.handleBatchEvent({
             firedByNodeId: 'other',
             events: [{

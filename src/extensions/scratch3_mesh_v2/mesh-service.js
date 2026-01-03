@@ -340,8 +340,8 @@ class MeshV2Service {
             const batchEventCost = this.costTracking.batchEventReceived * 0.000002;
             const dissolveCost = this.costTracking.dissolveReceived * 0.000002;
 
-            // Subscription connection cost (3 subscriptions)
-            const connectionCost = (connectionDurationMinutes / 1000000) * 3 * 0.08;
+            // Subscription connection cost (1 subscription)
+            const connectionCost = (connectionDurationMinutes / 1000000) * 1 * 0.08;
 
             const totalCost = queryCost + mutationCost + dataUpdateCost + batchEventCost +
                 dissolveCost + connectionCost;
@@ -360,7 +360,7 @@ class MeshV2Service {
                 `$${batchEventCost.toFixed(8)}`);
             log.info(`    - Dissolve: ${this.costTracking.dissolveReceived} msgs = ` +
                 `$${dissolveCost.toFixed(8)}`);
-            log.info(`  Subscription Connection: ${connectionDurationMinutes.toFixed(2)} min × 3 = ` +
+            log.info(`  Subscription Connection: ${connectionDurationMinutes.toFixed(2)} min × 1 = ` +
                 `$${connectionCost.toFixed(8)}`);
             log.info(`  TOTAL ESTIMATED COST: $${totalCost.toFixed(8)} ` +
                 `(${(totalCost * 1000000).toFixed(2)} per million operations equivalent)`);
@@ -411,9 +411,12 @@ class MeshV2Service {
 
                 // MeshMessage has three fields: nodeStatus, batchEvent, groupDissolve
                 // Only one field will be non-null per message
+                // Count all received messages for accurate cost estimation (AppSync delivers to sender too)
                 if (message.nodeStatus) {
+                    this.costTracking.dataUpdateReceived++;
                     this.handleDataUpdate(message.nodeStatus);
                 } else if (message.batchEvent) {
+                    this.costTracking.batchEventReceived++;
                     this.handleBatchEvent(message.batchEvent);
                 } else if (message.groupDissolve) {
                     this.costTracking.dissolveReceived++;
@@ -437,7 +440,6 @@ class MeshV2Service {
     handleDataUpdate (nodeStatus) {
         if (!nodeStatus || nodeStatus.nodeId === this.meshId) return;
 
-        this.costTracking.dataUpdateReceived++;
         const nodeId = nodeStatus.nodeId;
         if (!this.remoteData[nodeId]) {
             this.remoteData[nodeId] = {};
@@ -459,7 +461,6 @@ class MeshV2Service {
     handleBatchEvent (batchEvent) {
         if (!batchEvent || batchEvent.firedByNodeId === this.meshId) return;
 
-        this.costTracking.batchEventReceived++;
         const events = batchEvent.events ?
             batchEvent.events.filter(event => event.firedByNodeId !== this.meshId) :
             [];
