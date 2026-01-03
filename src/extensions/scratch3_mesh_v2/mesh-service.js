@@ -18,9 +18,28 @@ const {
     LIST_GROUP_STATUSES
 } = require('./gql-operations');
 
-const CONNECTION_TIMEOUT = process.env.MESH_CONNECTION_TIMEOUT_MS ?
-    parseInt(process.env.MESH_CONNECTION_TIMEOUT_MS, 10) :
-    50 * 60 * 1000; // Default 50 minutes in milliseconds
+/**
+ * Parses an environment variable as an integer with validation.
+ * @param {string} envVar - The environment variable value.
+ * @param {number} defaultValue - The default value if parsing fails or is out of range.
+ * @param {number} min - Minimum allowed value (inclusive).
+ * @param {number} max - Maximum allowed value (inclusive).
+ * @returns {number} The parsed integer or default value.
+ */
+const parseEnvInt = (envVar, defaultValue, min = 0, max = Infinity) => {
+    if (!envVar) return defaultValue;
+    const parsed = parseInt(envVar, 10);
+    if (isNaN(parsed) || parsed < min || parsed > max) return defaultValue;
+    return parsed;
+};
+
+// Mesh v2 configuration parameters
+const CONNECTION_TIMEOUT = parseEnvInt(
+    process.env.MESH_CONNECTION_TIMEOUT_MS,
+    50 * 60 * 1000, // Default: 50 minutes (production: 25 minutes = 1500000ms)
+    60 * 1000, // min: 1 minute
+    120 * 60 * 1000 // max: 2 hours
+);
 
 /**
  * GraphQL error types that indicate the connection is no longer valid.
@@ -60,9 +79,13 @@ class MeshV2Service {
         this.remoteData = {};
 
         // Rate limiters
-        const dataInterval = process.env.MESH_DATA_UPDATE_INTERVAL_MS ?
-            parseInt(process.env.MESH_DATA_UPDATE_INTERVAL_MS, 10) :
-            250;
+        // Data update interval (default: 250ms, production: 1000ms)
+        const dataInterval = parseEnvInt(
+            process.env.MESH_DATA_UPDATE_INTERVAL_MS,
+            250, // default
+            100, // min: 100ms
+            10000 // max: 10 seconds
+        );
         this.dataRateLimiter = new RateLimiter(4, dataInterval, {
             enableMerge: true,
             mergeKeyField: 'key'
@@ -70,9 +93,13 @@ class MeshV2Service {
 
         // Event queue for batch sending: { eventName, payload, firedAt } の配列
         this.eventQueue = [];
-        this.eventBatchInterval = process.env.MESH_EVENT_BATCH_INTERVAL_MS ?
-            parseInt(process.env.MESH_EVENT_BATCH_INTERVAL_MS, 10) :
-            250;
+        // Event batch interval (default: 250ms, production: 1000ms)
+        this.eventBatchInterval = parseEnvInt(
+            process.env.MESH_EVENT_BATCH_INTERVAL_MS,
+            250, // default
+            100, // min: 100ms
+            10000 // max: 10 seconds
+        );
         this.eventBatchTimer = null;
 
         // Event queue limits
@@ -664,9 +691,12 @@ class MeshV2Service {
 
         log.info(`Mesh V2: Starting heartbeat timer (Role: ${this.isHost ? 'Host' : 'Member'})`);
         // Use 15s for host, memberHeartbeatInterval for member (default 120s)
-        const hostInterval = process.env.MESH_HOST_HEARTBEAT_INTERVAL_MS ?
-            parseInt(process.env.MESH_HOST_HEARTBEAT_INTERVAL_MS, 10) :
-            15 * 1000;
+        const hostInterval = parseEnvInt(
+            process.env.MESH_HOST_HEARTBEAT_INTERVAL_MS,
+            15 * 1000, // default: 15 seconds
+            1000, // min: 1 second
+            300 * 1000 // max: 5 minutes
+        );
         const interval = this.isHost ? hostInterval : this.memberHeartbeatInterval * 1000;
 
         this.heartbeatTimer = setInterval(() => {
