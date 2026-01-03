@@ -48,6 +48,10 @@ class MeshV2Service {
         this.connectionTimer = null;
         this.heartbeatTimer = null;
         this.dataSyncTimer = null;
+
+        // Last data send promise to track completion of the most recent data transmission
+        this.lastDataSendPromise = Promise.resolve();
+
         this.memberHeartbeatInterval = 120; // Default 2 min
 
         // Data from other nodes: { nodeId: { key: { value: string, timestamp: number } } }
@@ -439,10 +443,13 @@ class MeshV2Service {
             this.remoteData[nodeId] = {};
         }
 
+        // Use server timestamp with fallback to current time
+        const serverTimestamp = nodeStatus.timestamp ? new Date(nodeStatus.timestamp).getTime() : Date.now();
+
         nodeStatus.data.forEach(item => {
             this.remoteData[nodeId][item.key] = {
                 value: item.value,
-                timestamp: Date.now() // Add timestamp
+                timestamp: serverTimestamp
             };
         });
     }
@@ -617,8 +624,8 @@ class MeshV2Service {
         if (!this.groupId || !this.client || events.length === 0) return;
 
         try {
-            // データ送信完了を待つ (Removed to prevent blocking, relying on unified subscription for order)
-            // await this.dataRateLimiter.waitForCompletion();
+            // Wait for last data send to complete
+            await this.lastDataSendPromise;
 
             this.costTracking.mutationCount++;
             this.costTracking.fireEventsCount++;
@@ -778,7 +785,9 @@ class MeshV2Service {
         }
 
         try {
-            await this.dataRateLimiter.send(dataArray, this._reportDataBound);
+            // Save Promise to track completion (including queue time)
+            this.lastDataSendPromise = this.dataRateLimiter.send(dataArray, this._reportDataBound);
+            await this.lastDataSendPromise;
         } catch (error) {
             log.error(`Mesh V2: Failed to send data: ${error}`);
             const reason = this.shouldDisconnectOnError(error);
@@ -792,25 +801,43 @@ class MeshV2Service {
      * Internal method to send data to the server.
      * Used as sendFunction in dataRateLimiter.
      * @param {Array} payload - Array of {key, value} objects.
+     * @returns {Promise} - Resolves with the mutation result.
      * @private
      */
     async _reportData (payload) {
-        this.costTracking.mutationCount++;
-        this.costTracking.reportDataCount++;
-        await this.client.mutate({
-            mutation: REPORT_DATA,
-            variables: {
-                groupId: this.groupId,
-                domain: this.domain,
-                nodeId: this.meshId,
-                data: payload
-            }
-        });
+        if (!this.groupId || !this.client) return;
 
-        // Update last sent data on success
-        payload.forEach(item => {
-            this.lastSentData[item.key] = item.value;
-        });
+        try {
+            this.costTracking.mutationCount++;
+            this.costTracking.reportDataCount++;
+
+            // Save Promise to track completion
+            this.lastDataSendPromise = this.client.mutate({
+                mutation: REPORT_DATA,
+                variables: {
+                    groupId: this.groupId,
+                    domain: this.domain,
+                    nodeId: this.meshId,
+                    data: payload
+                }
+            });
+
+            const result = await this.lastDataSendPromise;
+
+            // Update last sent data on success
+            payload.forEach(item => {
+                this.lastSentData[item.key] = item.value;
+            });
+
+            return result;
+        } catch (error) {
+            log.error(`Mesh V2: Failed to report data: ${error}`);
+            const reason = this.shouldDisconnectOnError(error);
+            if (reason) {
+                this.cleanupAndDisconnect(reason);
+            }
+            throw error;
+        }
     }
 
     fireEvent (eventName, payload = '') {
@@ -902,10 +929,11 @@ class MeshV2Service {
                 if (!this.remoteData[status.nodeId]) {
                     this.remoteData[status.nodeId] = {};
                 }
+                const serverTimestamp = status.timestamp ? new Date(status.timestamp).getTime() : Date.now();
                 status.data.forEach(item => {
                     this.remoteData[status.nodeId][item.key] = {
                         value: item.value,
-                        timestamp: Date.now()
+                        timestamp: serverTimestamp
                     };
                 });
             });
