@@ -77,10 +77,13 @@ const webBuilder = new ScratchWebpackConfigBuilder(common)
         'process.env.MESH_GRAPHQL_ENDPOINT': JSON.stringify(process.env.MESH_GRAPHQL_ENDPOINT),
         'process.env.MESH_API_KEY': JSON.stringify(process.env.MESH_API_KEY),
         'process.env.MESH_AWS_REGION': JSON.stringify(process.env.MESH_AWS_REGION),
-        'process.env.MESH_CONNECTION_TIMEOUT_MS': JSON.stringify(process.env.MESH_CONNECTION_TIMEOUT_MS),
+        'process.env.MESH_MAX_CONNECTION_TIME_SECONDS': JSON.stringify(process.env.MESH_MAX_CONNECTION_TIME_SECONDS),
         'process.env.MESH_DATA_UPDATE_INTERVAL_MS': JSON.stringify(process.env.MESH_DATA_UPDATE_INTERVAL_MS),
         'process.env.MESH_EVENT_BATCH_INTERVAL_MS': JSON.stringify(process.env.MESH_EVENT_BATCH_INTERVAL_MS),
-        'process.env.MESH_HOST_HEARTBEAT_INTERVAL_MS': JSON.stringify(process.env.MESH_HOST_HEARTBEAT_INTERVAL_MS)
+        'process.env.MESH_HOST_HEARTBEAT_INTERVAL_SECONDS':
+            JSON.stringify(process.env.MESH_HOST_HEARTBEAT_INTERVAL_SECONDS),
+        'process.env.MESH_MEMBER_HEARTBEAT_INTERVAL_SECONDS':
+            JSON.stringify(process.env.MESH_MEMBER_HEARTBEAT_INTERVAL_SECONDS)
     }));
 
 const playgroundBuilder = webBuilder.clone()

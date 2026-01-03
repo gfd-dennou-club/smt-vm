@@ -35,11 +35,11 @@ const parseEnvInt = (envVar, defaultValue, min = 0, max = Infinity) => {
 
 // Mesh v2 configuration parameters
 const CONNECTION_TIMEOUT = parseEnvInt(
-    process.env.MESH_CONNECTION_TIMEOUT_MS,
-    50 * 60 * 1000, // Default: 50 minutes (production: 25 minutes = 1500000ms)
-    60 * 1000, // min: 1 minute
-    120 * 60 * 1000 // max: 2 hours
-);
+    process.env.MESH_MAX_CONNECTION_TIME_SECONDS,
+    300, // Default: 5 minutes (300 seconds)
+    60, // min: 1 minute
+    7200 // max: 2 hours
+) * 1000; // Convert to milliseconds
 
 /**
  * GraphQL error types that indicate the connection is no longer valid.
@@ -690,14 +690,22 @@ class MeshV2Service {
         if (!this.groupId) return;
 
         log.info(`Mesh V2: Starting heartbeat timer (Role: ${this.isHost ? 'Host' : 'Member'})`);
-        // Use 15s for host, memberHeartbeatInterval for member (default 120s)
+        // Use 15s for host, memberHeartbeatInterval for member (default 15s)
         const hostInterval = parseEnvInt(
-            process.env.MESH_HOST_HEARTBEAT_INTERVAL_MS,
-            15 * 1000, // default: 15 seconds
-            1000, // min: 1 second
-            300 * 1000 // max: 5 minutes
-        );
-        const interval = this.isHost ? hostInterval : this.memberHeartbeatInterval * 1000;
+            process.env.MESH_HOST_HEARTBEAT_INTERVAL_SECONDS,
+            15, // default: 15 seconds
+            1, // min: 1 second
+            300 // max: 5 minutes
+        ) * 1000;
+
+        const memberDefaultInterval = parseEnvInt(
+            process.env.MESH_MEMBER_HEARTBEAT_INTERVAL_SECONDS,
+            15, // default: 15 seconds
+            1, // min: 1 second
+            300 // max: 5 minutes
+        ) * 1000;
+
+        const interval = this.isHost ? hostInterval : (this.memberHeartbeatInterval * 1000 || memberDefaultInterval);
 
         this.heartbeatTimer = setInterval(() => {
             if (this.isHost) {
