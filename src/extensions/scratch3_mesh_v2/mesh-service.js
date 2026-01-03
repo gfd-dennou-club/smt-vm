@@ -34,12 +34,6 @@ const parseEnvInt = (envVar, defaultValue, min = 0, max = Infinity) => {
 };
 
 // Mesh v2 configuration parameters
-const CONNECTION_TIMEOUT = parseEnvInt(
-    process.env.MESH_MAX_CONNECTION_TIME_SECONDS,
-    300, // Default: 5 minutes (300 seconds)
-    60, // min: 1 minute
-    7200 // max: 2 hours
-) * 1000; // Convert to milliseconds
 
 /**
  * GraphQL error types that indicate the connection is no longer valid.
@@ -789,13 +783,15 @@ class MeshV2Service {
 
     startConnectionTimer () {
         this.stopConnectionTimer();
-        let timeout = CONNECTION_TIMEOUT;
-        if (this.expiresAt) {
-            const serverTimeout = new Date(this.expiresAt).getTime() - Date.now();
-            if (serverTimeout > 0) {
-                timeout = serverTimeout;
-            }
+        if (!this.expiresAt) return;
+
+        const timeout = new Date(this.expiresAt).getTime() - Date.now();
+        if (timeout <= 0) {
+            log.warn('Mesh V2: Group is already expired');
+            this.leaveGroup();
+            return;
         }
+
         const timeoutMinutes = Math.round(timeout / 60000);
         this.connectionTimer = setTimeout(() => {
             log.warn(`Mesh V2: Connection timeout (${timeoutMinutes} minutes)`);
