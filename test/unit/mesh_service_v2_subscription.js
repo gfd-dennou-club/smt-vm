@@ -29,7 +29,7 @@ test('MeshV2Service Subscription Integration', t => {
                 return {
                     subscribe: observer => {
                         subscriptionObserver = observer;
-                        return { unsubscribe: () => {} };
+                        return {unsubscribe: () => {}};
                     }
                 };
             }
@@ -52,7 +52,7 @@ test('MeshV2Service Subscription Integration', t => {
             subscribe: () => ({
                 subscribe: observer => {
                     subscriptionObserver = observer;
-                    return { unsubscribe: () => {} };
+                    return {unsubscribe: () => {}};
                 }
             })
         };
@@ -61,7 +61,7 @@ test('MeshV2Service Subscription Integration', t => {
 
         // Spy on handleDataUpdate
         let handleDataUpdateCalled = false;
-        service.handleDataUpdate = (payload) => {
+        service.handleDataUpdate = payload => {
             handleDataUpdateCalled = true;
             st.equal(payload.__typename, 'NodeStatus');
             st.equal(payload.nodeId, 'node2');
@@ -71,9 +71,11 @@ test('MeshV2Service Subscription Integration', t => {
         subscriptionObserver.next({
             data: {
                 onMessageInGroup: {
-                    __typename: 'NodeStatus',
-                    nodeId: 'node2',
-                    data: []
+                    nodeStatus: {
+                        __typename: 'NodeStatus',
+                        nodeId: 'node2',
+                        data: []
+                    }
                 }
             }
         });
@@ -92,7 +94,7 @@ test('MeshV2Service Subscription Integration', t => {
             subscribe: () => ({
                 subscribe: observer => {
                     subscriptionObserver = observer;
-                    return { unsubscribe: () => {} };
+                    return {unsubscribe: () => {}};
                 }
             })
         };
@@ -101,7 +103,7 @@ test('MeshV2Service Subscription Integration', t => {
 
         // Spy on handleBatchEvent
         let handleBatchEventCalled = false;
-        service.handleBatchEvent = (payload) => {
+        service.handleBatchEvent = payload => {
             handleBatchEventCalled = true;
             st.equal(payload.__typename, 'BatchEvent');
             st.equal(payload.firedByNodeId, 'node2');
@@ -111,9 +113,11 @@ test('MeshV2Service Subscription Integration', t => {
         subscriptionObserver.next({
             data: {
                 onMessageInGroup: {
-                    __typename: 'BatchEvent',
-                    firedByNodeId: 'node2',
-                    events: []
+                    batchEvent: {
+                        __typename: 'BatchEvent',
+                        firedByNodeId: 'node2',
+                        events: []
+                    }
                 }
             }
         });
@@ -132,7 +136,7 @@ test('MeshV2Service Subscription Integration', t => {
             subscribe: () => ({
                 subscribe: observer => {
                     subscriptionObserver = observer;
-                    return { unsubscribe: () => {} };
+                    return {unsubscribe: () => {}};
                 }
             })
         };
@@ -149,8 +153,10 @@ test('MeshV2Service Subscription Integration', t => {
         subscriptionObserver.next({
             data: {
                 onMessageInGroup: {
-                    __typename: 'GroupDissolvePayload',
-                    message: 'Bye'
+                    groupDissolve: {
+                        __typename: 'GroupDissolvePayload',
+                        message: 'Bye'
+                    }
                 }
             }
         });
@@ -170,7 +176,7 @@ test('MeshV2Service Subscription Integration', t => {
             subscribe: () => ({
                 subscribe: observer => {
                     subscriptionObserver = observer;
-                    return { unsubscribe: () => {} };
+                    return {unsubscribe: () => {}};
                 }
             })
         };
@@ -179,9 +185,15 @@ test('MeshV2Service Subscription Integration', t => {
 
         // Spies
         let anyCalled = false;
-        service.handleDataUpdate = () => { anyCalled = true; };
-        service.handleBatchEvent = () => { anyCalled = true; };
-        service.cleanupAndDisconnect = () => { anyCalled = true; };
+        service.handleDataUpdate = () => {
+            anyCalled = true;
+        };
+        service.handleBatchEvent = () => {
+            anyCalled = true;
+        };
+        service.cleanupAndDisconnect = () => {
+            anyCalled = true;
+        };
 
         // Simulate unknown message
         subscriptionObserver.next({
