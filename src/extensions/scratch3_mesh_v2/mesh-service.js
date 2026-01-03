@@ -67,6 +67,7 @@ class MeshV2Service {
         // Last data send promise to track completion of the most recent data transmission
         this.lastDataSendPromise = Promise.resolve();
 
+        this.hostHeartbeatInterval = 60; // Default 1 min
         this.memberHeartbeatInterval = 120; // Default 2 min
 
         // Data from other nodes: { nodeId: { key: { value: string, timestamp: number } } }
@@ -226,6 +227,9 @@ class MeshV2Service {
             this.domain = group.domain; // Update domain from server
             this.expiresAt = group.expiresAt;
             this.isHost = true;
+            if (group.heartbeatIntervalSeconds) {
+                this.hostHeartbeatInterval = group.heartbeatIntervalSeconds;
+            }
 
             this.costTracking.connectionStartTime = Date.now();
             this.startSubscriptions();
@@ -684,22 +688,7 @@ class MeshV2Service {
         if (!this.groupId) return;
 
         log.info(`Mesh V2: Starting heartbeat timer (Role: ${this.isHost ? 'Host' : 'Member'})`);
-        // Use 60s for host, memberHeartbeatInterval for member (default 120s)
-        const hostInterval = parseEnvInt(
-            process.env.MESH_HOST_HEARTBEAT_INTERVAL_SECONDS,
-            60, // default: 60 seconds
-            1, // min: 1 second
-            300 // max: 5 minutes
-        ) * 1000;
-
-        const memberDefaultInterval = parseEnvInt(
-            process.env.MESH_MEMBER_HEARTBEAT_INTERVAL_SECONDS,
-            120, // default: 120 seconds
-            1, // min: 1 second
-            600 // max: 10 minutes
-        ) * 1000;
-
-        const interval = this.isHost ? hostInterval : (this.memberHeartbeatInterval * 1000 || memberDefaultInterval);
+        const interval = (this.isHost ? this.hostHeartbeatInterval : this.memberHeartbeatInterval) * 1000;
 
         this.heartbeatTimer = setInterval(() => {
             if (this.isHost) {
@@ -734,6 +723,13 @@ class MeshV2Service {
             });
             this.expiresAt = result.data.renewHeartbeat.expiresAt;
             log.info(`Mesh V2: Heartbeat renewed. Expires at: ${this.expiresAt}`);
+            if (result.data.renewHeartbeat.heartbeatIntervalSeconds) {
+                const newInterval = result.data.renewHeartbeat.heartbeatIntervalSeconds;
+                if (newInterval !== this.hostHeartbeatInterval) {
+                    this.hostHeartbeatInterval = newInterval;
+                    this.startHeartbeat(); // Restart with new interval
+                }
+            }
             this.startConnectionTimer();
             return result.data.renewHeartbeat;
         } catch (error) {

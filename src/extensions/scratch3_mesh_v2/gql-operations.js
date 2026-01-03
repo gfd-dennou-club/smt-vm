@@ -31,6 +31,7 @@ const CREATE_GROUP = gql`
       hostId
       createdAt
       expiresAt
+      heartbeatIntervalSeconds
     }
   }
 `;
