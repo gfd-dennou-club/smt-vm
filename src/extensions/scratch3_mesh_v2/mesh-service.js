@@ -18,7 +18,9 @@ const {
     LIST_GROUP_STATUSES
 } = require('./gql-operations');
 
-const CONNECTION_TIMEOUT = 50 * 60 * 1000; // 50 minutes in milliseconds
+const CONNECTION_TIMEOUT = process.env.MESH_CONNECTION_TIMEOUT_MS ?
+    parseInt(process.env.MESH_CONNECTION_TIMEOUT_MS, 10) :
+    50 * 60 * 1000; // Default 50 minutes in milliseconds
 
 /**
  * GraphQL error types that indicate the connection is no longer valid.
@@ -58,14 +60,19 @@ class MeshV2Service {
         this.remoteData = {};
 
         // Rate limiters
-        this.dataRateLimiter = new RateLimiter(4, 250, {
+        const dataInterval = process.env.MESH_DATA_UPDATE_INTERVAL_MS ?
+            parseInt(process.env.MESH_DATA_UPDATE_INTERVAL_MS, 10) :
+            250;
+        this.dataRateLimiter = new RateLimiter(4, dataInterval, {
             enableMerge: true,
             mergeKeyField: 'key'
         });
 
         // Event queue for batch sending: { eventName, payload, firedAt } の配列
         this.eventQueue = [];
-        this.eventBatchInterval = 250;
+        this.eventBatchInterval = process.env.MESH_EVENT_BATCH_INTERVAL_MS ?
+            parseInt(process.env.MESH_EVENT_BATCH_INTERVAL_MS, 10) :
+            250;
         this.eventBatchTimer = null;
 
         // Event queue limits
@@ -657,7 +664,10 @@ class MeshV2Service {
 
         log.info(`Mesh V2: Starting heartbeat timer (Role: ${this.isHost ? 'Host' : 'Member'})`);
         // Use 15s for host, memberHeartbeatInterval for member (default 120s)
-        const interval = this.isHost ? 15 * 1000 : this.memberHeartbeatInterval * 1000;
+        const hostInterval = process.env.MESH_HOST_HEARTBEAT_INTERVAL_MS ?
+            parseInt(process.env.MESH_HOST_HEARTBEAT_INTERVAL_MS, 10) :
+            15 * 1000;
+        const interval = this.isHost ? hostInterval : this.memberHeartbeatInterval * 1000;
 
         this.heartbeatTimer = setInterval(() => {
             if (this.isHost) {
