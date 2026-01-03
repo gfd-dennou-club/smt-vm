@@ -35,33 +35,36 @@ test('MeshV2Service Timestamp-based getRemoteVariable', t => {
         st.end();
     });
 
-    t.test('handleDataUpdate should add timestamp', st => {
+    t.test('handleDataUpdate should add timestamp from nodeStatus', st => {
+        const serverTimestamp = new Date().toISOString();
+        const expectedTimestamp = new Date(serverTimestamp).getTime();
         const nodeStatus = {
             nodeId: 'node4',
+            timestamp: serverTimestamp,
             data: [
                 {key: 'var1', value: '100'}
             ]
         };
 
-        const beforeUpdate = Date.now();
         service.handleDataUpdate(nodeStatus);
-        const afterUpdate = Date.now();
 
         st.ok(service.remoteData.node4, 'Node 4 should be added');
         st.ok(service.remoteData.node4.var1, 'var1 should be added');
         st.equal(service.remoteData.node4.var1.value, '100');
-        st.ok(service.remoteData.node4.var1.timestamp >= beforeUpdate);
-        st.ok(service.remoteData.node4.var1.timestamp <= afterUpdate);
+        st.equal(service.remoteData.node4.var1.timestamp, expectedTimestamp, 'Should use server timestamp');
         st.end();
     });
 
-    t.test('fetchAllNodesData should add timestamp', async st => {
+    t.test('fetchAllNodesData should add timestamp from status', async st => {
+        const serverTimestamp = new Date().toISOString();
+        const expectedTimestamp = new Date(serverTimestamp).getTime();
         service.client = {
             query: () => Promise.resolve({
                 data: {
                     listGroupStatuses: [
                         {
                             nodeId: 'node5',
+                            timestamp: serverTimestamp,
                             data: [{key: 'var2', value: '200'}]
                         }
                     ]
@@ -69,14 +72,11 @@ test('MeshV2Service Timestamp-based getRemoteVariable', t => {
             })
         };
 
-        const beforeFetch = Date.now();
         await service.fetchAllNodesData();
-        const afterFetch = Date.now();
 
         st.ok(service.remoteData.node5, 'Node 5 should be added');
         st.equal(service.remoteData.node5.var2.value, '200');
-        st.ok(service.remoteData.node5.var2.timestamp >= beforeFetch);
-        st.ok(service.remoteData.node5.var2.timestamp <= afterFetch);
+        st.equal(service.remoteData.node5.var2.timestamp, expectedTimestamp, 'Should use server timestamp');
         st.end();
     });
 

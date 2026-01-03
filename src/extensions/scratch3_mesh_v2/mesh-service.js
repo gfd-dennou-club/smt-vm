@@ -14,9 +14,7 @@ const {
     SEND_MEMBER_HEARTBEAT,
     REPORT_DATA,
     FIRE_EVENTS,
-    ON_DATA_UPDATE,
-    ON_BATCH_EVENT,
-    ON_GROUP_DISSOLVE,
+    ON_MESSAGE_IN_GROUP,
     LIST_GROUP_STATUSES
 } = require('./gql-operations');
 
@@ -50,6 +48,10 @@ class MeshV2Service {
         this.connectionTimer = null;
         this.heartbeatTimer = null;
         this.dataSyncTimer = null;
+
+        // Last data send promise to track completion of the most recent data transmission
+        this.lastDataSendPromise = Promise.resolve();
+
         this.memberHeartbeatInterval = 120; // Default 2 min
 
         // Data from other nodes: { nodeId: { key: { value: string, timestamp: number } } }
@@ -65,6 +67,14 @@ class MeshV2Service {
         this.eventQueue = [];
         this.eventBatchInterval = 250;
         this.eventBatchTimer = null;
+
+        // Event queue limits
+        this.MAX_EVENT_QUEUE_SIZE = 100; // 最大100イベント
+        this.eventQueueStats = {
+            duplicatesSkipped: 0,
+            dropped: 0,
+            lastReportTime: Date.now()
+        };
 
         // Last sent data to detect changes
         this.lastSentData = {};
@@ -357,6 +367,14 @@ class MeshV2Service {
             log.info(`  Average cost per second: $${(totalCost / connectionDurationSeconds).toFixed(10)}`);
         }
 
+        // 統計情報を出力
+        if (this.eventQueueStats &&
+            (this.eventQueueStats.duplicatesSkipped > 0 || this.eventQueueStats.dropped > 0)) {
+            log.info(`Mesh V2: Final Event Queue Stats: ` +
+                `duplicates skipped=${this.eventQueueStats.duplicatesSkipped}, ` +
+                `dropped=${this.eventQueueStats.dropped}`);
+        }
+
         // キューをクリア
         this.pendingBroadcasts = [];
         this.batchStartTime = null;
@@ -383,35 +401,32 @@ class MeshV2Service {
             domain: this.domain
         };
 
-        const dataSub = this.client.subscribe({
-            query: ON_DATA_UPDATE,
+        const messageSub = this.client.subscribe({
+            query: ON_MESSAGE_IN_GROUP,
             variables
         }).subscribe({
-            next: result => this.handleDataUpdate(result.data.onDataUpdateInGroup),
-            error: err => log.error(`Mesh V2: Data subscription error: ${err}`)
-        });
+            next: result => {
+                const message = result.data.onMessageInGroup;
+                if (!message) return;
 
-        const batchEventSub = this.client.subscribe({
-            query: ON_BATCH_EVENT,
-            variables
-        }).subscribe({
-            next: result => this.handleBatchEvent(result.data.onBatchEventInGroup),
-            error: err => log.error(`Mesh V2: Batch event subscription error: ${err}`)
-        });
-
-        const dissolveSub = this.client.subscribe({
-            query: ON_GROUP_DISSOLVE,
-            variables
-        }).subscribe({
-            next: () => {
-                this.costTracking.dissolveReceived++;
-                log.info('Mesh V2: Group dissolved by host');
-                this.cleanupAndDisconnect();
+                // MeshMessage has three fields: nodeStatus, batchEvent, groupDissolve
+                // Only one field will be non-null per message
+                if (message.nodeStatus) {
+                    this.handleDataUpdate(message.nodeStatus);
+                } else if (message.batchEvent) {
+                    this.handleBatchEvent(message.batchEvent);
+                } else if (message.groupDissolve) {
+                    this.costTracking.dissolveReceived++;
+                    log.info('Mesh V2: Group dissolved by host');
+                    this.cleanupAndDisconnect();
+                } else {
+                    log.warn('Mesh V2: Received message with all fields null');
+                }
             },
-            error: err => log.error(`Mesh V2: Dissolve subscription error: ${err}`)
+            error: err => log.error(`Mesh V2: Subscription error: ${err}`)
         });
 
-        this.subscriptions.push(dataSub, batchEventSub, dissolveSub);
+        this.subscriptions.push(messageSub);
     }
 
     stopSubscriptions () {
@@ -428,10 +443,15 @@ class MeshV2Service {
             this.remoteData[nodeId] = {};
         }
 
+        // Use server timestamp with fallback to current time
+        const serverTimestamp = nodeStatus.timestamp ?
+            new Date(nodeStatus.timestamp).getTime() :
+            (log.warn('Mesh V2: Missing server timestamp, using client time'), Date.now());
+
         nodeStatus.data.forEach(item => {
             this.remoteData[nodeId][item.key] = {
                 value: item.value,
-                timestamp: Date.now() // Add timestamp
+                timestamp: serverTimestamp
             };
         });
     }
@@ -480,8 +500,10 @@ class MeshV2Service {
      * Called once per frame via BEFORE_STEP event.
      *
      * Strategy:
-     * - Events with offsetMs close to each other (< 1ms) are processed in the same frame (at most 1)
-     * - Events separated by frame intervals (>= 16.67ms) wait for real time to elapse
+     * - Process events whose timing has arrived (offsetMs <= elapsedMs)
+     * - Limit processing to a 33ms window of event time per frame to avoid spikes
+     * - Execute them in order (maintains event sequence)
+     * - Different event types don't cause RESTART (different handlers)
      */
     processNextBroadcast () {
         if (!this.groupId) {
@@ -501,54 +523,45 @@ class MeshV2Service {
 
         // 処理すべきイベントを収集（タイミングが来ているもの）
         const eventsToProcess = [];
+        let windowBase = null;
 
         while (this.pendingBroadcasts.length > 0) {
             const {event, offsetMs} = this.pendingBroadcasts[0];
 
             // まだタイミングが来ていない場合は待機
             if (offsetMs > elapsedMs) {
-                log.info(`Mesh V2: Waiting for event ${event.name} ` +
+                log.debug(`Mesh V2: Waiting for event ${event.name} ` +
                     `(needs ${offsetMs}ms, elapsed ${elapsedMs}ms)`);
+                break;
+            }
+
+            // 1フレーム(33ms)のウィンドウ制限を適用
+            // （バックログがある場合でも1フレームで大量のブロードキャストを避ける）
+            if (windowBase === null) {
+                windowBase = offsetMs;
+            } else if (offsetMs >= windowBase + 33) {
+                log.debug(`Mesh V2: Window limit reached (33ms). ` +
+                    `Remaining events will be processed in next frames.`);
                 break;
             }
 
             // タイミングが来たイベントをキューから取り出し
             const item = this.pendingBroadcasts.shift();
             eventsToProcess.push(item);
-
-            // 次のイベントとの間隔をチェック
-            if (this.pendingBroadcasts.length > 0) {
-                const nextOffset = this.pendingBroadcasts[0].offsetMs;
-                const gap = nextOffset - offsetMs;
-
-                // 次のイベントが1ms以内なら同じフレームで処理対象とする（が実際には1個しか処理しない）
-                // それ以外は次のフレームまで待機
-                if (gap >= 1) {
-                    break;
-                }
-            }
         }
 
         // 収集したイベントを処理
         if (eventsToProcess.length > 0) {
-            // フレームごとに1つのブロードキャストのみ実行（スレッド再起動回避）
-            const {event, offsetMs} = eventsToProcess[0];
+            log.info(`Mesh V2: Broadcasting ${eventsToProcess.length} events ` +
+                `(${this.pendingBroadcasts.length} remaining in queue)`);
 
-            log.info(`Mesh V2: Broadcasting event: ${event.name} ` +
-                `(offset: ${offsetMs}ms, elapsed: ${elapsedMs}ms, ` +
-                `${eventsToProcess.length - 1} similar events batched, ` +
-                `${this.pendingBroadcasts.length} remaining in queue)`);
+            eventsToProcess.forEach(({event, offsetMs}) => {
+                log.info(`Mesh V2: Broadcasting event: ${event.name} ` +
+                    `(offset: ${offsetMs}ms, elapsed: ${elapsedMs}ms)`);
 
-            this.broadcastEvent(event);
-            this.lastBroadcastOffset = offsetMs;
-
-            // 1ms以内の追加イベントは次のフレームで処理
-            // （同じフレームで複数ブロードキャストしない制約）
-            eventsToProcess.slice(1)
-                .reverse()
-                .forEach(item => {
-                    this.pendingBroadcasts.unshift(item);
-                });
+                this.broadcastEvent(event);
+                this.lastBroadcastOffset = offsetMs;
+            });
         }
     }
 
@@ -613,8 +626,8 @@ class MeshV2Service {
         if (!this.groupId || !this.client || events.length === 0) return;
 
         try {
-            // データ送信完了を待つ
-            await this.dataRateLimiter.waitForCompletion();
+            // Wait for last data send to complete
+            await this.lastDataSendPromise;
 
             this.costTracking.mutationCount++;
             this.costTracking.fireEventsCount++;
@@ -774,7 +787,9 @@ class MeshV2Service {
         }
 
         try {
-            await this.dataRateLimiter.send(dataArray, this._reportDataBound);
+            // Save Promise to track completion (including queue time)
+            this.lastDataSendPromise = this.dataRateLimiter.send(dataArray, this._reportDataBound);
+            await this.lastDataSendPromise;
         } catch (error) {
             log.error(`Mesh V2: Failed to send data: ${error}`);
             const reason = this.shouldDisconnectOnError(error);
@@ -788,25 +803,43 @@ class MeshV2Service {
      * Internal method to send data to the server.
      * Used as sendFunction in dataRateLimiter.
      * @param {Array} payload - Array of {key, value} objects.
+     * @returns {Promise} - Resolves with the mutation result.
      * @private
      */
     async _reportData (payload) {
-        this.costTracking.mutationCount++;
-        this.costTracking.reportDataCount++;
-        await this.client.mutate({
-            mutation: REPORT_DATA,
-            variables: {
-                groupId: this.groupId,
-                domain: this.domain,
-                nodeId: this.meshId,
-                data: payload
-            }
-        });
+        if (!this.groupId || !this.client) return;
 
-        // Update last sent data on success
-        payload.forEach(item => {
-            this.lastSentData[item.key] = item.value;
-        });
+        try {
+            this.costTracking.mutationCount++;
+            this.costTracking.reportDataCount++;
+
+            // Save Promise to track completion
+            this.lastDataSendPromise = this.client.mutate({
+                mutation: REPORT_DATA,
+                variables: {
+                    groupId: this.groupId,
+                    domain: this.domain,
+                    nodeId: this.meshId,
+                    data: payload
+                }
+            });
+
+            const result = await this.lastDataSendPromise;
+
+            // Update last sent data on success
+            payload.forEach(item => {
+                this.lastSentData[item.key] = item.value;
+            });
+
+            return result;
+        } catch (error) {
+            log.error(`Mesh V2: Failed to report data: ${error}`);
+            const reason = this.shouldDisconnectOnError(error);
+            if (reason) {
+                this.cleanupAndDisconnect(reason);
+            }
+            throw error;
+        }
     }
 
     fireEvent (eventName, payload = '') {
@@ -815,13 +848,60 @@ class MeshV2Service {
             return;
         }
 
-        log.info(`Mesh V2: Queuing event for sending: ${eventName}`);
+        // ステップ1: 重複チェック
+        const isDuplicate = this.eventQueue.some(item =>
+            item.eventName === eventName && item.payload === payload
+        );
+
+        if (isDuplicate) {
+            this.eventQueueStats.duplicatesSkipped++;
+            this.reportEventStatsIfNeeded();
+
+            log.debug(`Mesh V2: Event already in queue, skipping: ${eventName}`);
+            return;
+        }
+
+        // ステップ2: サイズ制限チェック（保険）
+        if (this.eventQueue.length >= this.MAX_EVENT_QUEUE_SIZE) {
+            const dropped = this.eventQueue.shift(); // 古いイベントを破棄（FIFO）
+            this.eventQueueStats.dropped++;
+
+            if (this.eventQueueStats.dropped % 10 === 1) { // 10イベントごとに警告
+                log.warn(`Mesh V2: Event queue full (${this.MAX_EVENT_QUEUE_SIZE}). ` +
+                    `Dropped ${this.eventQueueStats.dropped} events. ` +
+                    `Latest: ${dropped.eventName}`);
+            }
+        }
+
+        log.debug(`Mesh V2: Queuing event for sending: ${eventName} ` +
+            `(queue size: ${this.eventQueue.length})`);
+
         // キューに追加（発火日時を記録）
         this.eventQueue.push({
             eventName: eventName,
             payload: payload,
             firedAt: new Date().toISOString()
         });
+    }
+
+    /**
+     * Report event queue statistics if needed (every 10 seconds).
+     */
+    reportEventStatsIfNeeded () {
+        const now = Date.now();
+        const elapsed = now - this.eventQueueStats.lastReportTime;
+
+        if (elapsed >= 10000 &&
+            (this.eventQueueStats.duplicatesSkipped > 0 || this.eventQueueStats.dropped > 0)) {
+            log.info(`Mesh V2: Event Queue Stats (last ${(elapsed / 1000).toFixed(1)}s): ` +
+                `duplicates skipped=${this.eventQueueStats.duplicatesSkipped}, ` +
+                `dropped=${this.eventQueueStats.dropped}, ` +
+                `current queue size=${this.eventQueue.length}`);
+
+            this.eventQueueStats.duplicatesSkipped = 0;
+            this.eventQueueStats.dropped = 0;
+            this.eventQueueStats.lastReportTime = now;
+        }
     }
 
     /**
@@ -851,10 +931,13 @@ class MeshV2Service {
                 if (!this.remoteData[status.nodeId]) {
                     this.remoteData[status.nodeId] = {};
                 }
+                const serverTimestamp = status.timestamp ?
+                    new Date(status.timestamp).getTime() :
+                    (log.warn('Mesh V2: Missing server timestamp, using client time'), Date.now());
                 status.data.forEach(item => {
                     this.remoteData[status.nodeId][item.key] = {
                         value: item.value,
-                        timestamp: Date.now()
+                        timestamp: serverTimestamp
                     };
                 });
             });
