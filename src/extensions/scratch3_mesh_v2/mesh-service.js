@@ -444,7 +444,9 @@ class MeshV2Service {
         }
 
         // Use server timestamp with fallback to current time
-        const serverTimestamp = nodeStatus.timestamp ? new Date(nodeStatus.timestamp).getTime() : Date.now();
+        const serverTimestamp = nodeStatus.timestamp ?
+            new Date(nodeStatus.timestamp).getTime() :
+            (log.warn('Mesh V2: Missing server timestamp, using client time'), Date.now());
 
         nodeStatus.data.forEach(item => {
             this.remoteData[nodeId][item.key] = {
@@ -929,7 +931,9 @@ class MeshV2Service {
                 if (!this.remoteData[status.nodeId]) {
                     this.remoteData[status.nodeId] = {};
                 }
-                const serverTimestamp = status.timestamp ? new Date(status.timestamp).getTime() : Date.now();
+                const serverTimestamp = status.timestamp ?
+                    new Date(status.timestamp).getTime() :
+                    (log.warn('Mesh V2: Missing server timestamp, using client time'), Date.now());
                 status.data.forEach(item => {
                     this.remoteData[status.nodeId][item.key] = {
                         value: item.value,
