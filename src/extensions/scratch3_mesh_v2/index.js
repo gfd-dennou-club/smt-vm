@@ -55,6 +55,7 @@ class Scratch3MeshV2Blocks {
         this.domain = getDomainFromUrl();
         this.nodeId = uuidv4().replaceAll('-', '');
         this.connectionState = 'disconnected';
+        this.isExplicitDisconnect = false;
 
         try {
             createClient();
@@ -261,6 +262,10 @@ class Scratch3MeshV2Blocks {
         log.info(`Mesh V2: Connection state transition: ${prevState} -> ${state}`);
         this.connectionState = state;
 
+        if (state !== 'disconnected') {
+            this.isExplicitDisconnect = false;
+        }
+
         switch (state) {
         case 'connected':
             this.runtime.emit(this.runtime.constructor.PERIPHERAL_CONNECTED);
@@ -270,7 +275,7 @@ class Scratch3MeshV2Blocks {
             this.runtime.emit(this.runtime.constructor.PERIPHERAL_REQUEST_ERROR, {
                 extensionId: Scratch3MeshV2Blocks.EXTENSION_ID
             });
-            if (prevState === 'connected') {
+            if (prevState === 'connected' && !this.isExplicitDisconnect) {
                 this.runtime.emit(this.runtime.constructor.PERIPHERAL_CONNECTION_LOST_ERROR, {
                     extensionId: Scratch3MeshV2Blocks.EXTENSION_ID
                 });
@@ -287,6 +292,11 @@ class Scratch3MeshV2Blocks {
                     extensionId: Scratch3MeshV2Blocks.EXTENSION_ID
                 });
             }
+            if (prevState === 'connected' && !this.isExplicitDisconnect) {
+                this.runtime.emit(this.runtime.constructor.PERIPHERAL_CONNECTION_LOST_ERROR, {
+                    extensionId: Scratch3MeshV2Blocks.EXTENSION_ID
+                });
+            }
             // Always emit disconnected event
             this.runtime.emit(this.runtime.constructor.PERIPHERAL_DISCONNECTED, {
                 extensionId: Scratch3MeshV2Blocks.EXTENSION_ID
@@ -298,6 +308,7 @@ class Scratch3MeshV2Blocks {
     /* istanbul ignore next */
     disconnect () {
         if (this.meshService) {
+            this.isExplicitDisconnect = true;
             this.setConnectionState('disconnected');
             this.meshService.leaveGroup();
         }

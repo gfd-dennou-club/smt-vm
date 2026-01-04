@@ -273,6 +273,59 @@ test('Mesh V2 Blocks', t => {
         st.end();
     });
 
+    t.test('connection state: connected to disconnected (unexpected) emits PERIPHERAL_CONNECTION_LOST_ERROR', st => {
+        const mockRuntime = createMockRuntime();
+        const blocks = new MeshV2Blocks(mockRuntime);
+        const events = [];
+
+        // Track all emitted events
+        const originalEmit = mockRuntime.emit;
+        mockRuntime.emit = (event, data) => {
+            events.push({event, data});
+            return originalEmit(event, data);
+        };
+
+        // Transition to connected state first
+        blocks.setConnectionState('connected');
+        events.length = 0; // Clear events
+
+        // Transition to disconnected state unexpectedly (e.g. from service callback)
+        blocks.setConnectionState('disconnected');
+
+        // Verify PERIPHERAL_CONNECTION_LOST_ERROR and PERIPHERAL_DISCONNECTED were emitted
+        st.equal(events.length, 2);
+        st.equal(events[0].event, 'PERIPHERAL_CONNECTION_LOST_ERROR');
+        st.equal(events[1].event, 'PERIPHERAL_DISCONNECTED');
+
+        st.end();
+    });
+
+    t.test('connection state: connected to disconnected (explicit) DOES NOT emit PERIPHERAL_CONNECTION_LOST_ERROR', st => {
+        const mockRuntime = createMockRuntime();
+        const blocks = new MeshV2Blocks(mockRuntime);
+        const events = [];
+
+        // Track all emitted events
+        const originalEmit = mockRuntime.emit;
+        mockRuntime.emit = (event, data) => {
+            events.push({event, data});
+            return originalEmit(event, data);
+        };
+
+        // Transition to connected state first
+        blocks.setConnectionState('connected');
+        events.length = 0; // Clear events
+
+        // Explicit disconnect
+        blocks.disconnect();
+
+        // Verify ONLY PERIPHERAL_DISCONNECTED was emitted
+        st.equal(events.length, 1);
+        st.equal(events[0].event, 'PERIPHERAL_DISCONNECTED');
+
+        st.end();
+    });
+
     t.test('disconnect from error state', st => {
         const mockRuntime = createMockRuntime();
         const blocks = new MeshV2Blocks(mockRuntime);

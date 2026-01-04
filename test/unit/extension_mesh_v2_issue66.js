@@ -97,16 +97,29 @@ test('Mesh V2 Issue #66: Improved error handling for expired groups', t => {
     t.test('disconnect when unauthorized', st => {
         const mockRuntime = createMockRuntime();
         const blocks = new MeshV2Blocks(mockRuntime);
+        const events = [];
+
+        // Track all emitted events
+        const originalEmit = mockRuntime.emit;
+        mockRuntime.emit = (event, data) => {
+            events.push({event, data});
+            return originalEmit(event, data);
+        };
         
         // Simulate being connected
-        blocks.connectionState = 'connected';
+        blocks.setConnectionState('connected');
         blocks.meshService.groupId = 'active-group';
+        events.length = 0; // Clear events
 
         // Trigger disconnect callback with 'Unauthorized' reason
         blocks.meshService.disconnectCallback('Unauthorized');
 
         st.equal(blocks.connectionState, 'disconnected'); // Only GroupNotFound/expired currently map to error
-        st.equal(mockRuntime.lastEmittedEvent, 'PERIPHERAL_DISCONNECTED');
+        
+        // Verify PERIPHERAL_CONNECTION_LOST_ERROR and PERIPHERAL_DISCONNECTED were emitted
+        st.equal(events.length, 2);
+        st.equal(events[0].event, 'PERIPHERAL_CONNECTION_LOST_ERROR');
+        st.equal(events[1].event, 'PERIPHERAL_DISCONNECTED');
         st.end();
     });
 
