@@ -116,8 +116,10 @@ class MeshV2Service {
             lastReportTime: Date.now()
         };
 
-        // Last sent data to detect changes
+        // Last sent data to detect changes (confirmed by server)
         this.lastSentData = {};
+        // Latest data queued for sending (may not be confirmed yet)
+        this.latestQueuedData = {};
 
         // イベントキュー: {event, offsetMs} の配列
         this.pendingBroadcasts = [];
@@ -434,6 +436,7 @@ class MeshV2Service {
         this.isHost = false;
         this.remoteData = {};
         this.lastSentData = {};
+        this.latestQueuedData = {};
     }
 
     startSubscriptions () {
@@ -818,8 +821,9 @@ class MeshV2Service {
     async sendData (dataArray) {
         if (!this.groupId || !this.client) return;
 
-        // Delta transmission: Filter out items that haven't changed
-        const filteredData = dataArray.filter(item => this.lastSentData[item.key] !== item.value);
+        // Delta transmission: Filter out items that haven't changed since they were LAST QUEUED.
+        // This avoids redundant mutations if values change back within the rate-limit interval.
+        const filteredData = dataArray.filter(item => this.latestQueuedData[item.key] !== item.value);
 
         log.debug(`Mesh V2: sendData called with ${dataArray.length} items, ` +
             `${filteredData.length} items changed: ${JSON.stringify(filteredData)}`);
@@ -827,6 +831,11 @@ class MeshV2Service {
         if (filteredData.length === 0) {
             return;
         }
+
+        // Update latestQueuedData IMMEDIATELY before sending to RateLimiter
+        filteredData.forEach(item => {
+            this.latestQueuedData[item.key] = item.value;
+        });
 
         try {
             // Save Promise to track completion (including queue time)
@@ -851,6 +860,23 @@ class MeshV2Service {
     async _reportData (payload) {
         if (!this.groupId || !this.client) return;
 
+        // Final delta check: Filter out items that haven't changed since the LAST SUCCESSFUL transmission.
+        // This handles cases where values changed back while an earlier mutation was in flight.
+        const finalPayload = payload.filter(item => this.lastSentData[item.key] !== item.value);
+
+        if (finalPayload.length === 0) {
+            log.debug('Mesh V2: Skipping mutation as all data is already up-to-date on server');
+            return {
+                data: {
+                    reportDataByNode: {
+                        nodeStatus: {
+                            data: payload // Return original payload to satisfy caller expectation
+                        }
+                    }
+                }
+            };
+        }
+
         try {
             this.costTracking.mutationCount++;
             this.costTracking.reportDataCount++;
@@ -862,14 +888,14 @@ class MeshV2Service {
                     groupId: this.groupId,
                     domain: this.domain,
                     nodeId: this.meshId,
-                    data: payload
+                    data: finalPayload
                 }
             });
 
             const result = await this.lastDataSendPromise;
 
             // Update last sent data on success
-            payload.forEach(item => {
+            finalPayload.forEach(item => {
                 this.lastSentData[item.key] = item.value;
             });
 
