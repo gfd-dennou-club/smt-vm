@@ -802,34 +802,22 @@ class MeshV2Service {
         }
     }
 
-    /**
-     * Check if the data has changed since the last successful send.
-     * @param {Array} dataArray - Array of {key, value} objects.
-     * @returns {boolean} - True if data is unchanged.
-     */
-    isDataUnchanged (dataArray) {
-        if (dataArray.length !== Object.keys(this.lastSentData).length) return false;
-        for (const item of dataArray) {
-            if (this.lastSentData[item.key] !== item.value) return false;
-        }
-        return true;
-    }
-
     async sendData (dataArray) {
         if (!this.groupId || !this.client) return;
 
-        const unchanged = this.isDataUnchanged(dataArray);
-        log.debug(`Mesh V2: sendData called with ${dataArray.length} items: ` +
-            `${JSON.stringify(dataArray)} (unchanged: ${unchanged})`);
+        // Delta transmission: Filter out items that haven't changed
+        const filteredData = dataArray.filter(item => this.lastSentData[item.key] !== item.value);
 
-        // Change detection
-        if (unchanged) {
+        log.debug(`Mesh V2: sendData called with ${dataArray.length} items, ` +
+            `${filteredData.length} items changed: ${JSON.stringify(filteredData)}`);
+
+        if (filteredData.length === 0) {
             return;
         }
 
         try {
             // Save Promise to track completion (including queue time)
-            this.lastDataSendPromise = this.dataRateLimiter.send(dataArray, this._reportDataBound);
+            this.lastDataSendPromise = this.dataRateLimiter.send(filteredData, this._reportDataBound);
             await this.lastDataSendPromise;
         } catch (error) {
             log.error(`Mesh V2: Failed to send data: ${error}`);
