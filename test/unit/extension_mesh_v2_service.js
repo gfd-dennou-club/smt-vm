@@ -35,18 +35,22 @@ test('MeshV2Service Cost Tracking', t => {
                     id: 'g1',
                     name: 'G1',
                     domain: 'd1',
-                    expiresAt: '2026-01-01T00:00:00Z'
+                    expiresAt: '2099-01-01T00:00:00Z',
+                    heartbeatIntervalSeconds: 60
                 },
                 joinGroup: {
                     id: 'n1',
                     domain: 'd1',
-                    expiresAt: '2026-01-01T00:00:00Z'
+                    expiresAt: '2099-01-01T00:00:00Z',
+                    heartbeatIntervalSeconds: 120
                 },
                 renewHeartbeat: {
-                    expiresAt: '2026-01-01T00:00:00Z'
+                    expiresAt: '2099-01-01T00:00:00Z',
+                    heartbeatIntervalSeconds: 60
                 },
                 sendMemberHeartbeat: {
-                    expiresAt: '2026-01-01T00:00:00Z'
+                    expiresAt: '2099-01-01T00:00:00Z',
+                    heartbeatIntervalSeconds: 120
                 }
             }
         }),

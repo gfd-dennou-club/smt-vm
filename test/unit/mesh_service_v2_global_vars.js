@@ -104,7 +104,8 @@ test('MeshV2Service Global Variables', t => {
                         id: 'group1',
                         name: 'groupName',
                         domain: 'domain1',
-                        expiresAt: '2025-12-30T12:00:00Z'
+                        expiresAt: '2099-01-01T00:00:00Z',
+                        heartbeatIntervalSeconds: 60
                     }
                 }
             }),
