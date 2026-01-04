@@ -99,6 +99,15 @@ class MeshV2Service {
         log.info(`Mesh V2: Event batch interval set to ${this.eventBatchInterval}ms`);
         this.eventBatchTimer = null;
 
+        // Periodic data sync interval (default: 15000ms)
+        this.periodicDataSyncInterval = parseEnvInt(
+            process.env.MESH_PERIODIC_DATA_SYNC_INTERVAL_MS,
+            15000, // default
+            1000, // min: 1 second
+            3600000 // max: 1 hour
+        );
+        log.info(`Mesh V2: Periodic data sync interval set to ${this.periodicDataSyncInterval}ms`);
+
         // Event queue limits
         this.MAX_EVENT_QUEUE_SIZE = 100; // 最大100イベント
         this.eventQueueStats = {
@@ -987,8 +996,7 @@ class MeshV2Service {
     startPeriodicDataSync () {
         this.stopPeriodicDataSync();
 
-        // Sync every 5 minutes
-        const interval = 5 * 60 * 1000;
+        const interval = this.periodicDataSyncInterval;
         log.info(`Mesh V2: Starting periodic data sync timer (Interval: ${interval / 1000}s)`);
         this.dataSyncTimer = setInterval(() => {
             log.info('Mesh V2: Periodic data sync');
