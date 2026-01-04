@@ -29,6 +29,7 @@ const createMockRuntime = () => {
             PERIPHERAL_CONNECTED: 'PERIPHERAL_CONNECTED',
             PERIPHERAL_DISCONNECTED: 'PERIPHERAL_DISCONNECTED',
             PERIPHERAL_CONNECTION_ERROR_ID: 'PERIPHERAL_CONNECTION_ERROR_ID',
+            PERIPHERAL_CONNECTION_LOST_ERROR: 'PERIPHERAL_CONNECTION_LOST_ERROR',
             PERIPHERAL_REQUEST_ERROR: 'PERIPHERAL_REQUEST_ERROR'
         }
     };
@@ -72,7 +73,7 @@ test('Mesh V2 Issue #66: Improved error handling for expired groups', t => {
         blocks.connect('expired-id');
 
         st.equal(blocks.connectionState, 'error');
-        st.equal(mockRuntime.lastEmittedEvent, 'PERIPHERAL_REQUEST_ERROR');
+        st.equal(mockRuntime.lastEmittedEvent, 'PERIPHERAL_DISCONNECTED');
         st.deepEqual(mockRuntime.lastEmittedData, {extensionId: 'meshV2'});
         st.end();
     });
@@ -89,23 +90,36 @@ test('Mesh V2 Issue #66: Improved error handling for expired groups', t => {
         blocks.meshService.disconnectCallback('GroupNotFound');
 
         st.equal(blocks.connectionState, 'error');
-        st.equal(mockRuntime.lastEmittedEvent, 'PERIPHERAL_REQUEST_ERROR');
+        st.equal(mockRuntime.lastEmittedEvent, 'PERIPHERAL_DISCONNECTED');
         st.end();
     });
 
     t.test('disconnect when unauthorized', st => {
         const mockRuntime = createMockRuntime();
         const blocks = new MeshV2Blocks(mockRuntime);
+        const events = [];
+
+        // Track all emitted events
+        const originalEmit = mockRuntime.emit;
+        mockRuntime.emit = (event, data) => {
+            events.push({event, data});
+            return originalEmit(event, data);
+        };
         
         // Simulate being connected
-        blocks.connectionState = 'connected';
+        blocks.setConnectionState('connected');
         blocks.meshService.groupId = 'active-group';
+        events.length = 0; // Clear events
 
         // Trigger disconnect callback with 'Unauthorized' reason
         blocks.meshService.disconnectCallback('Unauthorized');
 
         st.equal(blocks.connectionState, 'disconnected'); // Only GroupNotFound/expired currently map to error
-        st.equal(mockRuntime.lastEmittedEvent, 'PERIPHERAL_DISCONNECTED');
+        
+        // Verify PERIPHERAL_CONNECTION_LOST_ERROR and PERIPHERAL_DISCONNECTED were emitted
+        st.equal(events.length, 2);
+        st.equal(events[0].event, 'PERIPHERAL_CONNECTION_LOST_ERROR');
+        st.equal(events[1].event, 'PERIPHERAL_DISCONNECTED');
         st.end();
     });
 
