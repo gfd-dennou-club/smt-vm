@@ -81,7 +81,8 @@ class MeshV2Service {
             100, // min: 100ms
             10000 // max: 10 seconds
         );
-        this.dataRateLimiter = new RateLimiter(4, dataInterval, {
+        log.info(`Mesh V2: Data update interval set to ${dataInterval}ms`);
+        this.dataRateLimiter = new RateLimiter(dataInterval, {
             enableMerge: true,
             mergeKeyField: 'key'
         });
@@ -95,7 +96,17 @@ class MeshV2Service {
             100, // min: 100ms
             10000 // max: 10 seconds
         );
+        log.info(`Mesh V2: Event batch interval set to ${this.eventBatchInterval}ms`);
         this.eventBatchTimer = null;
+
+        // Periodic data sync interval (default: 15000ms)
+        this.periodicDataSyncInterval = parseEnvInt(
+            process.env.MESH_PERIODIC_DATA_SYNC_INTERVAL_MS,
+            15000, // default
+            1000, // min: 1 second
+            3600000 // max: 1 hour
+        );
+        log.info(`Mesh V2: Periodic data sync interval set to ${this.periodicDataSyncInterval}ms`);
 
         // Event queue limits
         this.MAX_EVENT_QUEUE_SIZE = 100; // 最大100イベント
@@ -105,8 +116,10 @@ class MeshV2Service {
             lastReportTime: Date.now()
         };
 
-        // Last sent data to detect changes
+        // Last sent data to detect changes (confirmed by server)
         this.lastSentData = {};
+        // Latest data queued for sending (may not be confirmed yet)
+        this.latestQueuedData = {};
 
         // イベントキュー: {event, offsetMs} の配列
         this.pendingBroadcasts = [];
@@ -423,6 +436,7 @@ class MeshV2Service {
         this.isHost = false;
         this.remoteData = {};
         this.lastSentData = {};
+        this.latestQueuedData = {};
     }
 
     startSubscriptions () {
@@ -624,6 +638,7 @@ class MeshV2Service {
 
     startEventBatchTimer () {
         this.stopEventBatchTimer();
+        log.debug(`Mesh V2: Starting event batch timer (Interval: ${this.eventBatchInterval}ms)`);
         this.eventBatchTimer = setInterval(() => {
             this.processBatchEvents();
         }, this.eventBatchInterval);
@@ -687,7 +702,8 @@ class MeshV2Service {
         this.stopHeartbeat();
         if (!this.groupId) return;
 
-        log.info(`Mesh V2: Starting heartbeat timer (Role: ${this.isHost ? 'Host' : 'Member'})`);
+        log.info(`Mesh V2: Starting heartbeat timer (Role: ${this.isHost ? 'Host' : 'Member'}, ` +
+            `Interval: ${this.isHost ? this.hostHeartbeatInterval : this.memberHeartbeatInterval}s)`);
         const interval = (this.isHost ? this.hostHeartbeatInterval : this.memberHeartbeatInterval) * 1000;
 
         this.heartbeatTimer = setInterval(() => {
@@ -802,34 +818,28 @@ class MeshV2Service {
         }
     }
 
-    /**
-     * Check if the data has changed since the last successful send.
-     * @param {Array} dataArray - Array of {key, value} objects.
-     * @returns {boolean} - True if data is unchanged.
-     */
-    isDataUnchanged (dataArray) {
-        if (dataArray.length !== Object.keys(this.lastSentData).length) return false;
-        for (const item of dataArray) {
-            if (this.lastSentData[item.key] !== item.value) return false;
-        }
-        return true;
-    }
-
     async sendData (dataArray) {
         if (!this.groupId || !this.client) return;
 
-        const unchanged = this.isDataUnchanged(dataArray);
-        log.debug(`Mesh V2: sendData called with ${dataArray.length} items: ` +
-            `${JSON.stringify(dataArray)} (unchanged: ${unchanged})`);
+        // Delta transmission: Filter out items that haven't changed since they were LAST QUEUED.
+        // This avoids redundant mutations if values change back within the rate-limit interval.
+        const filteredData = dataArray.filter(item => this.latestQueuedData[item.key] !== item.value);
 
-        // Change detection
-        if (unchanged) {
+        log.debug(`Mesh V2: sendData called with ${dataArray.length} items, ` +
+            `${filteredData.length} items changed: ${JSON.stringify(filteredData)}`);
+
+        if (filteredData.length === 0) {
             return;
         }
 
+        // Update latestQueuedData IMMEDIATELY before sending to RateLimiter
+        filteredData.forEach(item => {
+            this.latestQueuedData[item.key] = item.value;
+        });
+
         try {
             // Save Promise to track completion (including queue time)
-            this.lastDataSendPromise = this.dataRateLimiter.send(dataArray, this._reportDataBound);
+            this.lastDataSendPromise = this.dataRateLimiter.send(filteredData, this._reportDataBound);
             await this.lastDataSendPromise;
         } catch (error) {
             log.error(`Mesh V2: Failed to send data: ${error}`);
@@ -850,6 +860,23 @@ class MeshV2Service {
     async _reportData (payload) {
         if (!this.groupId || !this.client) return;
 
+        // Final delta check: Filter out items that haven't changed since the LAST SUCCESSFUL transmission.
+        // This handles cases where values changed back while an earlier mutation was in flight.
+        const finalPayload = payload.filter(item => this.lastSentData[item.key] !== item.value);
+
+        if (finalPayload.length === 0) {
+            log.debug('Mesh V2: Skipping mutation as all data is already up-to-date on server');
+            return {
+                data: {
+                    reportDataByNode: {
+                        nodeStatus: {
+                            data: payload // Return original payload to satisfy caller expectation
+                        }
+                    }
+                }
+            };
+        }
+
         try {
             this.costTracking.mutationCount++;
             this.costTracking.reportDataCount++;
@@ -861,14 +888,14 @@ class MeshV2Service {
                     groupId: this.groupId,
                     domain: this.domain,
                     nodeId: this.meshId,
-                    data: payload
+                    data: finalPayload
                 }
             });
 
             const result = await this.lastDataSendPromise;
 
             // Update last sent data on success
-            payload.forEach(item => {
+            finalPayload.forEach(item => {
                 this.lastSentData[item.key] = item.value;
             });
 
@@ -995,11 +1022,12 @@ class MeshV2Service {
     startPeriodicDataSync () {
         this.stopPeriodicDataSync();
 
-        // Sync every 5 minutes
+        const interval = this.periodicDataSyncInterval;
+        log.info(`Mesh V2: Starting periodic data sync timer (Interval: ${interval / 1000}s)`);
         this.dataSyncTimer = setInterval(() => {
             log.info('Mesh V2: Periodic data sync');
             this.fetchAllNodesData();
-        }, 5 * 60 * 1000);
+        }, interval);
     }
 
     /**

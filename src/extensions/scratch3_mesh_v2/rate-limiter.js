@@ -3,14 +3,12 @@ const log = require('../../util/log');
 /* istanbul ignore next */
 class RateLimiter {
     /**
-     * @param {number} maxPerSecond - Maximum number of requests per second.
      * @param {number} intervalMs - Minimum interval between requests in milliseconds.
      * @param {object} options - Optional parameters.
      * @param {boolean} options.enableMerge - Whether to merge data in the queue (default: false).
      * @param {string} options.mergeKeyField - Field name to use as merge key (default: 'key').
      */
-    constructor (maxPerSecond, intervalMs, options = {}) {
-        this.maxPerSecond = maxPerSecond;
+    constructor (intervalMs, options = {}) {
         this.intervalMs = intervalMs;
         this.queue = [];
         this.lastSendTime = 0;
