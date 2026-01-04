@@ -2,7 +2,7 @@ const test = require('tap').test;
 const RateLimiter = require('../../src/extensions/scratch3_mesh_v2/rate-limiter');
 
 test('RateLimiter Basic', t => {
-    const limiter = new RateLimiter(4, 10);
+    const limiter = new RateLimiter(10);
     let count = 0;
     
     const pendingResolves = [];
@@ -36,7 +36,7 @@ test('RateLimiter Basic', t => {
 });
 
 test('RateLimiter Merge Feature', t => {
-    const limiter = new RateLimiter(4, 10, {
+    const limiter = new RateLimiter(10, {
         enableMerge: true,
         mergeKeyField: 'key'
     });
@@ -82,7 +82,7 @@ test('RateLimiter Merge Feature', t => {
 
 test('RateLimiter Merge Different Keys in same Send', t => {
 
-    const limiter = new RateLimiter(4, 10, {
+    const limiter = new RateLimiter(10, {
 
         enableMerge: true,
 

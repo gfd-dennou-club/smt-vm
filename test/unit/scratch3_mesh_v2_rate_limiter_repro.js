@@ -7,8 +7,8 @@ log.debug = () => {};
 log.info = () => {};
 
 test('RateLimiter stack overflow reproduction', {timeout: 60000}, async t => {
-    // maxPerSecond: 1, intervalMs: 250ms, enableMerge: true
-    const limiter = new RateLimiter(1, 250, {enableMerge: true});
+    // intervalMs: 250ms, enableMerge: true
+    const limiter = new RateLimiter(250, {enableMerge: true});
     
     // Immediate sendFunction
     const sendFunction = d => Promise.resolve(d);

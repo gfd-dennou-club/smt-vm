@@ -81,7 +81,8 @@ class MeshV2Service {
             100, // min: 100ms
             10000 // max: 10 seconds
         );
-        this.dataRateLimiter = new RateLimiter(4, dataInterval, {
+        log.info(`Mesh V2: Data update interval set to ${dataInterval}ms`);
+        this.dataRateLimiter = new RateLimiter(dataInterval, {
             enableMerge: true,
             mergeKeyField: 'key'
         });
@@ -95,6 +96,7 @@ class MeshV2Service {
             100, // min: 100ms
             10000 // max: 10 seconds
         );
+        log.info(`Mesh V2: Event batch interval set to ${this.eventBatchInterval}ms`);
         this.eventBatchTimer = null;
 
         // Event queue limits
@@ -624,6 +626,7 @@ class MeshV2Service {
 
     startEventBatchTimer () {
         this.stopEventBatchTimer();
+        log.debug(`Mesh V2: Starting event batch timer (Interval: ${this.eventBatchInterval}ms)`);
         this.eventBatchTimer = setInterval(() => {
             this.processBatchEvents();
         }, this.eventBatchInterval);
@@ -687,7 +690,8 @@ class MeshV2Service {
         this.stopHeartbeat();
         if (!this.groupId) return;
 
-        log.info(`Mesh V2: Starting heartbeat timer (Role: ${this.isHost ? 'Host' : 'Member'})`);
+        log.info(`Mesh V2: Starting heartbeat timer (Role: ${this.isHost ? 'Host' : 'Member'}, ` +
+            `Interval: ${this.isHost ? this.hostHeartbeatInterval : this.memberHeartbeatInterval}s)`);
         const interval = (this.isHost ? this.hostHeartbeatInterval : this.memberHeartbeatInterval) * 1000;
 
         this.heartbeatTimer = setInterval(() => {
@@ -984,10 +988,12 @@ class MeshV2Service {
         this.stopPeriodicDataSync();
 
         // Sync every 5 minutes
+        const interval = 5 * 60 * 1000;
+        log.info(`Mesh V2: Starting periodic data sync timer (Interval: ${interval / 1000}s)`);
         this.dataSyncTimer = setInterval(() => {
             log.info('Mesh V2: Periodic data sync');
             this.fetchAllNodesData();
-        }, 5 * 60 * 1000);
+        }, interval);
     }
 
     /**
