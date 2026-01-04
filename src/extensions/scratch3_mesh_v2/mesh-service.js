@@ -704,8 +704,7 @@ class MeshV2Service {
 
         log.info(`Mesh V2: Starting heartbeat timer (Role: ${this.isHost ? 'Host' : 'Member'}, ` +
             `Interval: ${this.isHost ? this.hostHeartbeatInterval : this.memberHeartbeatInterval}s)`);
-        // const interval = (this.isHost ? this.hostHeartbeatInterval : this.memberHeartbeatInterval) * 1000;
-        const interval = 120 * 1000;
+        const interval = (this.isHost ? this.hostHeartbeatInterval : this.memberHeartbeatInterval) * 1000;
 
         this.heartbeatTimer = setInterval(() => {
             if (this.isHost) {

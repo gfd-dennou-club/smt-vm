@@ -300,7 +300,7 @@ test('Mesh V2 Blocks', t => {
         st.end();
     });
 
-    t.test('connection state: connected to disconnected (explicit) DOES NOT emit PERIPHERAL_CONNECTION_LOST_ERROR', st => {
+    t.test('connection state: connected to disconnected (explicit) NO connection lost error', st => {
         const mockRuntime = createMockRuntime();
         const blocks = new MeshV2Blocks(mockRuntime);
         const events = [];
