@@ -27,6 +27,7 @@ const createMockRuntime = () => {
             PERIPHERAL_CONNECTED: 'PERIPHERAL_CONNECTED',
             PERIPHERAL_DISCONNECTED: 'PERIPHERAL_DISCONNECTED',
             PERIPHERAL_CONNECTION_ERROR_ID: 'PERIPHERAL_CONNECTION_ERROR_ID',
+            PERIPHERAL_CONNECTION_LOST_ERROR: 'PERIPHERAL_CONNECTION_LOST_ERROR',
             PERIPHERAL_REQUEST_ERROR: 'PERIPHERAL_REQUEST_ERROR'
         }
     };
@@ -167,7 +168,7 @@ test('Mesh V2 Blocks', t => {
         blocks.connect('meshV2_host');
 
         setImmediate(() => {
-            st.equal(mockRuntime.lastEmittedEvent, 'PERIPHERAL_REQUEST_ERROR');
+            st.equal(mockRuntime.lastEmittedEvent, 'PERIPHERAL_DISCONNECTED');
             st.deepEqual(mockRuntime.lastEmittedData, {extensionId: 'meshV2'});
             st.equal(blocks.connectionState, 'error');
             st.end();
@@ -185,7 +186,7 @@ test('Mesh V2 Blocks', t => {
         blocks.connect('group1');
 
         setImmediate(() => {
-            st.equal(mockRuntime.lastEmittedEvent, 'PERIPHERAL_REQUEST_ERROR');
+            st.equal(mockRuntime.lastEmittedEvent, 'PERIPHERAL_DISCONNECTED');
             st.deepEqual(mockRuntime.lastEmittedData, {extensionId: 'meshV2'});
             st.equal(blocks.connectionState, 'error');
             st.end();
@@ -202,7 +203,8 @@ test('Mesh V2 Blocks', t => {
         // Test error state transition
         blocks.setConnectionState('error');
         st.equal(blocks.connectionState, 'error');
-        st.equal(mockRuntime.lastEmittedEvent, 'PERIPHERAL_REQUEST_ERROR');
+        // Now it emits both PERIPHERAL_REQUEST_ERROR and PERIPHERAL_DISCONNECTED
+        st.equal(mockRuntime.lastEmittedEvent, 'PERIPHERAL_DISCONNECTED');
         st.deepEqual(mockRuntime.lastEmittedData, {extensionId: 'meshV2'});
 
         // Test connected state transition
@@ -218,7 +220,7 @@ test('Mesh V2 Blocks', t => {
         st.end();
     });
 
-    t.test('connection state: error does not emit PERIPHERAL_DISCONNECTED', st => {
+    t.test('connection state: error emits PERIPHERAL_DISCONNECTED', st => {
         const mockRuntime = createMockRuntime();
         const blocks = new MeshV2Blocks(mockRuntime);
         const events = [];
@@ -233,10 +235,40 @@ test('Mesh V2 Blocks', t => {
         // Transition to error state
         blocks.setConnectionState('error');
 
-        // Verify only PERIPHERAL_REQUEST_ERROR was emitted
-        st.equal(events.length, 1);
+        // Verify both PERIPHERAL_REQUEST_ERROR and PERIPHERAL_DISCONNECTED were emitted
+        st.equal(events.length, 2);
         st.equal(events[0].event, 'PERIPHERAL_REQUEST_ERROR');
+        st.equal(events[1].event, 'PERIPHERAL_DISCONNECTED');
         st.deepEqual(events[0].data, {extensionId: 'meshV2'});
+        st.deepEqual(events[1].data, {extensionId: 'meshV2'});
+
+        st.end();
+    });
+
+    t.test('connection state: connected to error emits PERIPHERAL_CONNECTION_LOST_ERROR', st => {
+        const mockRuntime = createMockRuntime();
+        const blocks = new MeshV2Blocks(mockRuntime);
+        const events = [];
+
+        // Track all emitted events
+        const originalEmit = mockRuntime.emit;
+        mockRuntime.emit = (event, data) => {
+            events.push({event, data});
+            return originalEmit(event, data);
+        };
+
+        // Transition to connected state first
+        blocks.setConnectionState('connected');
+        events.length = 0; // Clear events
+
+        // Transition to error state
+        blocks.setConnectionState('error');
+
+        // Verify PERIPHERAL_REQUEST_ERROR, PERIPHERAL_CONNECTION_LOST_ERROR, and PERIPHERAL_DISCONNECTED were emitted
+        st.equal(events.length, 3);
+        st.equal(events[0].event, 'PERIPHERAL_REQUEST_ERROR');
+        st.equal(events[1].event, 'PERIPHERAL_CONNECTION_LOST_ERROR');
+        st.equal(events[2].event, 'PERIPHERAL_DISCONNECTED');
 
         st.end();
     });

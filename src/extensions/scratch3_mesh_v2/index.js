@@ -270,6 +270,15 @@ class Scratch3MeshV2Blocks {
             this.runtime.emit(this.runtime.constructor.PERIPHERAL_REQUEST_ERROR, {
                 extensionId: Scratch3MeshV2Blocks.EXTENSION_ID
             });
+            if (prevState === 'connected') {
+                this.runtime.emit(this.runtime.constructor.PERIPHERAL_CONNECTION_LOST_ERROR, {
+                    extensionId: Scratch3MeshV2Blocks.EXTENSION_ID
+                });
+            }
+            // Always emit disconnected to ensure GUI (Blocks.jsx) refreshes its status icon
+            this.runtime.emit(this.runtime.constructor.PERIPHERAL_DISCONNECTED, {
+                extensionId: Scratch3MeshV2Blocks.EXTENSION_ID
+            });
             break;
         case 'disconnected':
             // Emit error event if we were connecting

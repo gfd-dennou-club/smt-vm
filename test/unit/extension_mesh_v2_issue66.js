@@ -29,6 +29,7 @@ const createMockRuntime = () => {
             PERIPHERAL_CONNECTED: 'PERIPHERAL_CONNECTED',
             PERIPHERAL_DISCONNECTED: 'PERIPHERAL_DISCONNECTED',
             PERIPHERAL_CONNECTION_ERROR_ID: 'PERIPHERAL_CONNECTION_ERROR_ID',
+            PERIPHERAL_CONNECTION_LOST_ERROR: 'PERIPHERAL_CONNECTION_LOST_ERROR',
             PERIPHERAL_REQUEST_ERROR: 'PERIPHERAL_REQUEST_ERROR'
         }
     };
@@ -72,7 +73,7 @@ test('Mesh V2 Issue #66: Improved error handling for expired groups', t => {
         blocks.connect('expired-id');
 
         st.equal(blocks.connectionState, 'error');
-        st.equal(mockRuntime.lastEmittedEvent, 'PERIPHERAL_REQUEST_ERROR');
+        st.equal(mockRuntime.lastEmittedEvent, 'PERIPHERAL_DISCONNECTED');
         st.deepEqual(mockRuntime.lastEmittedData, {extensionId: 'meshV2'});
         st.end();
     });
@@ -89,7 +90,7 @@ test('Mesh V2 Issue #66: Improved error handling for expired groups', t => {
         blocks.meshService.disconnectCallback('GroupNotFound');
 
         st.equal(blocks.connectionState, 'error');
-        st.equal(mockRuntime.lastEmittedEvent, 'PERIPHERAL_REQUEST_ERROR');
+        st.equal(mockRuntime.lastEmittedEvent, 'PERIPHERAL_DISCONNECTED');
         st.end();
     });
 
