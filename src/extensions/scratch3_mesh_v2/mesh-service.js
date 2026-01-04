@@ -18,7 +18,22 @@ const {
     LIST_GROUP_STATUSES
 } = require('./gql-operations');
 
-const CONNECTION_TIMEOUT = 50 * 60 * 1000; // 50 minutes in milliseconds
+/**
+ * Parses an environment variable as an integer with validation.
+ * @param {string} envVar - The environment variable value.
+ * @param {number} defaultValue - The default value if parsing fails or is out of range.
+ * @param {number} min - Minimum allowed value (inclusive).
+ * @param {number} max - Maximum allowed value (inclusive).
+ * @returns {number} The parsed integer or default value.
+ */
+const parseEnvInt = (envVar, defaultValue, min = 0, max = Infinity) => {
+    if (!envVar) return defaultValue;
+    const parsed = parseInt(envVar, 10);
+    if (isNaN(parsed) || parsed < min || parsed > max) return defaultValue;
+    return parsed;
+};
+
+// Mesh v2 configuration parameters
 
 /**
  * GraphQL error types that indicate the connection is no longer valid.
@@ -52,20 +67,34 @@ class MeshV2Service {
         // Last data send promise to track completion of the most recent data transmission
         this.lastDataSendPromise = Promise.resolve();
 
+        this.hostHeartbeatInterval = 60; // Default 1 min
         this.memberHeartbeatInterval = 120; // Default 2 min
 
         // Data from other nodes: { nodeId: { key: { value: string, timestamp: number } } }
         this.remoteData = {};
 
         // Rate limiters
-        this.dataRateLimiter = new RateLimiter(4, 250, {
+        // Data update interval (default: 1000ms)
+        const dataInterval = parseEnvInt(
+            process.env.MESH_DATA_UPDATE_INTERVAL_MS,
+            1000, // default
+            100, // min: 100ms
+            10000 // max: 10 seconds
+        );
+        this.dataRateLimiter = new RateLimiter(4, dataInterval, {
             enableMerge: true,
             mergeKeyField: 'key'
         });
 
         // Event queue for batch sending: { eventName, payload, firedAt } の配列
         this.eventQueue = [];
-        this.eventBatchInterval = 250;
+        // Event batch interval (default: 1000ms)
+        this.eventBatchInterval = parseEnvInt(
+            process.env.MESH_EVENT_BATCH_INTERVAL_MS,
+            1000, // default
+            100, // min: 100ms
+            10000 // max: 10 seconds
+        );
         this.eventBatchTimer = null;
 
         // Event queue limits
@@ -198,6 +227,9 @@ class MeshV2Service {
             this.domain = group.domain; // Update domain from server
             this.expiresAt = group.expiresAt;
             this.isHost = true;
+            if (group.heartbeatIntervalSeconds) {
+                this.hostHeartbeatInterval = group.heartbeatIntervalSeconds;
+            }
 
             this.costTracking.connectionStartTime = Date.now();
             this.startSubscriptions();
@@ -656,8 +688,7 @@ class MeshV2Service {
         if (!this.groupId) return;
 
         log.info(`Mesh V2: Starting heartbeat timer (Role: ${this.isHost ? 'Host' : 'Member'})`);
-        // Use 15s for host, memberHeartbeatInterval for member (default 120s)
-        const interval = this.isHost ? 15 * 1000 : this.memberHeartbeatInterval * 1000;
+        const interval = (this.isHost ? this.hostHeartbeatInterval : this.memberHeartbeatInterval) * 1000;
 
         this.heartbeatTimer = setInterval(() => {
             if (this.isHost) {
@@ -692,6 +723,13 @@ class MeshV2Service {
             });
             this.expiresAt = result.data.renewHeartbeat.expiresAt;
             log.info(`Mesh V2: Heartbeat renewed. Expires at: ${this.expiresAt}`);
+            if (result.data.renewHeartbeat.heartbeatIntervalSeconds) {
+                const newInterval = result.data.renewHeartbeat.heartbeatIntervalSeconds;
+                if (newInterval !== this.hostHeartbeatInterval) {
+                    this.hostHeartbeatInterval = newInterval;
+                    this.startHeartbeat(); // Restart with new interval
+                }
+            }
             this.startConnectionTimer();
             return result.data.renewHeartbeat;
         } catch (error) {
@@ -741,13 +779,15 @@ class MeshV2Service {
 
     startConnectionTimer () {
         this.stopConnectionTimer();
-        let timeout = CONNECTION_TIMEOUT;
-        if (this.expiresAt) {
-            const serverTimeout = new Date(this.expiresAt).getTime() - Date.now();
-            if (serverTimeout > 0) {
-                timeout = serverTimeout;
-            }
+        if (!this.expiresAt) return;
+
+        const timeout = new Date(this.expiresAt).getTime() - Date.now();
+        if (timeout <= 0) {
+            log.warn('Mesh V2: Group is already expired');
+            this.leaveGroup();
+            return;
         }
+
         const timeoutMinutes = Math.round(timeout / 60000);
         this.connectionTimer = setTimeout(() => {
             log.warn(`Mesh V2: Connection timeout (${timeoutMinutes} minutes)`);

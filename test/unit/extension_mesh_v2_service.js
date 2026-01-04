@@ -1,5 +1,9 @@
 /* eslint-disable require-atomic-updates */
 const test = require('tap').test;
+const minilog = require('minilog');
+// Suppress debug logs during tests
+minilog.suggest.deny('vm', 'debug');
+
 const MeshV2Service = require('../../src/extensions/scratch3_mesh_v2/mesh-service');
 const log = require('../../src/util/log');
 
@@ -35,18 +39,22 @@ test('MeshV2Service Cost Tracking', t => {
                     id: 'g1',
                     name: 'G1',
                     domain: 'd1',
-                    expiresAt: '2026-01-01T00:00:00Z'
+                    expiresAt: '2099-01-01T00:00:00Z',
+                    heartbeatIntervalSeconds: 60
                 },
                 joinGroup: {
                     id: 'n1',
                     domain: 'd1',
-                    expiresAt: '2026-01-01T00:00:00Z'
+                    expiresAt: '2099-01-01T00:00:00Z',
+                    heartbeatIntervalSeconds: 120
                 },
                 renewHeartbeat: {
-                    expiresAt: '2026-01-01T00:00:00Z'
+                    expiresAt: '2099-01-01T00:00:00Z',
+                    heartbeatIntervalSeconds: 60
                 },
                 sendMemberHeartbeat: {
-                    expiresAt: '2026-01-01T00:00:00Z'
+                    expiresAt: '2099-01-01T00:00:00Z',
+                    heartbeatIntervalSeconds: 120
                 }
             }
         }),

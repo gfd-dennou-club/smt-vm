@@ -1,4 +1,9 @@
 const test = require('tap').test;
+const minilog = require('minilog');
+// Suppress debug and info logs during tests
+minilog.suggest.deny('vm', 'debug');
+minilog.suggest.deny('vm', 'info');
+
 const MeshV2Service = require('../../src/extensions/scratch3_mesh_v2/mesh-service');
 const Variable = require('../../src/engine/variable');
 
@@ -104,7 +109,8 @@ test('MeshV2Service Global Variables', t => {
                         id: 'group1',
                         name: 'groupName',
                         domain: 'domain1',
-                        expiresAt: '2025-12-30T12:00:00Z'
+                        expiresAt: '2099-01-01T00:00:00Z',
+                        heartbeatIntervalSeconds: 60
                     }
                 }
             }),

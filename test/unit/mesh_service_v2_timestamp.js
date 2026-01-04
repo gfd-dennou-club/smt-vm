@@ -1,4 +1,9 @@
 const test = require('tap').test;
+const minilog = require('minilog');
+// Suppress debug and info logs during tests
+minilog.suggest.deny('vm', 'debug');
+minilog.suggest.deny('vm', 'info');
+
 const MeshV2Service = require('../../src/extensions/scratch3_mesh_v2/mesh-service');
 
 const createMockBlocks = () => ({
