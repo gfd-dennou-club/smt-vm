@@ -122,6 +122,11 @@ class KoshienClient {
         return new Promise(resolve => resolve());
     }
 
+    // eslint-disable-next-line no-unused-vars
+    setMessage (message) {
+        return new Promise(resolve => resolve());
+    }
+
     calcRoute (props) {
         // eslint-disable-next-line no-unused-vars
         const {src, dst, exceptCells, result} = props;
@@ -703,6 +708,22 @@ class KoshienBlocks {
 
                     },
                     filter: [TargetType.SPRITE]
+                },
+                {
+                    opcode: 'setMessage',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'koshien.setMessage',
+                        default: 'message [MESSAGE]',
+                        description: 'display a message'
+                    }),
+                    arguments: {
+                        MESSAGE: {
+                            type: ArgumentType.STRING,
+                            defaultValue: 'hello'
+                        }
+                    },
+                    filter: [TargetType.SPRITE]
                 }
             ],
             menus: {
@@ -957,6 +978,16 @@ class KoshienBlocks {
         default:
             return -1;
         }
+    }
+
+    /**
+     * display a message
+     * @param {object} args - the block's arguments.
+     * @param {string} args.MESSAGE - message.
+     */
+    // eslint-disable-next-line no-unused-vars
+    setMessage (args) {
+        return this._client.setMessage(args.MESSAGE);
     }
 }
 
