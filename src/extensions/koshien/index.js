@@ -1,10 +1,10 @@
-import ArgumentType from '../../extension-support/argument-type';
-import BlockType from '../../extension-support/block-type';
-import TargetType from '../../extension-support/target-type';
-import Variable from '../../engine/variable';
+const ArgumentType = require('../../extension-support/argument-type');
+const BlockType = require('../../extension-support/block-type');
+const TargetType = require('../../extension-support/target-type');
+const Variable = require('../../engine/variable');
 
-import blockIcon from './block-icon.png';
-import translations from './translations.json';
+const blockIcon = require('./block-icon.png');
+const translations = require('./translations.json');
 
 let formatMessage = messageData => messageData.defaultMessage;
 
@@ -991,7 +991,4 @@ class KoshienBlocks {
     }
 }
 
-export {
-    KoshienBlocks as default,
-    KoshienBlocks as blockClass
-};
+module.exports = KoshienBlocks;
