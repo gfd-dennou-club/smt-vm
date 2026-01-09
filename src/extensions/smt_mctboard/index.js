@@ -127,6 +127,9 @@ class Mctboard {
             }),
             menuIconURI: menuIconURI,
             blockIconURI: blockIconURI,
+	    color1: '#D08A5A',
+	    color2: '#A86A42',
+	    color3: '#7A4D2E',
             blocks: [
                 {
                     opcode: 'led_all',
@@ -284,6 +287,14 @@ class Mctboard {
                     }
                 },
                 {
+                    opcode: 'wifi_connected',
+                    text: formatMessage({
+                        id: 'mctboard.wifi_connected',
+                        default: 'Wi-Fi: connected?'
+                    }),		    		    
+                    blockType: BlockType.BOOLEAN
+                },
+                {
                     opcode: 'http_get',
                     text: formatMessage({
                         id: 'mctboard.http_get',
@@ -307,18 +318,18 @@ class Mctboard {
                     }
                 },
                 {
-                    opcode: 'wifi_connected',
-                    text: formatMessage({
-                        id: 'mctboard.wifi_connected',
-                        default: 'Wi-Fi: connected?'
-                    }),		    		    
-                    blockType: BlockType.BOOLEAN
-                },
-                {
                     opcode: 'sntp_init',
                     text: formatMessage({
                         id: 'mctboard.sntp_init',
                         default: 'SNTP: initialize'
+                    }),		    		    
+                    blockType: BlockType.COMMAND
+                },
+                {
+                    opcode: 'sntp_read',
+                    text: formatMessage({
+                        id: 'mctboard.sntp_read',
+                        default: 'SNTP: read'
                     }),		    		    
                     blockType: BlockType.COMMAND
                 },
@@ -440,6 +451,7 @@ class Mctboard {
     wifi_init(){}
     wifi_connected(){}
     sntp_init(){}
+    sntp_read(){}
     sntp_date(){}
     http_get(){}
     http_post(){}

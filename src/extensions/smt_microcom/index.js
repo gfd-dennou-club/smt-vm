@@ -90,7 +90,10 @@ class Microcom {
             name:formatMessage({ id: 'microcom.name', default: 'Microcom' }),
             menuIconURI: menuIconURI,
             blockIconURI: blockIconURI,
-            blocks: [
+	    color1: '#B39DDB',
+	    color2: '#9575CD',
+	    color3: '#7E57C2',
+	    blocks: [
                 {
                     opcode :'gpio_init',
                     text: formatMessage({
@@ -376,6 +379,68 @@ class Microcom {
                     }
                 },
                 {
+                    opcode: 'spi_init',
+                    text: formatMessage({
+                        id: 'microcom.spi_init',
+                        default: 'SPI: initialize (MISO=[MISO]pin, MOSI=[MOSI]pin, CLK=[CLK]pin)' 
+                    }),
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        MISO: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 19
+                        },
+                        MOSI: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 23
+                        },
+			CLK: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 18
+                        }
+                    }
+                },
+                {
+                    opcode: 'spi_write',
+                    text: formatMessage({
+                        id: 'microcom.spi_write',
+                        default: 'SPI: output (command = (0x[ADDR1][ADDR2]), (0x[ADDR3][ADDR4])'
+                    }),		    
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        ADDR1: {
+                            type: ArgumentType.STRING, 
+                            menu: 'menuHexNum1'
+                        },
+                        ADDR2: {
+                            type: ArgumentType.STRING, 
+                            menu: 'menuHexNum1'
+                        },
+                        ADDR3: {
+                            type: ArgumentType.STRING, 
+                            menu: 'menuHexNum1'
+                        },
+                        ADDR4: {
+                            type: ArgumentType.STRING, 
+                            menu: 'menuHexNum1'
+                        }
+                    }
+                },
+                {
+                    opcode: 'spi_read',
+                    text: formatMessage({
+                        id: 'microcom.spi_read',
+                        default: 'SPI: input ([BYTES] bytes)'
+                    }),		    		    
+                    blockType: BlockType.REPORTER,
+                    arguments: {
+			BYTES: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 1
+                        }
+                    }
+                },
+                {
                     opcode: 'uart_init',
                     text: formatMessage({
                         id: 'microcom.uart_init',
@@ -467,64 +532,6 @@ class Microcom {
                         }
                     }
                 },
-/*
-                {
-                    opcode: 'str16',
-                    text: formatMessage({
-                        id: 'microcom.str16',
-                        default: '[STR].to_str(16)'
-                    }),
-                    blockType: BlockType.REPORTER,
-                    arguments: {
-			STR: {
-                            type: ArgumentType.STRING,
-                            defaultValue: '10'
-                        }
-                    }
-                },
-                {
-                    opcode: 'ord',
-                    text: formatMessage({
-                        id: 'microcom.ord',
-                        default: '[STR].ord'
-                    }),
-                    blockType: BlockType.REPORTER,
-                    arguments: {
-			STR: {
-                            type: ArgumentType.STRING,
-                            defaultValue: 'A'
-                        }
-                    }
-                },
-                {
-                    opcode: 'bytes',
-                    text: formatMessage({
-                        id: 'microcom.bytes',
-                        default: '[STR].bytes'
-                    }),
-                    blockType: BlockType.REPORTER,
-                    arguments: {
-			STR: {
-                            type: ArgumentType.STRING,
-                            defaultValue: 'input i2c_read'
-                        }
-                    }
-                },
-                {
-                    opcode: 'split',
-                    text: formatMessage({
-                        id: 'microcom.split',
-                        default: '[STR].split(,)'
-                    }),
-                    blockType: BlockType.REPORTER,
-                    arguments: {
-			STR: {
-                            type: ArgumentType.STRING,
-                            defaultValue: 'string'
-                        }
-                    }
-                },
-*/		
                 {
                     opcode: 'tools',
                     text: formatMessage({
@@ -588,7 +595,7 @@ class Microcom {
     adc_init () {}
     adc_raw () {}    
     adc_volt () {}    
-    i2c_init () {}    
+    i2c_init () {}
     i2c_write () {}
     i2c_write2 () {}
     i2c_read () {}
@@ -597,11 +604,10 @@ class Microcom {
     uart_gets () {}    
     uart_txclear () {}    
     uart_rxclear () {}
+    spi_init () {}
+    spi_write () {}
+    spi_read () {}
     num16 () {}    
-//    str16 () {}    
-//    ord () {}    
-//    bytes () {}    
-//    split () {}    
     tools () {}
     puts () {}
     p () {}

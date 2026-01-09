@@ -33,6 +33,8 @@ const builtinExtensions = {
     mctboard:   () => require('../extensions/smt_mctboard'),
     rboard:     () => require('../extensions/smt_rboard'),
     peripherals:() => require('../extensions/smt_peripherals'),
+//    network:    () => require('../extensions/smt_network'),
+//    fileio:     () => require('../extensions/smt_fileio'),
     rboard0:    () => require('../extensions/smt_rboard0')
 };
 

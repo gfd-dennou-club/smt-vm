@@ -142,7 +142,10 @@ class Rboard0 {
             }),
             menuIconURI: menuIconURI,
             blockIconURI: blockIconURI,
-            blocks: [
+	    color1: '#1E88E5',
+	    color2: '#1565C0',
+	    color3: '#0D47A1',
+	    blocks: [
                 {
                     opcode :'gpio_output_init',
                     text: formatMessage({

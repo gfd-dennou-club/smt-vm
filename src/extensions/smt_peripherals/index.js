@@ -13,19 +13,28 @@ const menuIconURI = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZ
 
 //メニューで使う配列
 const PeripheralsMenus = {
-    menuSCD30: {
+    menuSensors: {
 	items: [
-	    { id: 'peripherals.menu_temp', default: 'Temperature', value: 'temp' },
-	    { id: 'peripherals.menu_humi', default: 'Humidity',    value: 'humi' },
-	    { id: 'peripherals.menu_co2',  default: 'CO2',         value: 'co2' }
+	    { text: 'BME688', value: 'BME688' },
+	    { text: 'BMP280', value: 'BMP280' },
+	    { text: 'DPS310', value: 'DPS310' },
+	    { text: 'SCD30',  value: 'SCD30' },
+	    { text: 'SCD41',  value: 'SCD41' },
+	    { text: 'SHT30',  value: 'SHT30' },
+	    { text: 'SHT35',  value: 'SHT35' },
+	    { text: 'SHT40',  value: 'SHT40' },
+	    { text: 'VL53L0X',value: 'VL53L0X' }
 	]
     },
-    menuDPS310: {
+    menuTargets: {
 	items: [
-	    { id: 'peripherals.menu_temp', default: 'Temperature', value: 'measure_temperature_once' },
-	    { id: 'peripherals.menu_pres', default: 'Pressure',    value: 'measure_pressure_once' }
+	    { id: 'peripherals.menu_pres', default: 'Pressure',    value: 'pressure' },
+	    { id: 'peripherals.menu_temp', default: 'Temperature', value: 'temperature' },
+	    { id: 'peripherals.menu_humi', default: 'Humidity',    value: 'humidity' },
+	    { id: 'peripherals.menu_co2',  default: 'CO2',         value: 'co2'},
+	    { id: 'peripherals.menu_dist', default: 'Distance',    value: 'distance'}
 	]
-    },
+    },    
     menuILI934Xline: {
 	items: [
 	    { id: 'peripherals.menuILI934Xline_line', default: 'Line', value: 'line' },
@@ -48,6 +57,30 @@ const PeripheralsMenus = {
 	    { id: 'peripherals.menuILI934Xcolor_blue',   default: 'blue',   value: '[0x00, 0x00, 0xFF]' },
 	    { id: 'peripherals.menuILI934Xcolor_yellow', default: 'yellow', value: '[0xFF, 0xFF, 0x00]' },
 
+	]
+    },
+    menuSNTP: {
+	items: [
+	    {id: 'mctboard.menuSNTP_year', default: '%Y', value: 'year' },
+	    {id: 'mctboard.menuSNTP_mon',  default: '%m', value: 'mon' },
+	    {id: 'mctboard.menuSNTP_mday', default: '%d', value: 'mday' },
+	    {id: 'mctboard.menuSNTP_wday', default: '%w', value: 'wday' },
+	    {id: 'mctboard.menuSNTP_hour', default: '%H', value: 'hour' },
+	    {id: 'mctboard.menuSNTP_min',  default: '%M', value: 'min' },
+	    {id: 'mctboard.menuSNTP_sec',  default: '%S', value: 'sec' }
+	]
+    },
+    menuSDopen: {
+	items: [
+	    {id: 'mctboard.menuSDopen_w', default: '(new)', value: 'w' },
+	    {id: 'mctboard.menuSDopen_a', default: '(add)', value: 'a' },
+	    {id: 'mctboard.menuSDopen_r', default: '(read)',value: 'r' }
+	]
+    },
+    menuSDread: {
+	items: [
+	    {id: 'mctboard.menuSDread_read', default: '(all lines)', value: 'read' },
+	    {id: 'mctboard.menuSDread_gets', default: '(1 line)',    value: 'gets' }
 	]
     }
 };
@@ -75,28 +108,57 @@ class Peripherals {
             }),
             menuIconURI: menuIconURI,
             blockIconURI: blockIconURI,
+	    color1: '#CE93D8',
+	    color2: '#AB47BC',
+	    color3: '#8E24AA',
             blocks: [
-//                {
-//                    opcode: 'i2c_init',
-//                    text: formatMessage({ id: 'peripherals.i2c_init', default: 'I2C: init' }),
-//                    blockType: BlockType.COMMAND,
-//                },
                 {
-                    opcode: 'scd30',
-                    text: formatMessage({ id: 'peripherals.sdc30_measure', default: 'SCD30: [OBS]' }),
-                    blockType: BlockType.REPORTER,
-		    arguments: {
-                        OBS: { type: ArgumentType.STRING, menu: 'menuSCD30' }
+                    opcode: 'i2c_sensor_init',
+                    text: formatMessage({
+                        id: 'peripherals.i2c_sensor_init',
+                        default: 'I2C: [SENSOR] initialize'
+                    }),
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        SENSOR: {
+                            type: ArgumentType.STRING,
+                            menu: 'menuSensors'
+                        }
                     }
                 },
                 {
-                    opcode: 'dps310',
-                    text: formatMessage({ id: 'peripherals.dps310_measure', default: 'DPS310: [OBS]' }),
+                    opcode: 'i2c_sensor_read',
+                    text: formatMessage({
+                        id: 'peripherals.i2c_sensor_read',
+                        default: 'I2C: [SENSOR] read' 
+                    }),
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        SENSOR: {
+                            type: ArgumentType.STRING,
+                            menu: 'menuSensors'
+                        }
+                    }		    
+                }, 
+                {
+                    opcode: 'i2c_sensor_value',
+                    text: formatMessage({
+                        id: 'peripherals.i2c_sensor_value',
+                        default: 'I2C: [SENSOR] [TARGET]' 
+                    }),
                     blockType: BlockType.REPORTER,
-		    arguments: {
-                        OBS: { type: ArgumentType.STRING, menu: 'menuDPS310' }
-                    }
+                    arguments: {
+                        SENSOR: {
+                            type: ArgumentType.STRING,
+                            menu: 'menuSensors'
+                        },
+                        TARGET: {
+                            type: ArgumentType.STRING,
+                            menu: 'menuTargets'
+                        }
+                    }		    
                 },
+/*		
                 {
                     opcode: 'ili934x_write_line',
                     text: formatMessage({
@@ -142,25 +204,177 @@ class Peripherals {
 			MESS: { type: ArgumentType.STRING, defaultValue: "Hello world!" },
 			COLOR:{ type: ArgumentType.STRING, menu: 'menuILI934Xcolor' }
                     }
-                }
+                    }
+*/
+		{
+		    opcode: 'wifi_init',
+		    text: formatMessage({
+                        id: 'peripherals.wifi_init',
+                        default: 'Wi-Fi: initialize',
+                    }),		    		    
+                    blockType: BlockType.COMMAND,
+                },
+		{
+		    opcode: 'wifi_connect',
+		    text: formatMessage({
+                        id: 'peripherals.wifi_connect',
+                        default: 'Wi-Fi: connect, SSID=[SSID], passphrase=[PASS]',
+                    }),		    		    
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+			SSID: { type: ArgumentType.STRING, defaultValue: "SugiyamaLab" },
+			PASS: { type: ArgumentType.STRING, defaultValue: "hogehoge" }
+                    }
+                },
+                {
+                    opcode: 'wifi_connected',
+                    text: formatMessage({
+                        id: 'peripherals.wifi_connected',
+                        default: 'Wi-Fi: connected?'
+                    }),		    		    
+                    blockType: BlockType.BOOLEAN
+                },
+                {
+                    opcode: 'http_get',
+                    text: formatMessage({
+                        id: 'peripherals.http_get',
+                        default: 'WI-Fi: HTTP GET, URL = [URL]'
+                    }),		    		    
+                    blockType: BlockType.REPORTER,
+                    arguments: {
+			URL: { type: ArgumentType.STRING, defaultValue: "https://my.gfd-dennou.org/hoge.php?name=hero&cal=20" }
+                    }
+                },
+                {
+                    opcode: 'http_post',
+                    text: formatMessage({
+                        id: 'peripherals.http_post',
+                        default: 'Wi-Fi: HTTP POST, URL = [URL], JSON data = [DATA]'
+                    }),		    		    
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+			URL: { type: ArgumentType.STRING, defaultValue: "https://my.gfd-dennou.org/hoge.php" },
+			DATA: { type: ArgumentType.STRING, defaultValue: "{\"name\":\"hero\", \"tel\":\"foo\", \"num\":23}" }
+                    }
+                },
+/*		
+                {
+                    opcode: 'sntp_init',
+                    text: formatMessage({
+                        id: 'peripherals.sntp_init',
+                        default: 'SNTP: initialize'
+                    }),		    		    
+                    blockType: BlockType.COMMAND
+                },
+                {
+                    opcode: 'sntp_read',
+                    text: formatMessage({
+                        id: 'peripherals.sntp_read',
+                        default: 'SNTP: read'
+                    }),		    		    
+                    blockType: BlockType.COMMAND
+                },
+                {
+                    opcode: 'sntp_date',
+                    text: formatMessage({
+                        id: 'peripherals.sntp_date',
+                        default: 'SNTP: [TIME]',
+                    }),		    		    
+                    blockType: BlockType.REPORTER,
+                    arguments: {
+			TIME: { type: ArgumentType.STRING, menu: 'menuSNTP' }
+                    }
+                },
+*/
+                {
+                    opcode: 'sd_init',
+                    text: formatMessage({
+                        id: 'peripherals.sd_init',
+                        default: 'SD: initialize, cs_pin=[PIN] mount_point=[DIR]'
+                    }),		    		    
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+			PIN: { type: ArgumentType.NUMBER, defaultValue: 2 },
+			DIR: { type: ArgumentType.STRING, defaultValue: "/sd" },
+                    }
+                },
+                {
+                    opcode: 'sd_open',
+                    text: formatMessage({
+                        id: 'peripherals.sd_open',
+                        default: 'SD: file open, file = [FILE] [MODE]'
+                    }),		    		    
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+			FILE: { type: ArgumentType.STRING, defaultValue: "filename.txt" },
+			MODE: { type: ArgumentType.STRING, menu: 'menuSDopen' }
+                    }
+                },
+                {
+                    opcode: 'sd_puts',
+                    text: formatMessage({
+                        id: 'peripherals.sd_puts',
+                        default: 'SD: puts [TEXT]'
+                    }),		    		    
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+			TEXT: { type: ArgumentType.STRING, defaultValue: "Hello World!" }
+                    }
+                },
+                {
+                    opcode: 'sd_read',
+                    text: formatMessage({
+                        id: 'peripherals.sd_read',
+                        default: 'SD: read from file [MODE]'
+                    }),
+                    blockType: BlockType.REPORTER,
+                    arguments: {
+			MODE: { type: ArgumentType.STRING, menu: 'menuSDread' }
+                    }
+                },
+                {
+                    opcode: 'sd_close',
+                    text: formatMessage({
+                        id: 'peripherals.sd_close',
+                        default: 'SD: file close'
+                    }),		    		    
+                    blockType: BlockType.COMMAND,
+                },
+		    
             ],
-            menus: {
-                menuSCD30:         { acceptReporters: false, items: createMenuItems('menuSCD30')},
-                menuDPS310:        { acceptReporters: false, items: createMenuItems('menuDPS310')},
-                menuILI934Xline:   { acceptReporters: false, items: createMenuItems('menuILI934Xline')},
-                menuILI934Xcircle: { acceptReporters: false, items: createMenuItems('menuILI934Xcircle')},
-                menuILI934Xcolor:  { acceptReporters: false, items: createMenuItems('menuILI934Xcolor')},
+	    menus: {
+		menuSensors:       { acceptReporters: false, items: createMenuItems('menuSensors')},
+		menuTargets:       { acceptReporters: false, items: createMenuItems('menuTargets')},
+		// menuILI934Xline:   { acceptReporters: false, items: createMenuItems('menuILI934Xline')},
+		// menuILI934Xcircle: { acceptReporters: false, items: createMenuItems('menuILI934Xcircle')},
+		// menuILI934Xcolor:  { acceptReporters: false, items: createMenuItems('menuILI934Xcolor')},
+                menuSNTP:     { acceptReporters: false, items: createMenuItems('menuSNTP')},
+		menuSDopen:{ acceptReporters: false, items: createMenuItems('menuSDopen') },
+		menuSDread:{ acceptReporters: false, items: createMenuItems('menuSDread') }		
             }
-        };
+	};
     }
-
+    
     // クリックされた時の挙動．何もしない．   
-    i2c_init() {}
-    scd30() {}
-    dps310() {}
-    ili934x_write_line() {}
-    ili934x_write_circle() {}
-    ili934x_write_string() {}
+    i2c_sensor_init () {}
+    i2c_sensor_read () {}
+    i2c_sensor_value () {}
+//    ili934x_write_line() {}
+//    ili934x_write_circle() {}
+//    ili934x_write_string() {}
+    wifi_init(){}
+    wifi_connect(){}
+    wifi_connected(){}
+    http_get(){}
+    http_post(){}
+//    sntp_init(){}
+//    sntp_read(){}
+//    sntp_date(){}
+    sd_init(){}
+    sd_open(){}
+    sd_close(){}
+    sd_puts(){}
+    sd_read(){}
 }
 
 module.exports = Peripherals
