@@ -11,8 +11,15 @@ const createMockRuntime = () => {
         getEditingTarget: () => ({
             getAllVariableNamesInScopeByType: () => []
         }),
-        formatMessage: messageData => messageData.default
+        formatMessage: messageData => messageData.default || messageData.defaultMessage,
+        setup: () => ({
+            locale: 'en',
+            translations: {
+                en: {}
+            }
+        })
     };
+    runtime.formatMessage.setup = runtime.setup;
     return runtime;
 };
 
