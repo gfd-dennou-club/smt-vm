@@ -4,7 +4,7 @@ const formatMessage = require('format-message');
 const log = require('../../util/log');
 const {v4: uuidv4} = require('uuid');
 const Variable = require('../../engine/variable');
-const {getDomainFromUrl} = require('./utils');
+const {getDomain, saveDomainToLocalStorage} = require('./utils');
 const {createClient} = require('./mesh-client');
 const MeshV2Service = require('./mesh-service');
 
@@ -52,7 +52,7 @@ class Scratch3MeshV2Blocks {
     constructor (runtime) {
         log.info('Loading NEW Mesh V2 extension (GraphQL)');
         this.runtime = runtime;
-        this.domain = getDomainFromUrl();
+        this.domain = getDomain();
         this.nodeId = uuidv4().replaceAll('-', '');
         this.connectionState = 'disconnected';
         this.isExplicitDisconnect = false;
@@ -78,6 +78,28 @@ class Scratch3MeshV2Blocks {
         }
 
         this.runtime.registerPeripheralExtension(Scratch3MeshV2Blocks.EXTENSION_ID, this);
+    }
+
+    /**
+     * Set the domain for the mesh service.
+     * @param {string} domain - The new domain.
+     * @returns {string|null} - Error message if failed, null if success.
+     */
+    setDomain (domain) {
+        if (this.connectionState === 'connected' || this.connectionState === 'connecting') {
+            return formatMessage({
+                id: 'mesh.domainConnectedAlert',
+                default: 'Mesh V2 is connected. To change the domain, please disconnect first.',
+                description: 'Alert message when trying to change domain while connected'
+            });
+        }
+        this.domain = domain;
+        saveDomainToLocalStorage(domain);
+        if (this.meshService) {
+            this.meshService.domain = domain;
+        }
+        log.info(`Mesh V2: Domain set to ${domain || 'null (auto)'}`);
+        return null;
     }
 
     makeMeshIdLabel (meshId) {
