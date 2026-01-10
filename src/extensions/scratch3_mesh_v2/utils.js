@@ -34,19 +34,27 @@ const getDomainFromUrl = () => {
 const getDomainFromLocalStorage = () => {
     /* istanbul ignore next */
     if (typeof window === 'undefined' || !window.localStorage) return null;
-    const domain = window.localStorage.getItem(MESH_DOMAIN_STORAGE_KEY);
-
-    return validateDomain(domain);
+    try {
+        const domain = window.localStorage.getItem(MESH_DOMAIN_STORAGE_KEY);
+        return validateDomain(domain);
+    } catch (e) {
+        log.warn(`Mesh V2: Failed to read from localStorage: ${e}`);
+        return null;
+    }
 };
 
 /* istanbul ignore next */
 const saveDomainToLocalStorage = domain => {
     /* istanbul ignore next */
     if (typeof window === 'undefined' || !window.localStorage) return;
-    if (domain) {
-        window.localStorage.setItem(MESH_DOMAIN_STORAGE_KEY, domain);
-    } else {
-        window.localStorage.removeItem(MESH_DOMAIN_STORAGE_KEY);
+    try {
+        if (domain) {
+            window.localStorage.setItem(MESH_DOMAIN_STORAGE_KEY, domain);
+        } else {
+            window.localStorage.removeItem(MESH_DOMAIN_STORAGE_KEY);
+        }
+    } catch (e) {
+        log.warn(`Mesh V2: Failed to write to localStorage: ${e}`);
     }
 };
 
