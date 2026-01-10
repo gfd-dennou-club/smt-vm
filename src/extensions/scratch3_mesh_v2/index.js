@@ -52,7 +52,12 @@ class Scratch3MeshV2Blocks {
     constructor (runtime) {
         log.info('Loading NEW Mesh V2 extension (GraphQL)');
         this.runtime = runtime;
-        this.domain = getDomain();
+        try {
+            this.domain = getDomain();
+        } catch (e) {
+            log.warn(`Mesh V2: Failed to get domain from URL/localStorage: ${e}`);
+            this.domain = null;
+        }
         this.nodeId = uuidv4().replaceAll('-', '');
         this.connectionState = 'disconnected';
         this.isExplicitDisconnect = false;
