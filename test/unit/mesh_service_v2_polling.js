@@ -182,9 +182,7 @@ test('MeshV2Service Polling', t => {
         ];
 
         service.client = {
-            query: () => {
-                return Promise.resolve({data: {getEventsSince: events}});
-            }
+            query: () => Promise.resolve({data: {getEventsSince: events}})
         };
 
         await service.pollEvents();
