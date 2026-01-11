@@ -9,7 +9,6 @@ const LIST_GROUPS_BY_DOMAIN = gql`
       fullId
       name
       hostId
-      createdAt
       expiresAt
     }
   }
@@ -34,7 +33,6 @@ const CREATE_GROUP = gql`
       fullId
       name
       hostId
-      createdAt
       expiresAt
       heartbeatIntervalSeconds
       useWebSocket
