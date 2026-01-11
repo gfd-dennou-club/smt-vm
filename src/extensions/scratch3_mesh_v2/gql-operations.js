@@ -162,7 +162,7 @@ const RECORD_EVENTS = gql`
 `;
 
 const GET_EVENTS_SINCE = gql`
-  query GetEventsSince($groupId: ID!, $domain: String!, $since: AWSDateTime!) {
+  query GetEventsSince($groupId: ID!, $domain: String!, $since: String!) {
     getEventsSince(groupId: $groupId, domain: $domain, since: $since) {
       name
       firedByNodeId

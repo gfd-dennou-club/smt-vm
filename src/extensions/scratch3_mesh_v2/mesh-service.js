@@ -215,9 +215,13 @@ class MeshV2Service {
             try {
                 // Derived from https://xxx.appsync-api.region.amazonaws.com/graphql
                 // to wss://xxx.appsync-realtime-api.region.amazonaws.com/graphql
-                const wsUrl = GRAPHQL_ENDPOINT
-                    .replace('https://', 'wss://')
-                    .replace('appsync-api', 'appsync-realtime-api');
+                // or for custom domains, to wss://api.example.com/graphql/realtime
+                let wsUrl = GRAPHQL_ENDPOINT.replace('https://', 'wss://');
+                if (wsUrl.includes('appsync-api')) {
+                    wsUrl = wsUrl.replace('appsync-api', 'appsync-realtime-api');
+                } else {
+                    wsUrl = wsUrl.replace(/\/graphql$/, '/graphql/realtime');
+                }
 
                 const socket = new WebSocket(wsUrl, 'graphql-ws');
                 const timeout = setTimeout(() => {
