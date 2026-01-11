@@ -295,6 +295,7 @@ class MeshV2Service {
             this.groupName = group.name;
             this.domain = group.domain; // Update domain from server
             this.expiresAt = group.expiresAt;
+            this.lastFetchTime = group.createdAt;
             this.useWebSocket = group.useWebSocket;
             if (group.pollingIntervalSeconds) {
                 this.pollingIntervalSeconds = group.pollingIntervalSeconds;
@@ -370,6 +371,7 @@ class MeshV2Service {
             this.groupName = groupName || groupId;
             this.domain = node.domain; // Update domain from server
             this.expiresAt = node.expiresAt;
+            this.lastFetchTime = new Date().toISOString();
             this.useWebSocket = node.useWebSocket;
             if (node.pollingIntervalSeconds) {
                 this.pollingIntervalSeconds = node.pollingIntervalSeconds;
@@ -566,10 +568,6 @@ class MeshV2Service {
         if (!this.groupId) return;
 
         log.info(`Mesh V2: Starting event polling (Interval: ${this.pollingIntervalSeconds}s)`);
-        // Initial fetch time
-        if (!this.lastFetchTime) {
-            this.lastFetchTime = new Date().toISOString();
-        }
 
         this.pollingTimer = setInterval(() => {
             this.pollEvents();
@@ -592,7 +590,7 @@ class MeshV2Service {
      * Fetch new events from the server since the last fetch time.
      */
     async pollEvents () {
-        if (!this.groupId || !this.client || this.useWebSocket || !this.lastFetchTime) return;
+        if (!this.groupId || !this.client || this.useWebSocket) return;
 
         try {
             this.costTracking.queryCount++;
@@ -845,7 +843,7 @@ class MeshV2Service {
                     }
                 });
             } else {
-                const result = await this.client.mutate({
+                await this.client.mutate({
                     mutation: RECORD_EVENTS,
                     variables: {
                         groupId: this.groupId,
@@ -854,10 +852,6 @@ class MeshV2Service {
                         events: events
                     }
                 });
-                // Update lastFetchTime if it's currently null
-                if (!this.lastFetchTime) {
-                    this.lastFetchTime = result.data.recordEventsByNode.nextSince;
-                }
             }
         } catch (error) {
             log.error(`Mesh V2: Failed to fire batch events: ${error}`);
