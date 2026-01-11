@@ -629,30 +629,10 @@ class MeshV2Service {
 
                     // Filter out events from self and sort by timestamp to preserve order
                     const otherEvents = events
-                        .filter(event => event.firedByNodeId !== this.meshId)
-                        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+                        .filter(event => event.firedByNodeId !== this.meshId);
 
                     if (otherEvents.length > 0) {
-                        // Use the first event's timestamp as base for relative timing within this polled batch
-                        const baseTime = new Date(otherEvents[0].timestamp).getTime();
-
-                        otherEvents.forEach(event => {
-                            const eventTime = new Date(event.timestamp).getTime();
-                            const offsetMs = eventTime - baseTime;
-
-                            this.pendingBroadcasts.push({
-                                event: event,
-                                offsetMs: offsetMs
-                            });
-                            log.info(`Mesh V2: Queued event: ${event.name} ` +
-                                `(offset: ${offsetMs}ms, original timestamp: ${event.timestamp})`);
-                        });
-
-                        // Start playback if not already started
-                        if (this.batchStartTime === null && this.pendingBroadcasts.length > 0) {
-                            this.batchStartTime = Date.now();
-                            this.lastBroadcastOffset = 0;
-                        }
+                        this._queueEventsForPlayback(otherEvents);
                     }
 
                     // ALWAYS update lastFetchTime from the LAST event in the result (including our own)
@@ -699,26 +679,37 @@ class MeshV2Service {
 
         log.info(`Mesh V2: Received ${events.length} events from ${batchEvent.firedByNodeId}`);
 
-        // タイムスタンプでソート
-        const sortedEvents = events.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        this._queueEventsForPlayback(events);
+    }
+
+    /**
+     * Internal method to queue events for playback with relative timing.
+     * @param {Array} events - Array of events to queue.
+     * @private
+     */
+    _queueEventsForPlayback (events) {
+        if (!events || events.length === 0) return;
+
+        // タイムスタンプでソート（副作用を避けるためコピーを作成）
+        const sortedEvents = [...events].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
         // 最初のイベントを基準にオフセットを計算
         const baseTime = new Date(sortedEvents[0].timestamp).getTime();
 
-        // キューに追加（setTimeoutは使わない）
+        // キューに追加
         sortedEvents.forEach(event => {
             const eventTime = new Date(event.timestamp).getTime();
             const offsetMs = eventTime - baseTime;
 
             this.pendingBroadcasts.push({
                 event: event,
-                offsetMs: offsetMs // 元のタイミング情報を保持
+                offsetMs: offsetMs
             });
             log.info(`Mesh V2: Queued event: ${event.name} ` +
                 `(offset: ${offsetMs}ms, original timestamp: ${event.timestamp})`);
         });
 
-        // バッチ処理開始時刻を記録（最初のイベント追加時のみ）
+        // バッチ処理開始時刻を記録（未開始の場合のみ）
         if (this.batchStartTime === null && this.pendingBroadcasts.length > 0) {
             this.batchStartTime = Date.now();
             this.lastBroadcastOffset = 0;
