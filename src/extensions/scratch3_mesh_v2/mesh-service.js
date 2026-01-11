@@ -626,13 +626,41 @@ class MeshV2Service {
                 const events = result.data.getEventsSince;
                 if (events.length > 0) {
                     log.info(`Mesh V2: Polled ${events.length} events`);
-                    events.forEach(event => {
-                        this.handleEvent(event);
-                        // Update lastFetchTime to the latest event's cursor
-                        if (event.cursor) {
-                            this.lastFetchTime = event.cursor;
+
+                    // Filter out events from self and sort by timestamp to preserve order
+                    const otherEvents = events
+                        .filter(event => event.firedByNodeId !== this.meshId)
+                        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+                    if (otherEvents.length > 0) {
+                        // Use the first event's timestamp as base for relative timing within this polled batch
+                        const baseTime = new Date(otherEvents[0].timestamp).getTime();
+
+                        otherEvents.forEach(event => {
+                            const eventTime = new Date(event.timestamp).getTime();
+                            const offsetMs = eventTime - baseTime;
+
+                            this.pendingBroadcasts.push({
+                                event: event,
+                                offsetMs: offsetMs
+                            });
+                            log.info(`Mesh V2: Queued event: ${event.name} ` +
+                                `(offset: ${offsetMs}ms, original timestamp: ${event.timestamp})`);
+                        });
+
+                        // Start playback if not already started
+                        if (this.batchStartTime === null && this.pendingBroadcasts.length > 0) {
+                            this.batchStartTime = Date.now();
+                            this.lastBroadcastOffset = 0;
                         }
-                    });
+                    }
+
+                    // ALWAYS update lastFetchTime from the LAST event in the result (including our own)
+                    // to ensure we don't fetch the same events again.
+                    const lastEvent = events[events.length - 1];
+                    if (lastEvent.cursor) {
+                        this.lastFetchTime = lastEvent.cursor;
+                    }
                 }
             }
         } catch (error) {
