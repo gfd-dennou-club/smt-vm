@@ -917,20 +917,20 @@ class MeshV2Service {
         if (!this.groupId || !this.client || !this.isHost) return;
 
         try {
-                        this.costTracking.mutationCount++;
-                        this.costTracking.heartbeatCount++;
-                        const result = await this.client.mutate({
-                            mutation: RENEW_HEARTBEAT,
-                            variables: {
-                                groupId: this.groupId,
-                                domain: this.domain,
-                                hostId: this.meshId
-                            }
-                        });
-            
-                        this.expiresAt = result.data.renewHeartbeat.expiresAt;
-                        log.info(`Mesh V2: Heartbeat renewed. Expires at: ${this.expiresAt}`);
-            
+            this.costTracking.mutationCount++;
+            this.costTracking.heartbeatCount++;
+            const result = await this.client.mutate({
+                mutation: RENEW_HEARTBEAT,
+                variables: {
+                    groupId: this.groupId,
+                    domain: this.domain,
+                    hostId: this.meshId
+                }
+            });
+
+            this.expiresAt = result.data.renewHeartbeat.expiresAt;
+            log.info(`Mesh V2: Heartbeat renewed. Expires at: ${this.expiresAt}`);
+
             if (result.data.renewHeartbeat.heartbeatIntervalSeconds) {
                 const newInterval = result.data.renewHeartbeat.heartbeatIntervalSeconds;
                 if (newInterval !== this.hostHeartbeatInterval) {
