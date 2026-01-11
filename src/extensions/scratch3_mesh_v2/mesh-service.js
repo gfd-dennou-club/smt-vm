@@ -20,6 +20,8 @@ const {
     LIST_GROUP_STATUSES
 } = require('./gql-operations');
 
+const {getForcePollingFromUrl} = require('./utils');
+
 const {GRAPHQL_ENDPOINT} = require('./mesh-client');
 
 /**
@@ -62,7 +64,11 @@ class MeshV2Service {
         this.groupName = null;
         this.expiresAt = null;
         this.isHost = false;
-        this.useWebSocket = true;
+        this.forcePolling = getForcePollingFromUrl();
+        this.useWebSocket = !this.forcePolling;
+        if (this.forcePolling) {
+            log.info('Mesh V2: Forced polling mode enabled via URL parameter');
+        }
         this.pollingIntervalSeconds = 2;
         this.lastFetchTime = null;
 
@@ -276,7 +282,11 @@ class MeshV2Service {
             }
 
             // Test WebSocket availability
-            this.useWebSocket = await this.testWebSocket();
+            if (this.forcePolling) {
+                this.useWebSocket = false;
+            } else {
+                this.useWebSocket = await this.testWebSocket();
+            }
             log.info(`Mesh V2: WebSocket available: ${this.useWebSocket}`);
 
             this.costTracking.mutationCount++;
@@ -372,7 +382,7 @@ class MeshV2Service {
             this.domain = node.domain; // Update domain from server
             this.expiresAt = node.expiresAt;
             this.lastFetchTime = new Date().toISOString();
-            this.useWebSocket = node.useWebSocket;
+            this.useWebSocket = this.forcePolling ? false : node.useWebSocket;
             if (node.pollingIntervalSeconds) {
                 this.pollingIntervalSeconds = node.pollingIntervalSeconds;
             }
