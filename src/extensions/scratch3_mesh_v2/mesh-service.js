@@ -70,7 +70,7 @@ class MeshV2Service {
             log.info('Mesh V2: Forced polling mode enabled via URL parameter');
         }
         this.pollingIntervalSeconds = 2;
-        this.lastFetchTime = null;
+        this.lastFetchTime = '';
 
         this.subscriptions = [];
         this.connectionTimer = null;
@@ -306,6 +306,7 @@ class MeshV2Service {
             this.domain = group.domain; // Update domain from server
             this.expiresAt = group.expiresAt;
             this.lastFetchTime = group.createdAt;
+            log.info(`Mesh V2: Initialized lastFetchTime to ${this.lastFetchTime} (from group.createdAt)`);
             this.useWebSocket = group.useWebSocket;
             if (group.pollingIntervalSeconds) {
                 this.pollingIntervalSeconds = group.pollingIntervalSeconds;
@@ -381,7 +382,8 @@ class MeshV2Service {
             this.groupName = groupName || groupId;
             this.domain = node.domain; // Update domain from server
             this.expiresAt = node.expiresAt;
-            this.lastFetchTime = new Date().toISOString();
+            this.lastFetchTime = node.createdAt;
+            log.info(`Mesh V2: Initialized lastFetchTime to ${this.lastFetchTime} (from node.createdAt)`);
             this.useWebSocket = this.forcePolling ? false : node.useWebSocket;
             if (node.pollingIntervalSeconds) {
                 this.pollingIntervalSeconds = node.pollingIntervalSeconds;
@@ -602,8 +604,14 @@ class MeshV2Service {
     async pollEvents () {
         if (!this.groupId || !this.client || this.useWebSocket) return;
 
+        if (!this.lastFetchTime) {
+            log.warn('Mesh V2: pollEvents called but lastFetchTime is empty. Falling back to current time.');
+            this.lastFetchTime = new Date().toISOString();
+        }
+
+        log.debug(`Mesh V2: pollEvents for group ${this.groupId}. since=${this.lastFetchTime}`);
+
         try {
-            this.costTracking.queryCount++;
             const result = await this.client.query({
                 query: GET_EVENTS_SINCE,
                 variables: {
@@ -614,32 +622,21 @@ class MeshV2Service {
                 fetchPolicy: 'network-only'
             });
 
-            const events = result.data.getEventsSince;
-            if (events && events.length > 0) {
-                log.info(`Mesh V2: Polled ${events.length} events`);
-                // Process events (similar to handleBatchEvent but with direct event objects)
-                const batchEvent = {
-                    firedByNodeId: 'polling-server', // dummy
-                    events: events.map(e => ({
-                        name: e.name,
-                        firedByNodeId: e.firedByNodeId,
-                        groupId: e.groupId,
-                        domain: e.domain,
-                        payload: e.payload,
-                        timestamp: e.timestamp
-                    }))
-                };
-                this.handleBatchEvent(batchEvent);
-
-                // Update lastFetchTime to the cursor of the last received event
-                this.lastFetchTime = events[events.length - 1].cursor;
+            if (result.data && result.data.getEventsSince) {
+                const events = result.data.getEventsSince;
+                if (events.length > 0) {
+                    log.info(`Mesh V2: Polled ${events.length} events`);
+                    events.forEach(event => {
+                        this.handleEvent(event);
+                        // Update lastFetchTime to the latest event's cursor
+                        if (event.cursor) {
+                            this.lastFetchTime = event.cursor;
+                        }
+                    });
+                }
             }
         } catch (error) {
             log.error(`Mesh V2: Event polling failed: ${error}`);
-            const reason = this.shouldDisconnectOnError(error);
-            if (reason) {
-                this.cleanupAndDisconnect(reason);
-            }
         }
     }
 
@@ -912,6 +909,9 @@ class MeshV2Service {
                 }
             });
             this.expiresAt = result.data.renewHeartbeat.expiresAt;
+            if (result.data.renewHeartbeat.createdAt) {
+                this.lastFetchTime = result.data.renewHeartbeat.createdAt;
+            }
             log.info(`Mesh V2: Heartbeat renewed. Expires at: ${this.expiresAt}`);
             if (result.data.renewHeartbeat.heartbeatIntervalSeconds) {
                 const newInterval = result.data.renewHeartbeat.heartbeatIntervalSeconds;
@@ -946,6 +946,9 @@ class MeshV2Service {
                 }
             });
             log.info('Mesh V2: Member heartbeat sent');
+            if (result.data.sendMemberHeartbeat.createdAt) {
+                this.lastFetchTime = result.data.sendMemberHeartbeat.createdAt;
+            }
             if (result.data.sendMemberHeartbeat.expiresAt) {
                 this.expiresAt = result.data.sendMemberHeartbeat.expiresAt;
                 this.startConnectionTimer();
