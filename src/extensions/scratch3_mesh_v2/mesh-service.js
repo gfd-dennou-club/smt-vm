@@ -14,9 +14,13 @@ const {
     SEND_MEMBER_HEARTBEAT,
     REPORT_DATA,
     FIRE_EVENTS,
+    RECORD_EVENTS,
+    GET_EVENTS_SINCE,
     ON_MESSAGE_IN_GROUP,
     LIST_GROUP_STATUSES
 } = require('./gql-operations');
+
+const {GRAPHQL_ENDPOINT} = require('./mesh-client');
 
 /**
  * Parses an environment variable as an integer with validation.
@@ -58,11 +62,15 @@ class MeshV2Service {
         this.groupName = null;
         this.expiresAt = null;
         this.isHost = false;
+        this.useWebSocket = true;
+        this.pollingIntervalSeconds = 2;
+        this.lastFetchTime = null;
 
         this.subscriptions = [];
         this.connectionTimer = null;
         this.heartbeatTimer = null;
         this.dataSyncTimer = null;
+        this.pollingTimer = null;
 
         // Last data send promise to track completion of the most recent data transmission
         this.lastDataSendPromise = Promise.resolve();
@@ -198,6 +206,45 @@ class MeshV2Service {
         }
     }
 
+    /**
+     * Test if WebSocket connection is possible in the current environment.
+     * @returns {Promise<boolean>} True if WebSocket is available.
+     */
+    testWebSocket () {
+        return new Promise(resolve => {
+            try {
+                // Derived from https://xxx.appsync-api.region.amazonaws.com/graphql
+                // to wss://xxx.appsync-realtime-api.region.amazonaws.com/graphql
+                const wsUrl = GRAPHQL_ENDPOINT
+                    .replace('https://', 'wss://')
+                    .replace('appsync-api', 'appsync-realtime-api');
+
+                const socket = new WebSocket(wsUrl, 'graphql-ws');
+                const timeout = setTimeout(() => {
+                    log.warn('Mesh V2: WebSocket test timed out');
+                    socket.close();
+                    resolve(false);
+                }, 3000); // 3 seconds timeout for test
+
+                socket.onopen = () => {
+                    log.info('Mesh V2: WebSocket test successful');
+                    clearTimeout(timeout);
+                    socket.close();
+                    resolve(true);
+                };
+
+                socket.onerror = err => {
+                    log.warn(`Mesh V2: WebSocket test failed: ${err}`);
+                    clearTimeout(timeout);
+                    resolve(false);
+                };
+            } catch (error) {
+                log.warn(`Mesh V2: WebSocket not supported or failed to initialize: ${error}`);
+                resolve(false);
+            }
+        });
+    }
+
     async createDomain () {
         if (!this.client) throw new Error('Client not initialized');
 
@@ -224,13 +271,18 @@ class MeshV2Service {
                 await this.createDomain();
             }
 
+            // Test WebSocket availability
+            this.useWebSocket = await this.testWebSocket();
+            log.info(`Mesh V2: WebSocket available: ${this.useWebSocket}`);
+
             this.costTracking.mutationCount++;
             const result = await this.client.mutate({
                 mutation: CREATE_GROUP,
                 variables: {
                     name: groupName,
                     hostId: this.meshId,
-                    domain: this.domain
+                    domain: this.domain,
+                    useWebSocket: this.useWebSocket
                 }
             });
 
@@ -239,13 +291,21 @@ class MeshV2Service {
             this.groupName = group.name;
             this.domain = group.domain; // Update domain from server
             this.expiresAt = group.expiresAt;
+            this.useWebSocket = group.useWebSocket;
+            if (group.pollingIntervalSeconds) {
+                this.pollingIntervalSeconds = group.pollingIntervalSeconds;
+            }
             this.isHost = true;
             if (group.heartbeatIntervalSeconds) {
                 this.hostHeartbeatInterval = group.heartbeatIntervalSeconds;
             }
 
             this.costTracking.connectionStartTime = Date.now();
-            this.startSubscriptions();
+            if (this.useWebSocket) {
+                this.startSubscriptions();
+            } else {
+                this.startPolling();
+            }
             this.startHeartbeat();
             this.startEventBatchTimer();
             this.startConnectionTimer();
@@ -253,7 +313,8 @@ class MeshV2Service {
 
             await this.sendAllGlobalVariables();
 
-            log.info(`Mesh V2: Created group ${this.groupName} (${this.groupId}) in domain ${this.domain}`);
+            log.info(`Mesh V2: Created group ${this.groupName} (${this.groupId}) in domain ${this.domain} ` +
+                `(Protocol: ${this.useWebSocket ? 'WebSocket' : 'Polling'})`);
             return group;
         } catch (error) {
             log.error(`Mesh V2: Failed to create group: ${error}`);
@@ -305,13 +366,21 @@ class MeshV2Service {
             this.groupName = groupName || groupId;
             this.domain = node.domain; // Update domain from server
             this.expiresAt = node.expiresAt;
+            this.useWebSocket = node.useWebSocket;
+            if (node.pollingIntervalSeconds) {
+                this.pollingIntervalSeconds = node.pollingIntervalSeconds;
+            }
             this.isHost = false;
             if (node.heartbeatIntervalSeconds) {
                 this.memberHeartbeatInterval = node.heartbeatIntervalSeconds;
             }
 
             this.costTracking.connectionStartTime = Date.now();
-            this.startSubscriptions();
+            if (this.useWebSocket) {
+                this.startSubscriptions();
+            } else {
+                this.startPolling();
+            }
             this.startHeartbeat(); // Start heartbeat for member too
             this.startEventBatchTimer();
             this.startConnectionTimer();
@@ -320,7 +389,8 @@ class MeshV2Service {
             await this.sendAllGlobalVariables();
             await this.fetchAllNodesData();
 
-            log.info(`Mesh V2: Joined group ${this.groupId} in domain ${this.domain}`);
+            log.info(`Mesh V2: Joined group ${this.groupId} in domain ${this.domain} ` +
+                `(Protocol: ${this.useWebSocket ? 'WebSocket' : 'Polling'})`);
             return node;
         } catch (error) {
             log.error(`Mesh V2: Failed to join group: ${error}`);
@@ -426,6 +496,7 @@ class MeshV2Service {
         this.lastBroadcastOffset = 0;
 
         this.stopSubscriptions();
+        this.stopPolling();
         this.stopHeartbeat();
         this.stopEventBatchTimer();
         this.stopConnectionTimer();
@@ -481,6 +552,83 @@ class MeshV2Service {
     stopSubscriptions () {
         this.subscriptions.forEach(sub => sub.unsubscribe());
         this.subscriptions = [];
+    }
+
+    /**
+     * Start polling for events when WebSocket is not available.
+     */
+    startPolling () {
+        this.stopPolling();
+        if (!this.groupId) return;
+
+        log.info(`Mesh V2: Starting event polling (Interval: ${this.pollingIntervalSeconds}s)`);
+        // Initial fetch time
+        if (!this.lastFetchTime) {
+            this.lastFetchTime = new Date().toISOString();
+        }
+
+        this.pollingTimer = setInterval(() => {
+            this.pollEvents();
+        }, this.pollingIntervalSeconds * 1000);
+    }
+
+    /**
+     * Stop event polling.
+     */
+    stopPolling () {
+        if (this.pollingTimer) {
+            log.info('Mesh V2: Stopping event polling');
+            clearInterval(this.pollingTimer);
+            this.pollingTimer = null;
+        }
+        this.lastFetchTime = null;
+    }
+
+    /**
+     * Fetch new events from the server since the last fetch time.
+     */
+    async pollEvents () {
+        if (!this.groupId || !this.client || this.useWebSocket) return;
+
+        try {
+            this.costTracking.queryCount++;
+            const result = await this.client.query({
+                query: GET_EVENTS_SINCE,
+                variables: {
+                    groupId: this.groupId,
+                    domain: this.domain,
+                    since: this.lastFetchTime
+                },
+                fetchPolicy: 'network-only'
+            });
+
+            const events = result.data.getEventsSince;
+            if (events && events.length > 0) {
+                log.info(`Mesh V2: Polled ${events.length} events`);
+                // Process events (similar to handleBatchEvent but with direct event objects)
+                const batchEvent = {
+                    firedByNodeId: 'polling-server', // dummy
+                    events: events.map(e => ({
+                        name: e.name,
+                        firedByNodeId: e.firedByNodeId,
+                        groupId: e.groupId,
+                        domain: e.domain,
+                        payload: e.payload,
+                        timestamp: e.timestamp
+                    }))
+                };
+                this.handleBatchEvent(batchEvent);
+
+                // Update lastFetchTime to the cursor of the last received event
+                this.lastFetchTime = events[events.length - 1].cursor;
+            }
+        } catch (error) {
+            log.error(`Mesh V2: Event polling failed: ${error}`);
+            const reason = this.shouldDisconnectOnError(error);
+            if (reason) {
+                this.cleanupAndDisconnect(reason);
+            }
+        }
     }
 
     handleDataUpdate (nodeStatus) {
@@ -679,16 +827,34 @@ class MeshV2Service {
 
             this.costTracking.mutationCount++;
             this.costTracking.fireEventsCount++;
-            log.info(`Mesh V2: Sending batch of ${events.length} events to group ${this.groupId}`);
-            await this.client.mutate({
-                mutation: FIRE_EVENTS,
-                variables: {
-                    groupId: this.groupId,
-                    domain: this.domain,
-                    nodeId: this.meshId,
-                    events: events
+            log.info(`Mesh V2: Sending batch of ${events.length} events to group ${this.groupId} ` +
+                `(Protocol: ${this.useWebSocket ? 'WebSocket' : 'Polling'})`);
+
+            if (this.useWebSocket) {
+                await this.client.mutate({
+                    mutation: FIRE_EVENTS,
+                    variables: {
+                        groupId: this.groupId,
+                        domain: this.domain,
+                        nodeId: this.meshId,
+                        events: events
+                    }
+                });
+            } else {
+                const result = await this.client.mutate({
+                    mutation: RECORD_EVENTS,
+                    variables: {
+                        groupId: this.groupId,
+                        domain: this.domain,
+                        nodeId: this.meshId,
+                        events: events
+                    }
+                });
+                // Update lastFetchTime if it's currently null
+                if (!this.lastFetchTime) {
+                    this.lastFetchTime = result.data.recordEventsByNode.nextSince;
                 }
-            });
+            }
         } catch (error) {
             log.error(`Mesh V2: Failed to fire batch events: ${error}`);
             const reason = this.shouldDisconnectOnError(error);

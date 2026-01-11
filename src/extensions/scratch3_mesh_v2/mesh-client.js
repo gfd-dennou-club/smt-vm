@@ -32,5 +32,6 @@ const getClient = () => client;
 module.exports = {
     createClient,
     getClient,
-    gql
+    gql,
+    GRAPHQL_ENDPOINT
 };

@@ -22,8 +22,13 @@ const CREATE_DOMAIN = gql`
 `;
 
 const CREATE_GROUP = gql`
-  mutation CreateGroup($name: String!, $hostId: ID!, $domain: String!, $maxConnectionTimeSeconds: Int) {
-    createGroup(name: $name, hostId: $hostId, domain: $domain, maxConnectionTimeSeconds: $maxConnectionTimeSeconds) {
+  mutation CreateGroup(
+    $name: String!, $hostId: ID!, $domain: String!, $maxConnectionTimeSeconds: Int, $useWebSocket: Boolean!
+  ) {
+    createGroup(
+      name: $name, hostId: $hostId, domain: $domain,
+      maxConnectionTimeSeconds: $maxConnectionTimeSeconds, useWebSocket: $useWebSocket
+    ) {
       id
       domain
       fullId
@@ -32,6 +37,8 @@ const CREATE_GROUP = gql`
       createdAt
       expiresAt
       heartbeatIntervalSeconds
+      useWebSocket
+      pollingIntervalSeconds
     }
   }
 `;
@@ -45,6 +52,8 @@ const JOIN_GROUP = gql`
       domain
       expiresAt
       heartbeatIntervalSeconds
+      useWebSocket
+      pollingIntervalSeconds
     }
   }
 `;
@@ -139,6 +148,32 @@ const FIRE_EVENTS = gql`
   }
 `;
 
+const RECORD_EVENTS = gql`
+  mutation RecordEventsByNode($groupId: ID!, $domain: String!, $nodeId: ID!, $events: [EventInput!]!) {
+    recordEventsByNode(
+      groupId: $groupId, domain: $domain, nodeId: $nodeId, events: $events
+    ) {
+      groupId
+      domain
+      recordedCount
+      nextSince
+    }
+  }
+`;
+
+const GET_EVENTS_SINCE = gql`
+  query GetEventsSince($groupId: ID!, $domain: String!, $since: AWSDateTime!) {
+    getEventsSince(groupId: $groupId, domain: $domain, since: $since) {
+      name
+      firedByNodeId
+      groupId
+      domain
+      payload
+      timestamp
+    }
+  }
+`;
+
 const ON_MESSAGE_IN_GROUP = gql`
   subscription OnMessageInGroup($groupId: ID!, $domain: String!) {
     onMessageInGroup(groupId: $groupId, domain: $domain) {
@@ -203,6 +238,8 @@ module.exports = {
     SEND_MEMBER_HEARTBEAT,
     REPORT_DATA,
     FIRE_EVENTS,
+    RECORD_EVENTS,
+    GET_EVENTS_SINCE,
     ON_MESSAGE_IN_GROUP,
     LIST_GROUP_STATUSES
 };
