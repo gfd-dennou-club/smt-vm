@@ -1,10 +1,13 @@
 # smt-vm
-#### SmT VM is forked from [smalruby3/scratch-vm](https://github.com/smalruby/scratch-vm). 利用方法・開発方法の詳細は [smt-gui wiki](https://github.com/gfd-dennou-club/smt-gui/wiki) にまとめている．
+#### SmT VM is forked from [smalruby3/scratch-vm](https://github.com/smalruby/scratch-vm). 
+
+## 利用方法・開発方法
+
+[smt-gui wiki](https://github.com/gfd-dennou-club/smt-gui/wiki) をご覧ください (smt-vm ではなく smt-gui の wiki にまとめて記載しています)．
 
 ## 動作検証サイト
 
 https://ceres.epi.it.matsue-ct.ac.jp/smt/
-
 
 ## demonstration
 
