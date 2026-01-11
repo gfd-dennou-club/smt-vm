@@ -592,7 +592,7 @@ class MeshV2Service {
      * Fetch new events from the server since the last fetch time.
      */
     async pollEvents () {
-        if (!this.groupId || !this.client || this.useWebSocket) return;
+        if (!this.groupId || !this.client || this.useWebSocket || !this.lastFetchTime) return;
 
         try {
             this.costTracking.queryCount++;

@@ -170,6 +170,7 @@ const GET_EVENTS_SINCE = gql`
       domain
       payload
       timestamp
+      cursor
     }
   }
 `;
