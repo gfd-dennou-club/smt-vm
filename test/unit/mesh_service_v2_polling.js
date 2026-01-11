@@ -60,17 +60,10 @@ test('MeshV2Service Polling', t => {
             }
         };
 
-        // Spy on handleBatchEvent
-        let handledBatch = null;
-        service.handleBatchEvent = batch => {
-            handledBatch = batch;
-        };
-
         await service.pollEvents();
 
-        st.ok(handledBatch);
-        st.equal(handledBatch.events.length, 2);
-        st.equal(handledBatch.events[0].name, 'e1');
+        st.equal(service.pendingBroadcasts.length, 2);
+        st.equal(service.pendingBroadcasts[0].event.name, 'e1');
         st.equal(service.lastFetchTime, 'C3');
 
         st.end();

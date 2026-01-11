@@ -869,7 +869,7 @@ class MeshV2Service {
                     }
                 });
             } else {
-                await this.client.mutate({
+                const result = await this.client.mutate({
                     mutation: RECORD_EVENTS,
                     variables: {
                         groupId: this.groupId,
@@ -878,6 +878,9 @@ class MeshV2Service {
                         events: events
                     }
                 });
+                if (result.data && result.data.recordEventsByNode && result.data.recordEventsByNode.nextSince) {
+                    this.lastFetchTime = result.data.recordEventsByNode.nextSince;
+                }
             }
         } catch (error) {
             log.error(`Mesh V2: Failed to fire batch events: ${error}`);
