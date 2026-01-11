@@ -53,10 +53,20 @@ const saveDomainToLocalStorage = domain => {
 /* istanbul ignore next */
 const getDomain = () => getDomainFromUrl() || getDomainFromLocalStorage();
 
+/* istanbul ignore next */
+const getForcePollingFromUrl = () => {
+    /* istanbul ignore next */
+    if (typeof window === 'undefined') return false;
+    const urlParams = new URLSearchParams(window.location.search);
+    const polling = urlParams.get('mesh_polling');
+    return !!polling && polling !== '0' && polling !== 'false';
+};
+
 module.exports = {
     getDomainFromUrl,
     getDomainFromLocalStorage,
     saveDomainToLocalStorage,
     getDomain,
-    validateDomain
+    validateDomain,
+    getForcePollingFromUrl
 };
