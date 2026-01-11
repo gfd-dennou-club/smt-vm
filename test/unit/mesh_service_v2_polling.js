@@ -159,5 +159,62 @@ test('MeshV2Service Polling', t => {
         st.end();
     });
 
+    t.test('pollEvents filters out self-fired events', async st => {
+        const blocks = createMockBlocks();
+        const service = new MeshV2Service(blocks, 'node1', 'domain1');
+        service.groupId = 'group1';
+        service.useWebSocket = false;
+        service.lastFetchTime = 'T1';
+
+        const events = [
+            {
+                name: 'self-event',
+                firedByNodeId: 'node1', // self
+                timestamp: 'T2',
+                cursor: 'C2'
+            },
+            {
+                name: 'other-event',
+                firedByNodeId: 'node2',
+                timestamp: 'T3',
+                cursor: 'C3'
+            }
+        ];
+
+        service.client = {
+            query: () => {
+                return Promise.resolve({data: {getEventsSince: events}});
+            }
+        };
+
+        await service.pollEvents();
+
+        st.equal(service.pendingBroadcasts.length, 1);
+        st.equal(service.pendingBroadcasts[0].event.name, 'other-event');
+        st.equal(service.lastFetchTime, 'C3'); // cursor still updates
+        st.equal(service.costTracking.queryCount, 1);
+
+        st.end();
+    });
+
+    t.test('pollEvents falls back to current time if lastFetchTime is empty', async st => {
+        const blocks = createMockBlocks();
+        const service = new MeshV2Service(blocks, 'node1', 'domain1');
+        service.groupId = 'group1';
+        service.useWebSocket = false;
+        service.lastFetchTime = ''; // empty
+
+        service.client = {
+            query: options => {
+                st.ok(options.variables.since);
+                st.ok(new Date(options.variables.since).getTime() > 0);
+                return Promise.resolve({data: {getEventsSince: []}});
+            }
+        };
+
+        await service.pollEvents();
+        st.end();
+    });
+
     t.end();
 });

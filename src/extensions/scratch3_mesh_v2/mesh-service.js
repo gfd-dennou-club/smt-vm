@@ -612,6 +612,7 @@ class MeshV2Service {
         log.debug(`Mesh V2: pollEvents for group ${this.groupId}. since=${this.lastFetchTime}`);
 
         try {
+            this.costTracking.queryCount++;
             const result = await this.client.query({
                 query: GET_EVENTS_SINCE,
                 variables: {
