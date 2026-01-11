@@ -39,24 +39,20 @@ test('MeshV2Service Cost Tracking', t => {
                     id: 'g1',
                     name: 'G1',
                     domain: 'd1',
-                    createdAt: '2026-01-11T10:00:00Z',
                     expiresAt: '2099-01-01T00:00:00Z',
                     heartbeatIntervalSeconds: 60
                 },
                 joinGroup: {
                     id: 'n1',
                     domain: 'd1',
-                    createdAt: '2026-01-11T10:00:00Z',
                     expiresAt: '2099-01-01T00:00:00Z',
                     heartbeatIntervalSeconds: 120
                 },
                 renewHeartbeat: {
-                    createdAt: '2026-01-11T10:00:00Z',
                     expiresAt: '2099-01-01T00:00:00Z',
                     heartbeatIntervalSeconds: 60
                 },
                 sendMemberHeartbeat: {
-                    createdAt: '2026-01-11T10:00:00Z',
                     expiresAt: '2099-01-01T00:00:00Z',
                     heartbeatIntervalSeconds: 120
                 }

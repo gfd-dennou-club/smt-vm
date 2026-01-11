@@ -50,7 +50,6 @@ const JOIN_GROUP = gql`
       name
       groupId
       domain
-      createdAt
       expiresAt
       heartbeatIntervalSeconds
       useWebSocket
@@ -89,7 +88,6 @@ const RENEW_HEARTBEAT = gql`
     renewHeartbeat(groupId: $groupId, domain: $domain, hostId: $hostId) {
       groupId
       domain
-      createdAt
       expiresAt
       heartbeatIntervalSeconds
     }
@@ -102,7 +100,6 @@ const SEND_MEMBER_HEARTBEAT = gql`
       nodeId
       groupId
       domain
-      createdAt
       expiresAt
       heartbeatIntervalSeconds
     }

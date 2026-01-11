@@ -290,6 +290,8 @@ class MeshV2Service {
             log.info(`Mesh V2: WebSocket available: ${this.useWebSocket}`);
 
             this.costTracking.mutationCount++;
+            this.lastFetchTime = new Date().toISOString();
+            log.info(`Mesh V2: Initialized lastFetchTime to ${this.lastFetchTime} (before createGroup)`);
             const result = await this.client.mutate({
                 mutation: CREATE_GROUP,
                 variables: {
@@ -305,8 +307,6 @@ class MeshV2Service {
             this.groupName = group.name;
             this.domain = group.domain; // Update domain from server
             this.expiresAt = group.expiresAt;
-            this.lastFetchTime = group.createdAt;
-            log.info(`Mesh V2: Initialized lastFetchTime to ${this.lastFetchTime} (from group.createdAt)`);
             this.useWebSocket = group.useWebSocket;
             if (group.pollingIntervalSeconds) {
                 this.pollingIntervalSeconds = group.pollingIntervalSeconds;
@@ -368,6 +368,8 @@ class MeshV2Service {
 
         try {
             this.costTracking.mutationCount++;
+            this.lastFetchTime = new Date().toISOString();
+            log.info(`Mesh V2: Initialized lastFetchTime to ${this.lastFetchTime} (before joinGroup)`);
             const result = await this.client.mutate({
                 mutation: JOIN_GROUP,
                 variables: {
@@ -382,8 +384,6 @@ class MeshV2Service {
             this.groupName = groupName || groupId;
             this.domain = node.domain; // Update domain from server
             this.expiresAt = node.expiresAt;
-            this.lastFetchTime = node.createdAt;
-            log.info(`Mesh V2: Initialized lastFetchTime to ${this.lastFetchTime} (from node.createdAt)`);
             this.useWebSocket = this.forcePolling ? false : node.useWebSocket;
             if (node.pollingIntervalSeconds) {
                 this.pollingIntervalSeconds = node.pollingIntervalSeconds;
@@ -595,7 +595,7 @@ class MeshV2Service {
             clearInterval(this.pollingTimer);
             this.pollingTimer = null;
         }
-        this.lastFetchTime = null;
+        this.lastFetchTime = '';
     }
 
     /**
@@ -898,21 +898,20 @@ class MeshV2Service {
         if (!this.groupId || !this.client || !this.isHost) return;
 
         try {
-            this.costTracking.mutationCount++;
-            this.costTracking.heartbeatCount++;
-            const result = await this.client.mutate({
-                mutation: RENEW_HEARTBEAT,
-                variables: {
-                    groupId: this.groupId,
-                    domain: this.domain,
-                    hostId: this.meshId
-                }
-            });
-            this.expiresAt = result.data.renewHeartbeat.expiresAt;
-            if (result.data.renewHeartbeat.createdAt) {
-                this.lastFetchTime = result.data.renewHeartbeat.createdAt;
-            }
-            log.info(`Mesh V2: Heartbeat renewed. Expires at: ${this.expiresAt}`);
+                        this.costTracking.mutationCount++;
+                        this.costTracking.heartbeatCount++;
+                        const result = await this.client.mutate({
+                            mutation: RENEW_HEARTBEAT,
+                            variables: {
+                                groupId: this.groupId,
+                                domain: this.domain,
+                                hostId: this.meshId
+                            }
+                        });
+            
+                        this.expiresAt = result.data.renewHeartbeat.expiresAt;
+                        log.info(`Mesh V2: Heartbeat renewed. Expires at: ${this.expiresAt}`);
+            
             if (result.data.renewHeartbeat.heartbeatIntervalSeconds) {
                 const newInterval = result.data.renewHeartbeat.heartbeatIntervalSeconds;
                 if (newInterval !== this.hostHeartbeatInterval) {
@@ -945,21 +944,12 @@ class MeshV2Service {
                     nodeId: this.meshId
                 }
             });
+
             log.info('Mesh V2: Member heartbeat sent');
-            if (result.data.sendMemberHeartbeat.createdAt) {
-                this.lastFetchTime = result.data.sendMemberHeartbeat.createdAt;
-            }
             if (result.data.sendMemberHeartbeat.expiresAt) {
                 this.expiresAt = result.data.sendMemberHeartbeat.expiresAt;
-                this.startConnectionTimer();
             }
-            if (result.data.sendMemberHeartbeat.heartbeatIntervalSeconds) {
-                const newInterval = result.data.sendMemberHeartbeat.heartbeatIntervalSeconds;
-                if (newInterval !== this.memberHeartbeatInterval) {
-                    this.memberHeartbeatInterval = newInterval;
-                    this.startHeartbeat(); // Restart with new interval
-                }
-            }
+
             return result.data.sendMemberHeartbeat;
         } catch (error) {
             log.error(`Mesh V2: Member heartbeat failed: ${error}`);
