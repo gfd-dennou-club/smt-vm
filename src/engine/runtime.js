@@ -519,6 +519,14 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Event name for when a frame step is about to begin.
+     * @const {string}
+     */
+    static get BEFORE_STEP () {
+        return 'BEFORE_STEP';
+    }
+
+    /**
      * Event name for target being stopped by a stop for target call.
      * Used by blocks that need to stop individual targets.
      * @const {string}
@@ -2051,6 +2059,10 @@ class Runtime extends EventEmitter {
                             // stack click threads and hat threads can coexist
                             !this.threads[i].stackClick
                         ) {
+                            if (requestedHatOpcode === 'event_whenbroadcastreceived') {
+                                log.info(`vm Mesh V2 Debug: [RESTART] Thread for hat ${requestedHatOpcode} ` +
+                                    `at block ${topBlockId} for target ${target.getName()}`);
+                            }
                             newThreads.push(
                                 this._restartThread(this.threads[i])
                             );
@@ -2068,12 +2080,20 @@ class Runtime extends EventEmitter {
                             !this.threads[j].stackClick &&
                             this.threads[j].status !== Thread.STATUS_DONE
                         ) {
+                            if (requestedHatOpcode === 'event_whenbroadcastreceived') {
+                                log.info(`vm Mesh V2 Debug: [SKIP] Thread for hat ${requestedHatOpcode} ` +
+                                    `at block ${topBlockId} already running for target ${target.getName()}`);
+                            }
                             // Some thread is already running.
                             return;
                         }
                     }
                 }
                 // Start the thread with this top block.
+                if (requestedHatOpcode === 'event_whenbroadcastreceived') {
+                    log.info(`vm Mesh V2 Debug: [START] New thread for hat ${requestedHatOpcode} ` +
+                        `at block ${topBlockId} for target ${target.getName()}`);
+                }
                 newThreads.push(this._pushThread(topBlockId, target));
             },
             optTarget
@@ -2302,6 +2322,8 @@ class Runtime extends EventEmitter {
             }
             this.profiler.start(stepProfilerId);
         }
+
+        this.emit(Runtime.BEFORE_STEP);
 
         // Clean up threads that were told to stop during or since the last step
         this.threads = this.threads.filter(thread => !thread.isKilled);

@@ -38,6 +38,7 @@
     "koshien.locateObjects": "範囲内の地形・アイテム (中心 座標 [POSITION] 、範囲 [SQ_SIZE] 、地形・アイテム [OBJECTS])をリスト [RESULT] に保存する",
     "koshien.targetCoordinate": "[TARGET] の [COORDINATE]",
     "koshien.turnOver": "ターンを終了する",
+    "koshien.setMessage": "メッセージ [MESSAGE]",
     "koshien.position": "座標 [X] [Y]",
     "koshien.positionOf": "[POSITION] の [COORDINATE]",
     "koshien.object": "[OBJECT]"
@@ -81,6 +82,7 @@
     "koshien.locateObjects": "はんいないのちけい・アイテム (ちゅうしん ざひょう [POSITION] 、はんい [SQ_SIZE] 、ちけい・アイテム [OBJECTS])をリスト [RESULT] にほぞんする",
     "koshien.targetCoordinate": "[TARGET] の [COORDINATE]",
     "koshien.turnOver": "ターンをしゅうりょうする",
+    "koshien.setMessage": "メッセージ [MESSAGE]",
     "koshien.position": "ざひょう [X] [Y]",
     "koshien.positionOf": "[POSITION] の [COORDINATE]",
     "koshien.object": "[OBJECT]"

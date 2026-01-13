@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 const formatMessage = require('format-message');
 const Variable = require('../../engine/variable');
 const BlockUtility = require('../../engine/block-utility.js');
@@ -73,8 +74,8 @@ class MeshService {
                     this.availablePeripherals[hostMeshId] = {
                         name: formatMessage({
                             id: 'mesh.hostPeripheralName',
-                            default: 'Host Mesh [{ MESH_ID }]',
-                            description: 'label for "Host Mesh" in connect modal for Mesh extension'
+                            default: 'Become Mesh Host [{ MESH_ID }]',
+                            description: 'label for becoming Host Mesh in connect modal for Mesh extension'
                         }, {MESH_ID: this.blocks.makeMeshIdLabel(this.meshId)}),
                         peripheralId: hostMeshId,
                         rssi: 0

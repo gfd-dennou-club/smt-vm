@@ -26,6 +26,7 @@ const builtinExtensions = {
     boost: () => require('../extensions/scratch3_boost'),
     gdxfor: () => require('../extensions/scratch3_gdx_for'),
     mesh: () => require('../extensions/scratch3_mesh'),
+    meshV2: () => require('../extensions/scratch3_mesh_v2'),
     smalrubotS1: () => require('../extensions/scratch3_smalrubot_s1')
 */
     kanirobo:   () => require('../extensions/smt_kanirobo'),
@@ -80,8 +81,7 @@ builtinExtensions.microbitMore = () => {
 
 builtinExtensions.koshien = () => {
     const formatMessage = require('format-message');
-    const ext = require('../extensions/koshien/index.js');
-    const blockClass = ext.blockClass;
+    const blockClass = require('../extensions/koshien/index.js');
     blockClass.formatMessage = formatMessage;
     return blockClass;
 };

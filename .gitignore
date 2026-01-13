@@ -20,3 +20,9 @@ npm-*
 
 # Localization
 /translations
+
+# Load Test
+/test/load-test/node_modules
+
+# Environment
+.env
