@@ -127,10 +127,10 @@ class Mctboard {
             }),
             menuIconURI: menuIconURI,
             blockIconURI: blockIconURI,
-	    color1: '#D08A5A',
-	    color2: '#A86A42',
-	    color3: '#7A4D2E',
-            blocks: [
+	    color1: '#CF63CF',
+	    color2: '#C94FC9',
+	    color3: '#BD42BD',
+	    blocks: [
                 {
                     opcode: 'led_all',
                     text: formatMessage({

@@ -90,9 +90,9 @@ class Microcom {
             name:formatMessage({ id: 'microcom.name', default: 'Microcom' }),
             menuIconURI: menuIconURI,
             blockIconURI: blockIconURI,
-	    color1: '#B39DDB',
-	    color2: '#9575CD',
-	    color3: '#7E57C2',
+	    color1: '#9966FF',
+	    color2: '#855CD6',
+	    color3: '#774DCB',
 	    blocks: [
                 {
                     opcode :'gpio_init',

@@ -62,9 +62,9 @@ class Rboard {
             name:formatMessage({ id: 'rboard.name', default: 'Rboard' }),
             menuIconURI: menuIconURI,
             blockIconURI: blockIconURI,
-	    color1: '#1E88E5',
-	    color2: '#1565C0',
-	    color3: '#0D47A1',
+	    color1: '#4C97FF',
+            color2: '#4280D7',
+            color3: '#3373CC',
             blocks: [
                 {
                     opcode :'led_all',
