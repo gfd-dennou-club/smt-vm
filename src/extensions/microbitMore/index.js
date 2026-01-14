@@ -1693,8 +1693,15 @@ class MbitMoreBlocks {
                     description: 'label for shaken gesture in gesture picker for microbit more extension'
                 }),
                 value: MbitMoreGestureName.SHAKE
+            },
+            {
+                text: formatMessage({
+                    id: 'mbitMore.gesturesMenu.moved',
+                    default: 'moved',
+                    description: 'label for moved gesture in gesture picker for microbit more extension'
+                }),
+                value: 'MOVED'
             }
-
         ];
     }
 
@@ -2292,6 +2299,21 @@ class MbitMoreBlocks {
                     }
                 },
                 {
+                    opcode: 'display',
+                    text: formatMessage({
+                        id: 'mbitMore.display',
+                        default: 'display [TEXT]',
+                        description: 'display text on the micro:bit display'
+                    }),
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        TEXT: {
+                            type: ArgumentType.STRING,
+                            defaultValue: 'Hello!'
+                        }
+                    }
+                },
+                {
                     opcode: 'displayText',
                     text: formatMessage({
                         id: 'mbitMore.displayText',
@@ -2850,6 +2872,12 @@ class MbitMoreBlocks {
             }, this.runtime.currentStepTime);
         }
         const gestureName = args.GESTURE;
+        if (gestureName === 'MOVED') {
+            return Object.entries(this._peripheral.gestureEvents).some(([name, timestamp]) => {
+                if (!this.prevGestureEvents[name]) return true;
+                return timestamp !== this.prevGestureEvents[name];
+            });
+        }
         const lastTimestamp =
             this._peripheral.getGestureEventTimestamp(gestureName);
         if (lastTimestamp === null) return false;
@@ -2896,7 +2924,29 @@ class MbitMoreBlocks {
     }
 
     /**
-     * Display text on the 5x5 LED matrix.
+     * Display text on the 5x5 LED matrix with fixed delay.
+     * @param {object} args - the block's arguments.
+     * @param {string} args.TEXT - the text to display.
+     * @param {object} util - utility object provided by the runtime.
+     * @return {?Promise} - a Promise that resolves after a tick or undefined if yield.
+     */
+    display (args, util) {
+        const text = Cast.toString(args.TEXT);
+        const delay = 120;
+        const resultPromise = this._peripheral.displayText(text, delay, util);
+        if (resultPromise) {
+            return resultPromise.then(() => {
+                // wait for display done.
+                // 5x5 LED matrix can display 1 character in a time.
+                // It takes (delay * (textLength + 5)) ms to display all characters.
+                const textLength = Math.min(18, text.length);
+                return new Promise(resolve => setTimeout(resolve, delay * (textLength + 5)));
+            });
+        }
+    }
+
+    /**
+     * Display text on the 5x5 LED matrix with delay.
      * Displayable character is ascii and non-ascii is replaced to '?'.
      * @param {object} args - the block's arguments.
      * @param {string} args.TEXT - The contents to display.
