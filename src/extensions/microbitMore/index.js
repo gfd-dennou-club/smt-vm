@@ -2880,42 +2880,22 @@ class MbitMoreBlocks {
         const gestureName = args.GESTURE;
         if (gestureName === 'MOVED') {
             const now = Date.now();
-            const perfNow = performance.now();
             const cooldownTime = this.runtime.currentStepTime * 5;
-            const diff = this.lastMovedEventTime === null ? Infinity : (now - this.lastMovedEventTime);
-            const inCooldown = diff < cooldownTime;
+            if (this.lastMovedEventTime !== null) {
+                if ((now - this.lastMovedEventTime) < cooldownTime) {
+                    return false;
+                }
+            }
 
-            let triggerEvent = null;
             const eventOccurred = Object.entries(this._peripheral.gestureEvents).some(([name, timestamp]) => {
-                let isChanged = false;
                 if (this.prevGestureEvents[name]) {
-                    isChanged = timestamp !== this.prevGestureEvents[name];
-                } else {
-                    isChanged = true;
+                    return timestamp !== this.prevGestureEvents[name];
                 }
-                if (isChanged) {
-                    triggerEvent = {name, timestamp, prev: this.prevGestureEvents[name]};
-                }
-                return isChanged;
+                return true;
             });
-
-            if (eventOccurred || diff >= cooldownTime) {
-                const logMsg = `[DEBUG MOVED] Time: ${perfNow.toFixed(3)}ms (Date: ${now}), ` +
-                            `Diff: ${diff}ms, Cooldown: ${cooldownTime}ms, InCooldown: ${inCooldown}`;
-                console.log(logMsg);
-                if (eventOccurred) {
-                    console.log(`[DEBUG MOVED] Triggered by: ${triggerEvent.name}, ` +
-                                `Timestamp: ${triggerEvent.timestamp}, Prev: ${triggerEvent.prev}`);
-                }
-            }
-
-            if (inCooldown) {
-                return false;
-            }
 
             if (eventOccurred) {
                 this.lastMovedEventTime = now;
-                console.log(`[DEBUG MOVED] Event FIRED at ${performance.now().toFixed(3)}ms`);
             }
 
             return eventOccurred;
