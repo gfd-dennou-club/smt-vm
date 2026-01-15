@@ -2156,6 +2156,18 @@ class MbitMoreBlocks {
         this.lastMovedEventTime = null;
 
         /**
+         * The last time any gesture event was detected.
+         * @type {number}
+         */
+        this.lastGestureOccurredTime = null;
+
+        /**
+         * Whether the extension is waiting for a gap in movement before firing again.
+         * @type {boolean}
+         */
+        this.isWaitingForGap = false;
+
+        /**
          * The timer of updateLastGestureEvent.
          * @type {number}
          */
@@ -2888,9 +2900,9 @@ class MbitMoreBlocks {
         if (gestureName === 'MOVED') {
             const now = Date.now();
             const perfNow = performance.now();
-            const cooldownTime = this.runtime.currentStepTime * 5;
-            const diff = this.lastMovedEventTime === null ? Infinity : (now - this.lastMovedEventTime);
-            const inCooldown = diff < cooldownTime;
+            const stepTime = this.runtime.currentStepTime;
+            const gapThreshold = stepTime * 5; // 5フレームの空白
+            const timeoutThreshold = stepTime * 30; // 30フレームで強制発火
 
             const changedGestures = [];
             Object.entries(this._peripheral.gestureEvents).forEach(([name, timestamp]) => {
@@ -2903,24 +2915,54 @@ class MbitMoreBlocks {
                 }
             });
 
-            const eventOccurred = changedGestures.length > 0;
-
-            if (eventOccurred || diff >= cooldownTime) {
-                console.log(`[DEBUG MOVED] Time: ${perfNow.toFixed(3)}ms, Diff: ${diff}ms, ` +
-                            `InCooldown: ${inCooldown}, EventOccurred: ${eventOccurred}, ` +
-                            `Changes: [${changedGestures.join(', ')}]`);
+            const eventDetected = changedGestures.length > 0;
+            if (eventDetected) {
+                this.lastGestureOccurredTime = now;
             }
 
-            if (inCooldown) {
-                return false;
+            // 静止判定（隙間ができたか）
+            const timeSinceLastOccurred = this.lastGestureOccurredTime === null ?
+                Infinity : (now - this.lastGestureOccurredTime);
+            if (timeSinceLastOccurred >= gapThreshold) {
+                if (this.isWaitingForGap) {
+                    console.log(`[DEBUG MOVED] Gap detected (${timeSinceLastOccurred.toFixed(1)}ms). Resetting.`);
+                }
+                this.isWaitingForGap = false;
             }
 
-            if (eventOccurred) {
+            let shouldFire = false;
+            let fireReason = '';
+
+            if (eventDetected) {
+                if (this.isWaitingForGap) {
+                    // 動き続けている場合の強制発火判定
+                    const timeSinceLastFired = this.lastMovedEventTime === null ?
+                        Infinity : (now - this.lastMovedEventTime);
+                    if (timeSinceLastFired >= timeoutThreshold) {
+                        shouldFire = true;
+                        fireReason = `Continuous movement timeout (${timeSinceLastFired.toFixed(1)}ms)`;
+                    }
+                } else {
+                    shouldFire = true;
+                    fireReason = 'Movement started after gap';
+                }
+            }
+
+            if (eventDetected || shouldFire || this.isWaitingForGap) {
+                console.log(`[DEBUG MOVED] Time: ${perfNow.toFixed(3)}ms, Detected: ${eventDetected}, ` +
+                            `Waiting: ${this.isWaitingForGap}, ShouldFire: ${shouldFire}, Reason: ${fireReason}`);
+                if (eventDetected) {
+                    console.log(`[DEBUG MOVED] Changes: [${changedGestures.join(', ')}]`);
+                }
+            }
+
+            if (shouldFire) {
                 this.lastMovedEventTime = now;
+                this.isWaitingForGap = true;
                 console.log(`[DEBUG MOVED] *** FIRED *** at ${perfNow.toFixed(3)}ms`);
             }
 
-            return eventOccurred;
+            return shouldFire;
         }
         const lastTimestamp =
             this._peripheral.getGestureEventTimestamp(gestureName);
