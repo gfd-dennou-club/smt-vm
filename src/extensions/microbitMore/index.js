@@ -2876,7 +2876,6 @@ class MbitMoreBlocks {
      * Update the last occured time of all gesture events.
      */
     updatePrevGestureEvents () {
-        console.log(`[DEBUG MOVED] updatePrevGestureEvents at ${performance.now().toFixed(3)}ms`);
         this.prevGestureEvents = {};
         Object.entries(this._peripheral.gestureEvents).forEach(([gestureName, timestamp]) => {
             this.prevGestureEvents[gestureName] = timestamp;
@@ -2899,7 +2898,6 @@ class MbitMoreBlocks {
         const gestureName = args.GESTURE;
         if (gestureName === 'MOVED') {
             const now = Date.now();
-            const perfNow = performance.now();
             const stepTime = this.runtime.currentStepTime;
             const gapThreshold = stepTime * 5; // 5フレームの空白
             const timeoutThreshold = stepTime * 30; // 30フレームで強制発火
@@ -2924,14 +2922,10 @@ class MbitMoreBlocks {
             const timeSinceLastOccurred = this.lastGestureOccurredTime === null ?
                 Infinity : (now - this.lastGestureOccurredTime);
             if (timeSinceLastOccurred >= gapThreshold) {
-                if (this.isWaitingForGap) {
-                    console.log(`[DEBUG MOVED] Gap detected (${timeSinceLastOccurred.toFixed(1)}ms). Resetting.`);
-                }
                 this.isWaitingForGap = false;
             }
 
             let shouldFire = false;
-            let fireReason = '';
 
             if (eventDetected) {
                 if (this.isWaitingForGap) {
@@ -2940,26 +2934,15 @@ class MbitMoreBlocks {
                         Infinity : (now - this.lastMovedEventTime);
                     if (timeSinceLastFired >= timeoutThreshold) {
                         shouldFire = true;
-                        fireReason = `Continuous movement timeout (${timeSinceLastFired.toFixed(1)}ms)`;
                     }
                 } else {
                     shouldFire = true;
-                    fireReason = 'Movement started after gap';
-                }
-            }
-
-            if (eventDetected || shouldFire || this.isWaitingForGap) {
-                console.log(`[DEBUG MOVED] Time: ${perfNow.toFixed(3)}ms, Detected: ${eventDetected}, ` +
-                            `Waiting: ${this.isWaitingForGap}, ShouldFire: ${shouldFire}, Reason: ${fireReason}`);
-                if (eventDetected) {
-                    console.log(`[DEBUG MOVED] Changes: [${changedGestures.join(', ')}]`);
                 }
             }
 
             if (shouldFire) {
                 this.lastMovedEventTime = now;
                 this.isWaitingForGap = true;
-                console.log(`[DEBUG MOVED] *** FIRED *** at ${perfNow.toFixed(3)}ms`);
             }
 
             return shouldFire;
