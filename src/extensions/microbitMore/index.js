@@ -1608,6 +1608,14 @@ class MbitMoreBlocks {
         return [
             {
                 text: formatMessage({
+                    id: 'mbitMore.gesturesMenu.moved',
+                    default: 'moved',
+                    description: 'label for moved gesture in gesture picker for microbit more extension'
+                }),
+                value: 'MOVED'
+            },
+            {
+                text: formatMessage({
                     id: 'mbitMore.gesturesMenu.tiltUp',
                     default: 'titl up',
                     description: 'label for tilt up gesture in gesture picker for microbit more extension'
@@ -1693,14 +1701,6 @@ class MbitMoreBlocks {
                     description: 'label for shaken gesture in gesture picker for microbit more extension'
                 }),
                 value: MbitMoreGestureName.SHAKE
-            },
-            {
-                text: formatMessage({
-                    id: 'mbitMore.gesturesMenu.moved',
-                    default: 'moved',
-                    description: 'label for moved gesture in gesture picker for microbit more extension'
-                }),
-                value: 'MOVED'
             }
         ];
     }
@@ -2150,6 +2150,30 @@ class MbitMoreBlocks {
         this.prevGestureEvents = {};
 
         /**
+         * The last time the "moved" event was fired.
+         * @type {number}
+         */
+        this.lastMovedEventTime = null;
+
+        /**
+         * The last time any gesture event was detected.
+         * @type {number}
+         */
+        this.lastGestureOccurredTime = null;
+
+        /**
+         * Whether the extension is waiting for a gap in movement before firing again.
+         * @type {boolean}
+         */
+        this.isWaitingForGap = false;
+
+        /**
+         * The timer of updateLastGestureEvent.
+         * @type {number}
+         */
+        this.updateLastGestureEventTimer = null;
+
+        /**
          * The previous timestamps of pin events.
          * @type {Object.<number, Object.<number, number>>}
          */
@@ -2278,7 +2302,7 @@ class MbitMoreBlocks {
                         GESTURE: {
                             type: ArgumentType.STRING,
                             menu: 'gestures',
-                            defaultValue: MbitMoreGestureName.SHAKE
+                            defaultValue: 'MOVED'
                         }
                     }
                 },
@@ -2865,7 +2889,7 @@ class MbitMoreBlocks {
      * @return {boolean} - true if the event raised.
      */
     whenGesture (args) {
-        if (!this.updateLastGestureEventTimer) {
+        if (this.updateLastGestureEventTimer === null) {
             this.updateLastGestureEventTimer = setTimeout(() => {
                 this.updatePrevGestureEvents();
                 this.updateLastGestureEventTimer = null;
@@ -2873,10 +2897,55 @@ class MbitMoreBlocks {
         }
         const gestureName = args.GESTURE;
         if (gestureName === 'MOVED') {
-            return Object.entries(this._peripheral.gestureEvents).some(([name, timestamp]) => {
-                if (!this.prevGestureEvents[name]) return true;
-                return timestamp !== this.prevGestureEvents[name];
+            const now = Date.now();
+            const stepTime = this.runtime.currentStepTime;
+            const gapThreshold = stepTime * 5; // 5フレームの空白
+            const timeoutThreshold = stepTime * 30; // 30フレームで強制発火
+
+            const changedGestures = [];
+            Object.entries(this._peripheral.gestureEvents).forEach(([name, timestamp]) => {
+                if (this.prevGestureEvents[name]) {
+                    if (timestamp !== this.prevGestureEvents[name]) {
+                        changedGestures.push(`${name}(${this.prevGestureEvents[name]}->${timestamp})`);
+                    }
+                } else {
+                    changedGestures.push(`${name}(new->${timestamp})`);
+                }
             });
+
+            const eventDetected = changedGestures.length > 0;
+            if (eventDetected) {
+                this.lastGestureOccurredTime = now;
+            }
+
+            // 静止判定（隙間ができたか）
+            const timeSinceLastOccurred = this.lastGestureOccurredTime === null ?
+                Infinity : (now - this.lastGestureOccurredTime);
+            if (timeSinceLastOccurred >= gapThreshold) {
+                this.isWaitingForGap = false;
+            }
+
+            let shouldFire = false;
+
+            if (eventDetected) {
+                if (this.isWaitingForGap) {
+                    // 動き続けている場合の強制発火判定
+                    const timeSinceLastFired = this.lastMovedEventTime === null ?
+                        Infinity : (now - this.lastMovedEventTime);
+                    if (timeSinceLastFired >= timeoutThreshold) {
+                        shouldFire = true;
+                    }
+                } else {
+                    shouldFire = true;
+                }
+            }
+
+            if (shouldFire) {
+                this.lastMovedEventTime = now;
+                this.isWaitingForGap = true;
+            }
+
+            return shouldFire;
         }
         const lastTimestamp =
             this._peripheral.getGestureEventTimestamp(gestureName);
