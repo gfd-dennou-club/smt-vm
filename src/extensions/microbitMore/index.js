@@ -1608,6 +1608,14 @@ class MbitMoreBlocks {
         return [
             {
                 text: formatMessage({
+                    id: 'mbitMore.gesturesMenu.moved',
+                    default: 'moved',
+                    description: 'label for moved gesture in gesture picker for microbit more extension'
+                }),
+                value: 'MOVED'
+            },
+            {
+                text: formatMessage({
                     id: 'mbitMore.gesturesMenu.tiltUp',
                     default: 'titl up',
                     description: 'label for tilt up gesture in gesture picker for microbit more extension'
@@ -1693,14 +1701,6 @@ class MbitMoreBlocks {
                     description: 'label for shaken gesture in gesture picker for microbit more extension'
                 }),
                 value: MbitMoreGestureName.SHAKE
-            },
-            {
-                text: formatMessage({
-                    id: 'mbitMore.gesturesMenu.moved',
-                    default: 'moved',
-                    description: 'label for moved gesture in gesture picker for microbit more extension'
-                }),
-                value: 'MOVED'
             }
         ];
     }
@@ -2150,6 +2150,12 @@ class MbitMoreBlocks {
         this.prevGestureEvents = {};
 
         /**
+         * The last time the "moved" event was fired.
+         * @type {number}
+         */
+        this.lastMovedEventTime = null;
+
+        /**
          * The previous timestamps of pin events.
          * @type {Object.<number, Object.<number, number>>}
          */
@@ -2278,7 +2284,7 @@ class MbitMoreBlocks {
                         GESTURE: {
                             type: ArgumentType.STRING,
                             menu: 'gestures',
-                            defaultValue: MbitMoreGestureName.SHAKE
+                            defaultValue: 'MOVED'
                         }
                     }
                 },
@@ -2873,10 +2879,23 @@ class MbitMoreBlocks {
         }
         const gestureName = args.GESTURE;
         if (gestureName === 'MOVED') {
-            return Object.entries(this._peripheral.gestureEvents).some(([name, timestamp]) => {
+            // クールダウン期間中はfalseを返す
+            const cooldownTime = this.runtime.currentStepTime * 5;
+            if (this.lastMovedEventTime !== null &&
+                (Date.now() - this.lastMovedEventTime) < cooldownTime) {
+                return false;
+            }
+
+            const eventOccurred = Object.entries(this._peripheral.gestureEvents).some(([name, timestamp]) => {
                 if (!this.prevGestureEvents[name]) return true;
                 return timestamp !== this.prevGestureEvents[name];
             });
+
+            if (eventOccurred) {
+                this.lastMovedEventTime = Date.now();
+            }
+
+            return eventOccurred;
         }
         const lastTimestamp =
             this._peripheral.getGestureEventTimestamp(gestureName);
