@@ -98,8 +98,8 @@ const MCTBoardMenus = {
     },
     menuSDread: {
 	items: [
-	    {id: 'mctboard.menuSDread_read', default: '(all lines)', value: 'read' },
-	    {id: 'mctboard.menuSDread_gets', default: '(1 line)',    value: 'gets' }
+	    {id: 'mctboard.menuSDread_gets', default: '(1 line)',    value: 'gets' },
+	    {id: 'mctboard.menuSDread_read', default: '(all lines)', value: 'read' }
 	]
     }
 };
@@ -400,9 +400,9 @@ class Mctboard {
                     }
                 },
                 {
-                    opcode: 'sd_read',
+                    opcode: 'sd_gets',
                     text: formatMessage({
-                        id: 'mctboard.sd_read',
+                        id: 'mctboard.sd_gets',
                         default: 'SD: read from file [MODE]'
                     }),
                     blockType: BlockType.REPORTER,
@@ -461,7 +461,7 @@ class Mctboard {
     sd_open(){}
     sd_close(){}
     sd_puts(){}
-    sd_read(){}
+    sd_gets(){}
     puts(){}
 }
 
