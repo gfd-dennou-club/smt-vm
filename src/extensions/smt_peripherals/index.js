@@ -59,6 +59,26 @@ const PeripheralsMenus = {
 
 	]
     },
+    menuSensors2: {
+	items: [
+	    { text: 'PCF85063', value: 'PCF85063' },
+	    { text: 'RX8035SA', value: 'RX8035SA' },
+	]
+    },
+    menuRTC: {
+	items: [
+	    {id: 'mctboard.menuRTC_str_datetime', default: '%Y%m%d %H%M%S', value: 'str_datetime' },
+	    {id: 'mctboard.menuRTC_str_date', default: '%Y-%m-%d', value: 'str_date' },
+	    {id: 'mctboard.menuRTC_str_time', default: '%H:%M:%S', value: 'str_time' },
+	    {id: 'mctboard.menuRTC_year', default: '%Y', value: 'year' },
+	    {id: 'mctboard.menuRTC_mon',  default: '%m', value: 'mon' },
+	    {id: 'mctboard.menuRTC_mday', default: '%d', value: 'mday' },
+	    {id: 'mctboard.menuRTC_wday', default: '%w', value: 'wday' },
+	    {id: 'mctboard.menuRTC_hour', default: '%H', value: 'hour' },
+	    {id: 'mctboard.menuRTC_min',  default: '%M', value: 'min' },
+	    {id: 'mctboard.menuRTC_sec',  default: '%S', value: 'sec' }
+	]
+    },    
     menuSNTP: {
 	items: [
 	    {id: 'mctboard.menuSNTP_year', default: '%Y', value: 'year' },
@@ -206,6 +226,70 @@ class Peripherals {
                     }
                     }
 */
+                {
+                    opcode: 'rtc_init',
+                    text: formatMessage({
+                        id: 'peripherals.rtc_init',
+                        default: 'RTC: [SENSOR] initialize'
+                    }),		    		    
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        SENSOR: {
+                            type: ArgumentType.STRING,
+                            menu: 'menuSensors2'
+                        }
+                    }
+                },
+                {
+                    opcode: 'rtc_write',
+                    text: formatMessage({
+                        id: 'peripherals.rtc_write',
+                        default: 'RTC: [SENSOR] set time, year=[YEAR],month=[MON],day=[DAY],wday=[WDAY],hour=[HOUR],minute=[MIN],second=[SEC]',
+                    }),		    		    
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        SENSOR: {
+                            type: ArgumentType.STRING,
+                            menu: 'menuSensors2'
+                        },
+			YEAR: { type: ArgumentType.NUMBER, defaultValue: 2025 },
+			MON:  { type: ArgumentType.NUMBER, defaultValue: 12 },
+			DAY:  { type: ArgumentType.NUMBER, defaultValue: 31 },
+			WDAY: { type: ArgumentType.NUMBER, defaultValue: 1 },
+			HOUR: { type: ArgumentType.NUMBER, defaultValue: 23 },
+			MIN:  { type: ArgumentType.NUMBER, defaultValue: 59 },
+			SEC:  { type: ArgumentType.NUMBER, defaultValue: 30 },
+                    }
+                },
+                {
+                    opcode: 'rtc_read',
+                    text: formatMessage({
+                        id: 'peripherals.rtc_read',
+                        default: 'RTC: [SENSOR] get time',
+                    }),		    		    
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+			SENSOR: {
+                            type: ArgumentType.STRING,
+                            menu: 'menuSensors2'
+			}
+		    }
+                },
+                {
+                    opcode: 'rtc_value',
+                    text: formatMessage({
+                        id: 'peripherals.rtc_value',
+                        default: 'RTC: [SENSOR] [TARGET]',
+                    }),		    		    
+                    blockType: BlockType.REPORTER,
+                    arguments: {
+			SENSOR: {
+                            type: ArgumentType.STRING,
+			    menu: 'menuSensors2'
+                        },
+			TARGET: { type: ArgumentType.STRING, menu: 'menuRTC' }
+                    }
+                },
 		{
 		    opcode: 'wifi_init',
 		    text: formatMessage({
@@ -219,7 +303,7 @@ class Peripherals {
 		    text: formatMessage({
                         id: 'peripherals.wifi_connect',
                         default: 'Wi-Fi: connect, SSID=[SSID], passphrase=[PASS]',
-                    }),		    		    
+                    }),
                     blockType: BlockType.COMMAND,
                     arguments: {
 			SSID: { type: ArgumentType.STRING, defaultValue: "SugiyamaLab" },
@@ -257,7 +341,6 @@ class Peripherals {
 			DATA: { type: ArgumentType.STRING, defaultValue: "{\"name\":\"hero\", \"tel\":\"foo\", \"num\":23}" }
                     }
                 },
-/*		
                 {
                     opcode: 'sntp_init',
                     text: formatMessage({
@@ -275,17 +358,17 @@ class Peripherals {
                     blockType: BlockType.COMMAND
                 },
                 {
-                    opcode: 'sntp_date',
+                    opcode: 'sntp_value',
                     text: formatMessage({
-                        id: 'peripherals.sntp_date',
-                        default: 'SNTP: [TIME]',
+                        id: 'peripherals.sntp_value',
+                        default: 'SNTP: [TARGET]',
                     }),		    		    
                     blockType: BlockType.REPORTER,
                     arguments: {
-			TIME: { type: ArgumentType.STRING, menu: 'menuSNTP' }
+			TARGET: { type: ArgumentType.STRING, menu: 'menuSNTP' }
                     }
                 },
-*/
+/*		
                 {
                     opcode: 'sd_init',
                     text: formatMessage({
@@ -322,9 +405,9 @@ class Peripherals {
                     }
                 },
                 {
-                    opcode: 'sd_read',
+                    opcode: 'sd_gets',
                     text: formatMessage({
-                        id: 'peripherals.sd_read',
+                        id: 'peripherals.sd_gets',
                         default: 'SD: read from file [MODE]'
                     }),
                     blockType: BlockType.REPORTER,
@@ -340,15 +423,17 @@ class Peripherals {
                     }),		    		    
                     blockType: BlockType.COMMAND,
                 },
-		    
+*/		    		    
             ],
 	    menus: {
-		menuSensors:       { acceptReporters: false, items: createMenuItems('menuSensors')},
-		menuTargets:       { acceptReporters: false, items: createMenuItems('menuTargets')},
+		menuSensors:  { acceptReporters: false, items: createMenuItems('menuSensors')},
+		menuSensors2: { acceptReporters: false, items: createMenuItems('menuSensors2')},
+		menuTargets:  { acceptReporters: false, items: createMenuItems('menuTargets')},
 		// menuILI934Xline:   { acceptReporters: false, items: createMenuItems('menuILI934Xline')},
 		// menuILI934Xcircle: { acceptReporters: false, items: createMenuItems('menuILI934Xcircle')},
 		// menuILI934Xcolor:  { acceptReporters: false, items: createMenuItems('menuILI934Xcolor')},
-                menuSNTP:     { acceptReporters: false, items: createMenuItems('menuSNTP')},
+                menuRTC:   { acceptReporters: false, items: createMenuItems('menuRTC')},
+                menuSNTP:  { acceptReporters: false, items: createMenuItems('menuSNTP')},
 		menuSDopen:{ acceptReporters: false, items: createMenuItems('menuSDopen') },
 		menuSDread:{ acceptReporters: false, items: createMenuItems('menuSDread') }		
             }
@@ -362,19 +447,23 @@ class Peripherals {
 //    ili934x_write_line() {}
 //    ili934x_write_circle() {}
 //    ili934x_write_string() {}
+    rtc_init(){}
+    rtc_write(){}
+    rtc_read(){}
+    rtc_value(){}    
     wifi_init(){}
     wifi_connect(){}
     wifi_connected(){}
     http_get(){}
     http_post(){}
-//    sntp_init(){}
-//    sntp_read(){}
-//    sntp_date(){}
+    sntp_init(){}
+    sntp_read(){}
+    sntp_value(){}
     sd_init(){}
     sd_open(){}
     sd_close(){}
     sd_puts(){}
-    sd_read(){}
+    sd_gets(){}
 }
 
 module.exports = Peripherals
