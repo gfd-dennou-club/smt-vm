@@ -2871,7 +2871,7 @@ class MbitMoreBlocks {
      * @return {boolean} - true if the event raised.
      */
     whenGesture (args) {
-        if (!this.updateLastGestureEventTimer) {
+        if (this.updateLastGestureEventTimer === null) {
             this.updateLastGestureEventTimer = setTimeout(() => {
                 this.updatePrevGestureEvents();
                 this.updateLastGestureEventTimer = null;
@@ -2879,20 +2879,43 @@ class MbitMoreBlocks {
         }
         const gestureName = args.GESTURE;
         if (gestureName === 'MOVED') {
-            // クールダウン期間中はfalseを返す
+            const now = Date.now();
+            const perfNow = performance.now();
             const cooldownTime = this.runtime.currentStepTime * 5;
-            if (this.lastMovedEventTime !== null &&
-                (Date.now() - this.lastMovedEventTime) < cooldownTime) {
+            const diff = this.lastMovedEventTime === null ? Infinity : (now - this.lastMovedEventTime);
+            const inCooldown = diff < cooldownTime;
+
+            let triggerEvent = null;
+            const eventOccurred = Object.entries(this._peripheral.gestureEvents).some(([name, timestamp]) => {
+                let isChanged = false;
+                if (this.prevGestureEvents[name]) {
+                    isChanged = timestamp !== this.prevGestureEvents[name];
+                } else {
+                    isChanged = true;
+                }
+                if (isChanged) {
+                    triggerEvent = {name, timestamp, prev: this.prevGestureEvents[name]};
+                }
+                return isChanged;
+            });
+
+            if (eventOccurred || diff >= cooldownTime) {
+                const logMsg = `[DEBUG MOVED] Time: ${perfNow.toFixed(3)}ms (Date: ${now}), ` +
+                            `Diff: ${diff}ms, Cooldown: ${cooldownTime}ms, InCooldown: ${inCooldown}`;
+                console.log(logMsg);
+                if (eventOccurred) {
+                    console.log(`[DEBUG MOVED] Triggered by: ${triggerEvent.name}, ` +
+                                `Timestamp: ${triggerEvent.timestamp}, Prev: ${triggerEvent.prev}`);
+                }
+            }
+
+            if (inCooldown) {
                 return false;
             }
 
-            const eventOccurred = Object.entries(this._peripheral.gestureEvents).some(([name, timestamp]) => {
-                if (!this.prevGestureEvents[name]) return true;
-                return timestamp !== this.prevGestureEvents[name];
-            });
-
             if (eventOccurred) {
-                this.lastMovedEventTime = Date.now();
+                this.lastMovedEventTime = now;
+                console.log(`[DEBUG MOVED] Event FIRED at ${performance.now().toFixed(3)}ms`);
             }
 
             return eventOccurred;
