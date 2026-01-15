@@ -2899,7 +2899,7 @@ class MbitMoreBlocks {
         if (gestureName === 'MOVED') {
             const now = Date.now();
             const stepTime = this.runtime.currentStepTime;
-            const gapThreshold = stepTime * 10; // 10フレームの空白
+            const gapThreshold = stepTime * 5; // 5フレームの空白
             const timeoutThreshold = stepTime * 30; // 30フレームで強制発火
 
             const changedGestures = [];
