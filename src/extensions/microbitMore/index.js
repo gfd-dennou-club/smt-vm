@@ -3040,7 +3040,12 @@ class MbitMoreBlocks {
 
     /**
      * Test whether the touch-pin event raised.
-
+     * @param {object} args - the block's arguments.
+     * @param {string} args.NAME - name of the pin to catch.
+     * @param {string} args.EVENT - event to catch.
+     * @param {object} util - utility object provided by the runtime.
+     * @return {boolean|Promise<boolean>|undefined} - true if the event raised or promise that or undefinde if yield.
+     */
     whenTouchEvent (args, util) {
         const buttonName = args.NAME;
         if (buttonName === MbitMoreButtonName.LOGO) {
