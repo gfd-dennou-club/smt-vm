@@ -2332,23 +2332,6 @@ class MbitMoreBlocks {
             showStatusButton: true,
             blocks: [
                 {
-                    opcode: 'whenConnectionChanged',
-                    text: formatMessage({
-                        id: 'mbitMore.whenConnectionChanged',
-                        default: 'when micro:bit [STATE]',
-                        description: 'when a micro:bit connection state changed'
-                    }),
-                    blockType: BlockType.HAT,
-                    arguments: {
-                        STATE: {
-                            type: ArgumentType.STRING,
-                            menu: 'connectionStateMenu',
-                            defaultValue: 'connected'
-                        }
-                    }
-                },
-                '---',
-                {
                     opcode: 'whenButtonEvent',
                     text: formatMessage({
                         id: 'mbitMore.whenButtonEvent',
@@ -2385,6 +2368,97 @@ class MbitMoreBlocks {
                         }
                     }
                 },
+                '---',
+                {
+                    opcode: 'whenGesture',
+                    text: formatMessage({
+                        id: 'mbitMore.whenGesture',
+                        default: 'when [GESTURE]',
+                        description: 'when the selected gesture is detected by the micro:bit'
+                    }),
+                    blockType: BlockType.HAT,
+                    arguments: {
+                        GESTURE: {
+                            type: ArgumentType.STRING,
+                            menu: 'gestures',
+                            defaultValue: 'MOVED'
+                        }
+                    }
+                },
+                '---',
+                {
+                    opcode: 'displayMatrix',
+                    text: formatMessage({
+                        id: 'mbitMore.displayMatrix',
+                        default: 'display pattern [MATRIX] ',
+                        description: 'display a pattern on the micro:bit display'
+                    }),
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        MATRIX: {
+                            type: ArgumentType.MATRIX,
+                            defaultValue: '0101010101100010101000100'
+                        }
+                    }
+                },
+                {
+                    opcode: 'display',
+                    text: formatMessage({
+                        id: 'mbitMore.display',
+                        default: 'display [TEXT]',
+                        description: 'display text on the micro:bit display'
+                    }),
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        TEXT: {
+                            type: ArgumentType.STRING,
+                            defaultValue: 'Hello!'
+                        }
+                    }
+                },
+                {
+                    opcode: 'displayClear',
+                    text: formatMessage({
+                        id: 'mbitMore.clearDisplay',
+                        default: 'clear display',
+                        description: 'display nothing on the micro:bit display'
+                    }),
+                    blockType: BlockType.COMMAND
+                },
+                '---',
+                {
+                    opcode: 'isTilted',
+                    text: formatMessage({
+                        id: 'mbitMore.isTilted',
+                        default: 'tilted [DIRECTION] ?',
+                        description: 'whether the micro:bit is tilted in a direction'
+                    }),
+                    blockType: BlockType.BOOLEAN,
+                    arguments: {
+                        DIRECTION: {
+                            type: ArgumentType.STRING,
+                            menu: 'tiltDirectionMenu',
+                            defaultValue: 'ANY'
+                        }
+                    }
+                },
+                {
+                    opcode: 'getTiltAngle',
+                    text: formatMessage({
+                        id: 'mbitMore.getTiltAngle',
+                        default: 'tilt angle [DIRECTION]',
+                        description: 'get the tilt angle in a direction'
+                    }),
+                    blockType: BlockType.REPORTER,
+                    arguments: {
+                        DIRECTION: {
+                            type: ArgumentType.STRING,
+                            menu: 'tiltAngleDirectionMenu',
+                            defaultValue: 'FRONT'
+                        }
+                    }
+                },
+                '---',
                 {
                     opcode: 'whenPinConnected',
                     text: formatMessage({
@@ -2401,6 +2475,24 @@ class MbitMoreBlocks {
                         }
                     }
                 },
+                '---',
+                {
+                    opcode: 'whenConnectionChanged',
+                    text: formatMessage({
+                        id: 'mbitMore.whenConnectionChanged',
+                        default: 'when micro:bit [STATE]',
+                        description: 'when a micro:bit connection state changed'
+                    }),
+                    blockType: BlockType.HAT,
+                    arguments: {
+                        STATE: {
+                            type: ArgumentType.STRING,
+                            menu: 'connectionStateMenu',
+                            defaultValue: 'connected'
+                        }
+                    }
+                },
+                '---',
                 {
                     opcode: 'whenTouchEvent',
                     text: formatMessage({
@@ -2440,85 +2532,6 @@ class MbitMoreBlocks {
                 },
                 '---',
                 {
-                    opcode: 'whenGesture',
-                    text: formatMessage({
-                        id: 'mbitMore.whenGesture',
-                        default: 'when [GESTURE]',
-                        description: 'when the selected gesture is detected by the micro:bit'
-                    }),
-                    blockType: BlockType.HAT,
-                    arguments: {
-                        GESTURE: {
-                            type: ArgumentType.STRING,
-                            menu: 'gestures',
-                            defaultValue: 'MOVED'
-                        }
-                    }
-                },
-                {
-                    opcode: 'isTilted',
-                    text: formatMessage({
-                        id: 'mbitMore.isTilted',
-                        default: 'tilted [DIRECTION] ?',
-                        description: 'whether the micro:bit is tilted in a direction'
-                    }),
-                    blockType: BlockType.BOOLEAN,
-                    arguments: {
-                        DIRECTION: {
-                            type: ArgumentType.STRING,
-                            menu: 'tiltDirectionMenu',
-                            defaultValue: 'ANY'
-                        }
-                    }
-                },
-                {
-                    opcode: 'getTiltAngle',
-                    text: formatMessage({
-                        id: 'mbitMore.getTiltAngle',
-                        default: 'tilt angle [DIRECTION]',
-                        description: 'get the tilt angle in a direction'
-                    }),
-                    blockType: BlockType.REPORTER,
-                    arguments: {
-                        DIRECTION: {
-                            type: ArgumentType.STRING,
-                            menu: 'tiltAngleDirectionMenu',
-                            defaultValue: 'FRONT'
-                        }
-                    }
-                },
-                '---',
-                {
-                    opcode: 'displayMatrix',
-                    text: formatMessage({
-                        id: 'mbitMore.displayMatrix',
-                        default: 'display pattern [MATRIX] ',
-                        description: 'display a pattern on the micro:bit display'
-                    }),
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-                        MATRIX: {
-                            type: ArgumentType.MATRIX,
-                            defaultValue: '0101010101100010101000100'
-                        }
-                    }
-                },
-                {
-                    opcode: 'display',
-                    text: formatMessage({
-                        id: 'mbitMore.display',
-                        default: 'display [TEXT]',
-                        description: 'display text on the micro:bit display'
-                    }),
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-                        TEXT: {
-                            type: ArgumentType.STRING,
-                            defaultValue: 'Hello!'
-                        }
-                    }
-                },
-                {
                     opcode: 'displayText',
                     text: formatMessage({
                         id: 'mbitMore.displayText',
@@ -2536,15 +2549,6 @@ class MbitMoreBlocks {
                             defaultValue: 120
                         }
                     }
-                },
-                {
-                    opcode: 'displayClear',
-                    text: formatMessage({
-                        id: 'mbitMore.clearDisplay',
-                        default: 'clear display',
-                        description: 'display nothing on the micro:bit display'
-                    }),
-                    blockType: BlockType.COMMAND
                 },
                 '---',
                 {
