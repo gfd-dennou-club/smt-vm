@@ -2283,24 +2283,6 @@ class MbitMoreBlocks {
         this.isWaitingForGap = false;
 
         /**
-         * The last time the "tilted" event was fired.
-         * @type {number}
-         */
-        this.lastTiltedEventTime = null;
-
-        /**
-         * The last time any tilt event was detected.
-         * @type {number}
-         */
-        this.lastTiltOccurredTime = null;
-
-        /**
-         * Whether the extension is waiting for a gap in tilting before firing again.
-         * @type {boolean}
-         */
-        this.isWaitingForTiltGap = false;
-
-        /**
          * The timer of updateLastGestureEvent.
          * @type {number}
          */
@@ -3159,66 +3141,18 @@ class MbitMoreBlocks {
             return shouldFire;
         }
         if (gestureName === 'TILTED') {
-            const now = Date.now();
-            const stepTime = this.runtime.currentStepTime;
-            const gapThreshold = stepTime * 5; // 5フレームの空白
-            const timeoutThreshold = stepTime * 30; // 30フレームで強制発火
-
-            // Only check tilt-related gestures
             const tiltGestures = [
                 MbitMoreGestureName.TILT_UP,
                 MbitMoreGestureName.TILT_DOWN,
                 MbitMoreGestureName.TILT_LEFT,
                 MbitMoreGestureName.TILT_RIGHT
             ];
-
-            const changedTiltGestures = [];
-            tiltGestures.forEach(name => {
-                const timestamp = this._peripheral.gestureEvents[name];
-                if (typeof timestamp !== 'undefined') {
-                    if (this.prevGestureEvents[name]) {
-                        if (timestamp !== this.prevGestureEvents[name]) {
-                            changedTiltGestures.push(name);
-                        }
-                    } else {
-                        changedTiltGestures.push(name);
-                    }
-                }
+            return tiltGestures.some(name => {
+                const lastTimestamp = this._peripheral.getGestureEventTimestamp(name);
+                if (lastTimestamp === null) return false;
+                if (!this.prevGestureEvents[name]) return true;
+                return lastTimestamp !== this.prevGestureEvents[name];
             });
-
-            const eventDetected = changedTiltGestures.length > 0;
-            if (eventDetected) {
-                this.lastTiltOccurredTime = now;
-            }
-
-            // 静止判定（隙間ができたか）
-            const timeSinceLastOccurred = this.lastTiltOccurredTime === null ?
-                Infinity : (now - this.lastTiltOccurredTime);
-            if (timeSinceLastOccurred >= gapThreshold) {
-                this.isWaitingForTiltGap = false;
-            }
-
-            let shouldFire = false;
-
-            if (eventDetected) {
-                if (this.isWaitingForTiltGap) {
-                    // 傾き続けている場合の強制発火判定
-                    const timeSinceLastFired = this.lastTiltedEventTime === null ?
-                        Infinity : (now - this.lastTiltedEventTime);
-                    if (timeSinceLastFired >= timeoutThreshold) {
-                        shouldFire = true;
-                    }
-                } else {
-                    shouldFire = true;
-                }
-            }
-
-            if (shouldFire) {
-                this.lastTiltedEventTime = now;
-                this.isWaitingForTiltGap = true;
-            }
-
-            return shouldFire;
         }
         const lastTimestamp =
             this._peripheral.getGestureEventTimestamp(gestureName);
