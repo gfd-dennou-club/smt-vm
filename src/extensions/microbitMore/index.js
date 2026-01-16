@@ -1911,6 +1911,26 @@ class MbitMoreBlocks {
     }
 
     /**
+     * @return {array} - Menu items for touch pin selector (P0, P1, P2).
+     */
+    get TOUCH_PIN_ID_MENU () {
+        return [
+            {
+                text: '0',
+                value: MbitMoreButtonName.P0
+            },
+            {
+                text: '1',
+                value: MbitMoreButtonName.P1
+            },
+            {
+                text: '2',
+                value: MbitMoreButtonName.P2
+            }
+        ];
+    }
+
+    /**
      * @return {array} - Menu items for touch event selector.
      */
     get TOUCH_EVENT_MENU () {
@@ -2362,6 +2382,22 @@ class MbitMoreBlocks {
                             type: ArgumentType.STRING,
                             menu: 'buttonIDMenu',
                             defaultValue: MbitMoreButtonName.A
+                        }
+                    }
+                },
+                {
+                    opcode: 'whenPinConnected',
+                    text: formatMessage({
+                        id: 'mbitMore.whenPinConnected',
+                        default: 'when pin [PIN] connected',
+                        description: 'when the selected touch pin on the micro:bit is connected'
+                    }),
+                    blockType: BlockType.HAT,
+                    arguments: {
+                        PIN: {
+                            type: ArgumentType.STRING,
+                            menu: 'touchPinIDMenu',
+                            defaultValue: '0'
                         }
                     }
                 },
@@ -2878,6 +2914,10 @@ class MbitMoreBlocks {
                     acceptReporters: false,
                     items: this.TOUCH_ID_MENU
                 },
+                touchPinIDMenu: {
+                    acceptReporters: false,
+                    items: this.TOUCH_PIN_ID_MENU
+                },
                 touchEventMenu: {
                     acceptReporters: false,
                     items: this.TOUCH_EVENT_MENU
@@ -2985,13 +3025,22 @@ class MbitMoreBlocks {
 
 
     /**
-     * Test whether the touch event raised at the pin.
+     * Test whether the pin is connected (touched).
      * @param {object} args - the block's arguments.
-     * @param {string} args.NAME - name of the pin to catch.
-     * @param {string} args.EVENT - event to catch.
+     * @param {string} args.PIN - name of the pin.
      * @param {object} util - utility object provided by the runtime.
      * @return {boolean|Promise<boolean>|undefined} - true if the event raised or promise that or undefinde if yield.
      */
+    whenPinConnected (args, util) {
+        return this.whenTouchEvent({
+            NAME: args.PIN,
+            EVENT: MbitMoreButtonEventName.DOWN
+        }, util);
+    }
+
+    /**
+     * Test whether the touch-pin event raised.
+
     whenTouchEvent (args, util) {
         const buttonName = args.NAME;
         if (buttonName === MbitMoreButtonName.LOGO) {

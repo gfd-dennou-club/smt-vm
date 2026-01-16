@@ -2,6 +2,7 @@
   "de": {
     "mbitMore.name": "MicroBit More",
     "mbitMore.whenButtonEvent": "Wenn Taste [NAME] [EVENT] ist",
+    "mbitMore.whenPinConnected": "Wenn Pin [PIN] verbunden wird",
     "mbitMore.buttonIDMenu.a": "A",
     "mbitMore.buttonIDMenu.b": "B",
     "mbitMore.buttonEventMenu.down": "unten",
@@ -90,6 +91,7 @@
   "ja": {
     "mbitMore.name": "MicroBit More",
     "mbitMore.whenButtonEvent": "ボタン [NAME] が [EVENT] とき",
+    "mbitMore.whenPinConnected": "ピン [PIN] がつながったとき",
     "mbitMore.buttonIDMenu.a": "A",
     "mbitMore.buttonIDMenu.b": "B",
     "mbitMore.buttonEventMenu.down": "押された",
@@ -192,6 +194,7 @@
   "ja-Hira": {
     "mbitMore.name": "MicroBit More",
     "mbitMore.whenButtonEvent": "[NAME] ボタンが [EVENT] とき",
+    "mbitMore.whenPinConnected": "ピン [PIN] がつながったとき",
     "mbitMore.buttonIDMenu.a": "A",
     "mbitMore.buttonIDMenu.b": "B",
     "mbitMore.buttonEventMenu.down": "おされた",
