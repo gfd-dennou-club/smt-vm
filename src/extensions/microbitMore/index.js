@@ -1762,6 +1762,46 @@ class MbitMoreBlocks {
     }
 
     /**
+     * @return {array} - text and values for each tilt angle direction menu element
+     */
+    get TILT_ANGLE_DIRECTION_MENU () {
+        return [
+            {
+                text: formatMessage({
+                    id: 'mbitMore.tiltAngleDirectionMenu.front',
+                    default: 'front',
+                    description: 'label for front element in tilt angle direction picker for Microbit More extension'
+                }),
+                value: 'FRONT'
+            },
+            {
+                text: formatMessage({
+                    id: 'mbitMore.tiltAngleDirectionMenu.back',
+                    default: 'back',
+                    description: 'label for back element in tilt angle direction picker for Microbit More extension'
+                }),
+                value: 'BACK'
+            },
+            {
+                text: formatMessage({
+                    id: 'mbitMore.tiltAngleDirectionMenu.left',
+                    default: 'left',
+                    description: 'label for left element in tilt angle direction picker for Microbit More extension'
+                }),
+                value: 'LEFT'
+            },
+            {
+                text: formatMessage({
+                    id: 'mbitMore.tiltAngleDirectionMenu.right',
+                    default: 'right',
+                    description: 'label for right element in tilt angle direction picker for Microbit More extension'
+                }),
+                value: 'RIGHT'
+            }
+        ];
+    }
+
+    /**
      * @return {array} - text and values for each buttons menu element
      */
     get BUTTON_ID_MENU () {
@@ -2395,6 +2435,22 @@ class MbitMoreBlocks {
                         }
                     }
                 },
+                {
+                    opcode: 'getTiltAngle',
+                    text: formatMessage({
+                        id: 'mbitMore.getTiltAngle',
+                        default: 'tilt angle [DIRECTION]',
+                        description: 'get the tilt angle in a direction'
+                    }),
+                    blockType: BlockType.REPORTER,
+                    arguments: {
+                        DIRECTION: {
+                            type: ArgumentType.STRING,
+                            menu: 'tiltAngleDirectionMenu',
+                            defaultValue: 'FRONT'
+                        }
+                    }
+                },
                 '---',
                 {
                     opcode: 'displayMatrix',
@@ -2834,6 +2890,10 @@ class MbitMoreBlocks {
                     acceptReporters: false,
                     items: this.TILT_DIRECTION_MENU
                 },
+                tiltAngleDirectionMenu: {
+                    acceptReporters: false,
+                    items: this.TILT_ANGLE_DIRECTION_MENU
+                },
                 analogInPins: {
                     acceptReporters: false,
                     items: this.ANALOG_IN_PINS_MENU
@@ -3141,6 +3201,31 @@ class MbitMoreBlocks {
         }
 
         return false;
+    }
+
+    /**
+     * Get the tilt angle in a direction.
+     * @param {object} args - the block's arguments.
+     * @param {string} args.DIRECTION - the direction to check (FRONT, BACK, LEFT, RIGHT).
+     * @return {number} - the tilt angle in degrees.
+     */
+    getTiltAngle (args) {
+        const direction = args.DIRECTION;
+        const pitch = this._peripheral.readPitch();
+        const roll = this._peripheral.readRoll();
+
+        switch (direction) {
+        case 'FRONT':
+            return pitch;
+        case 'BACK':
+            return -pitch;
+        case 'LEFT':
+            return roll;
+        case 'RIGHT':
+            return -roll;
+        default:
+            return 0;
+        }
     }
 
     /**
