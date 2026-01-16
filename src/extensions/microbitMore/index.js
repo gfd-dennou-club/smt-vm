@@ -1713,6 +1713,53 @@ class MbitMoreBlocks {
         ];
     }
 
+    /**
+     * @return {array} - text and values for each tilt direction menu element
+     */
+    get TILT_DIRECTION_MENU () {
+        return [
+            {
+                text: formatMessage({
+                    id: 'mbitMore.tiltDirectionMenu.any',
+                    default: 'any',
+                    description: 'label for any direction element in tilt direction picker for Microbit More extension'
+                }),
+                value: 'ANY'
+            },
+            {
+                text: formatMessage({
+                    id: 'mbitMore.tiltDirectionMenu.up',
+                    default: 'up',
+                    description: 'label for up element in tilt direction picker for Microbit More extension'
+                }),
+                value: MbitMoreGestureName.TILT_UP
+            },
+            {
+                text: formatMessage({
+                    id: 'mbitMore.tiltDirectionMenu.down',
+                    default: 'down',
+                    description: 'label for down element in tilt direction picker for Microbit More extension'
+                }),
+                value: MbitMoreGestureName.TILT_DOWN
+            },
+            {
+                text: formatMessage({
+                    id: 'mbitMore.tiltDirectionMenu.left',
+                    default: 'left',
+                    description: 'label for left element in tilt direction picker for Microbit More extension'
+                }),
+                value: MbitMoreGestureName.TILT_LEFT
+            },
+            {
+                text: formatMessage({
+                    id: 'mbitMore.tiltDirectionMenu.right',
+                    default: 'right',
+                    description: 'label for right element in tilt direction picker for Microbit More extension'
+                }),
+                value: MbitMoreGestureName.TILT_RIGHT
+            }
+        ];
+    }
 
     /**
      * @return {array} - text and values for each buttons menu element
@@ -2332,6 +2379,22 @@ class MbitMoreBlocks {
                         }
                     }
                 },
+                {
+                    opcode: 'isTilted',
+                    text: formatMessage({
+                        id: 'mbitMore.isTilted',
+                        default: 'tilted [DIRECTION] ?',
+                        description: 'whether the micro:bit is tilted in a direction'
+                    }),
+                    blockType: BlockType.BOOLEAN,
+                    arguments: {
+                        DIRECTION: {
+                            type: ArgumentType.STRING,
+                            menu: 'tiltDirectionMenu',
+                            defaultValue: 'ANY'
+                        }
+                    }
+                },
                 '---',
                 {
                     opcode: 'displayMatrix',
@@ -2767,6 +2830,10 @@ class MbitMoreBlocks {
                     acceptReporters: false,
                     items: this.GESTURES_MENU
                 },
+                tiltDirectionMenu: {
+                    acceptReporters: false,
+                    items: this.TILT_DIRECTION_MENU
+                },
                 analogInPins: {
                     acceptReporters: false,
                     items: this.ANALOG_IN_PINS_MENU
@@ -3040,6 +3107,40 @@ class MbitMoreBlocks {
         if (lastTimestamp === null) return false;
         if (!this.prevGestureEvents[gestureName]) return true;
         return lastTimestamp !== this.prevGestureEvents[gestureName];
+    }
+
+    /**
+     * Test whether the micro:bit is tilted in a direction.
+     * @param {object} args - the block's arguments.
+     * @param {string} args.DIRECTION - the direction to check.
+     * @return {boolean} - true if tilted within the time window.
+     */
+    isTilted (args) {
+        const direction = args.DIRECTION;
+        const now = Date.now();
+        const stepTime = this.runtime.currentStepTime;
+        const timeWindow = stepTime * 5; // 5フレームの期間
+
+        const tiltGestures = direction === 'ANY' ?
+            [
+                MbitMoreGestureName.TILT_UP,
+                MbitMoreGestureName.TILT_DOWN,
+                MbitMoreGestureName.TILT_LEFT,
+                MbitMoreGestureName.TILT_RIGHT
+            ] :
+            [direction];
+
+        for (const gestureName of tiltGestures) {
+            const timestamp = this._peripheral.getGestureEventTimestamp(gestureName);
+            if (timestamp !== null) {
+                const timeSinceEvent = now - timestamp;
+                if (timeSinceEvent <= timeWindow) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**
