@@ -273,8 +273,8 @@ const MbitMoreGestureName =
  */
 const MbitMoreGestureID =
 {
-    1: 'TILT_UP',
-    2: 'TILT_DOWN',
+    1: 'TILT_DOWN',
+    2: 'TILT_UP',
     3: 'TILT_LEFT',
     4: 'TILT_RIGHT',
     5: 'FACE_UP',
