@@ -961,8 +961,8 @@ class MbitMore {
                     const data = base64ToUint8Array(result.message);
                     const dataView = new DataView(data.buffer, 0);
                     // Accelerometer
-                    this.pitch = Math.round(dataView.getInt16(0, true) * 180 / Math.PI / 1000);
-                    this.roll = Math.round(dataView.getInt16(2, true) * 180 / Math.PI / 1000);
+                    this.pitch = -Math.round(dataView.getInt16(0, true) * 180 / Math.PI / 1000);
+                    this.roll = -Math.round(dataView.getInt16(2, true) * 180 / Math.PI / 1000);
                     this.acceleration.x = 1000 * dataView.getInt16(4, true) / G;
                     this.acceleration.y = 1000 * dataView.getInt16(6, true) / G;
                     this.acceleration.z = 1000 * dataView.getInt16(8, true) / G;
