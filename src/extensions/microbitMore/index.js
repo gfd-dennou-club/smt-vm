@@ -1625,23 +1625,23 @@ class MbitMoreBlocks {
             {
                 text: formatMessage({
                     id: 'mbitMore.gesturesMenu.tiltUp',
-                    default: 'titl up',
-                    description: 'label for tilt up gesture in gesture picker for microbit more extension'
+                    default: 'tilt front',
+                    description: 'label for tilt front gesture in gesture picker for microbit more extension'
                 }),
                 value: MbitMoreGestureName.TILT_UP
             },
             {
                 text: formatMessage({
                     id: 'mbitMore.gesturesMenu.tiltDown',
-                    default: 'titl down',
-                    description: 'label for tilt down gesture in gesture picker for microbit more extension'
+                    default: 'tilt back',
+                    description: 'label for tilt back gesture in gesture picker for microbit more extension'
                 }),
                 value: MbitMoreGestureName.TILT_DOWN
             },
             {
                 text: formatMessage({
                     id: 'mbitMore.gesturesMenu.tiltLeft',
-                    default: 'titl left',
+                    default: 'tilt left',
                     description: 'label for tilt left gesture in gesture picker for microbit more extension'
                 }),
                 value: MbitMoreGestureName.TILT_LEFT
@@ -1649,7 +1649,7 @@ class MbitMoreBlocks {
             {
                 text: formatMessage({
                     id: 'mbitMore.gesturesMenu.tiltRight',
-                    default: 'titl right',
+                    default: 'tilt right',
                     description: 'label for tilt right gesture in gesture picker for microbit more extension'
                 }),
                 value: MbitMoreGestureName.TILT_RIGHT
@@ -1729,16 +1729,16 @@ class MbitMoreBlocks {
             {
                 text: formatMessage({
                     id: 'mbitMore.tiltDirectionMenu.up',
-                    default: 'up',
-                    description: 'label for up element in tilt direction picker for Microbit More extension'
+                    default: 'front',
+                    description: 'label for front element in tilt direction picker for Microbit More extension'
                 }),
                 value: MbitMoreGestureName.TILT_UP
             },
             {
                 text: formatMessage({
                     id: 'mbitMore.tiltDirectionMenu.down',
-                    default: 'down',
-                    description: 'label for down element in tilt direction picker for Microbit More extension'
+                    default: 'back',
+                    description: 'label for back element in tilt direction picker for Microbit More extension'
                 }),
                 value: MbitMoreGestureName.TILT_DOWN
             },
