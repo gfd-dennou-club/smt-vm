@@ -3176,31 +3176,22 @@ class MbitMoreBlocks {
      * @return {boolean} - true if tilted within the time window.
      */
     isTilted (args) {
-        const direction = args.DIRECTION;
-        const now = Date.now();
-        const stepTime = this.runtime.currentStepTime;
-        const timeWindow = stepTime * 5; // 5フレームの期間
-
-        const tiltGestures = direction === 'ANY' ?
-            [
-                MbitMoreGestureName.TILT_UP,
-                MbitMoreGestureName.TILT_DOWN,
-                MbitMoreGestureName.TILT_LEFT,
-                MbitMoreGestureName.TILT_RIGHT
-            ] :
-            [direction];
-
-        for (const gestureName of tiltGestures) {
-            const timestamp = this._peripheral.getGestureEventTimestamp(gestureName);
-            if (timestamp !== null) {
-                const timeSinceEvent = now - timestamp;
-                if (timeSinceEvent <= timeWindow) {
-                    return true;
-                }
-            }
+        if (args.DIRECTION === 'ANY') {
+            return (
+                this.getTiltAngle({DIRECTION: 'FRONT'}) >= 15 ||
+                this.getTiltAngle({DIRECTION: 'BACK'}) >= 15 ||
+                this.getTiltAngle({DIRECTION: 'LEFT'}) >= 15 ||
+                this.getTiltAngle({DIRECTION: 'RIGHT'}) >= 15
+            );
         }
-
-        return false;
+        const directionMap = {
+            [MbitMoreGestureName.TILT_UP]: 'FRONT',
+            [MbitMoreGestureName.TILT_DOWN]: 'BACK',
+            [MbitMoreGestureName.TILT_LEFT]: 'LEFT',
+            [MbitMoreGestureName.TILT_RIGHT]: 'RIGHT'
+        };
+        const direction = directionMap[args.DIRECTION];
+        return this.getTiltAngle({DIRECTION: direction}) >= 15;
     }
 
     /**
@@ -3216,13 +3207,13 @@ class MbitMoreBlocks {
 
         switch (direction) {
         case 'FRONT':
-            return pitch;
-        case 'BACK':
             return -pitch;
+        case 'BACK':
+            return pitch;
         case 'LEFT':
-            return roll;
-        case 'RIGHT':
             return -roll;
+        case 'RIGHT':
+            return roll;
         default:
             return 0;
         }
