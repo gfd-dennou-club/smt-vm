@@ -273,8 +273,8 @@ const MbitMoreGestureName =
  */
 const MbitMoreGestureID =
 {
-    1: 'TILT_UP',
-    2: 'TILT_DOWN',
+    1: 'TILT_DOWN',
+    2: 'TILT_UP',
     3: 'TILT_LEFT',
     4: 'TILT_RIGHT',
     5: 'FACE_UP',
@@ -1616,24 +1616,32 @@ class MbitMoreBlocks {
             },
             {
                 text: formatMessage({
+                    id: 'mbitMore.gesturesMenu.tilted',
+                    default: 'tilted any',
+                    description: 'label for tilted any direction gesture in gesture picker for microbit more extension'
+                }),
+                value: 'TILTED'
+            },
+            {
+                text: formatMessage({
                     id: 'mbitMore.gesturesMenu.tiltUp',
-                    default: 'titl up',
-                    description: 'label for tilt up gesture in gesture picker for microbit more extension'
+                    default: 'tilt front',
+                    description: 'label for tilt front gesture in gesture picker for microbit more extension'
                 }),
                 value: MbitMoreGestureName.TILT_UP
             },
             {
                 text: formatMessage({
                     id: 'mbitMore.gesturesMenu.tiltDown',
-                    default: 'titl down',
-                    description: 'label for tilt down gesture in gesture picker for microbit more extension'
+                    default: 'tilt back',
+                    description: 'label for tilt back gesture in gesture picker for microbit more extension'
                 }),
                 value: MbitMoreGestureName.TILT_DOWN
             },
             {
                 text: formatMessage({
                     id: 'mbitMore.gesturesMenu.tiltLeft',
-                    default: 'titl left',
+                    default: 'tilt left',
                     description: 'label for tilt left gesture in gesture picker for microbit more extension'
                 }),
                 value: MbitMoreGestureName.TILT_LEFT
@@ -1641,7 +1649,7 @@ class MbitMoreBlocks {
             {
                 text: formatMessage({
                     id: 'mbitMore.gesturesMenu.tiltRight',
-                    default: 'titl right',
+                    default: 'tilt right',
                     description: 'label for tilt right gesture in gesture picker for microbit more extension'
                 }),
                 value: MbitMoreGestureName.TILT_RIGHT
@@ -1705,6 +1713,93 @@ class MbitMoreBlocks {
         ];
     }
 
+    /**
+     * @return {array} - text and values for each tilt direction menu element
+     */
+    get TILT_DIRECTION_MENU () {
+        return [
+            {
+                text: formatMessage({
+                    id: 'mbitMore.tiltDirectionMenu.any',
+                    default: 'any',
+                    description: 'label for any direction element in tilt direction picker for Microbit More extension'
+                }),
+                value: 'ANY'
+            },
+            {
+                text: formatMessage({
+                    id: 'mbitMore.tiltDirectionMenu.up',
+                    default: 'front',
+                    description: 'label for front element in tilt direction picker for Microbit More extension'
+                }),
+                value: MbitMoreGestureName.TILT_UP
+            },
+            {
+                text: formatMessage({
+                    id: 'mbitMore.tiltDirectionMenu.down',
+                    default: 'back',
+                    description: 'label for back element in tilt direction picker for Microbit More extension'
+                }),
+                value: MbitMoreGestureName.TILT_DOWN
+            },
+            {
+                text: formatMessage({
+                    id: 'mbitMore.tiltDirectionMenu.left',
+                    default: 'left',
+                    description: 'label for left element in tilt direction picker for Microbit More extension'
+                }),
+                value: MbitMoreGestureName.TILT_LEFT
+            },
+            {
+                text: formatMessage({
+                    id: 'mbitMore.tiltDirectionMenu.right',
+                    default: 'right',
+                    description: 'label for right element in tilt direction picker for Microbit More extension'
+                }),
+                value: MbitMoreGestureName.TILT_RIGHT
+            }
+        ];
+    }
+
+    /**
+     * @return {array} - text and values for each tilt angle direction menu element
+     */
+    get TILT_ANGLE_DIRECTION_MENU () {
+        return [
+            {
+                text: formatMessage({
+                    id: 'mbitMore.tiltAngleDirectionMenu.front',
+                    default: 'front',
+                    description: 'label for front element in tilt angle direction picker for Microbit More extension'
+                }),
+                value: 'FRONT'
+            },
+            {
+                text: formatMessage({
+                    id: 'mbitMore.tiltAngleDirectionMenu.back',
+                    default: 'back',
+                    description: 'label for back element in tilt angle direction picker for Microbit More extension'
+                }),
+                value: 'BACK'
+            },
+            {
+                text: formatMessage({
+                    id: 'mbitMore.tiltAngleDirectionMenu.left',
+                    default: 'left',
+                    description: 'label for left element in tilt angle direction picker for Microbit More extension'
+                }),
+                value: 'LEFT'
+            },
+            {
+                text: formatMessage({
+                    id: 'mbitMore.tiltAngleDirectionMenu.right',
+                    default: 'right',
+                    description: 'label for right element in tilt angle direction picker for Microbit More extension'
+                }),
+                value: 'RIGHT'
+            }
+        ];
+    }
 
     /**
      * @return {array} - text and values for each buttons menu element
@@ -1810,6 +1905,26 @@ class MbitMoreBlocks {
             },
             {
                 text: 'P2',
+                value: MbitMoreButtonName.P2
+            }
+        ];
+    }
+
+    /**
+     * @return {array} - Menu items for touch pin selector (P0, P1, P2).
+     */
+    get TOUCH_PIN_ID_MENU () {
+        return [
+            {
+                text: '0',
+                value: MbitMoreButtonName.P0
+            },
+            {
+                text: '1',
+                value: MbitMoreButtonName.P1
+            },
+            {
+                text: '2',
                 value: MbitMoreButtonName.P2
             }
         ];
@@ -2199,23 +2314,6 @@ class MbitMoreBlocks {
             showStatusButton: true,
             blocks: [
                 {
-                    opcode: 'whenConnectionChanged',
-                    text: formatMessage({
-                        id: 'mbitMore.whenConnectionChanged',
-                        default: 'when micro:bit [STATE]',
-                        description: 'when a micro:bit connection state changed'
-                    }),
-                    blockType: BlockType.HAT,
-                    arguments: {
-                        STATE: {
-                            type: ArgumentType.STRING,
-                            menu: 'connectionStateMenu',
-                            defaultValue: 'connected'
-                        }
-                    }
-                },
-                '---',
-                {
                     opcode: 'whenButtonEvent',
                     text: formatMessage({
                         id: 'mbitMore.whenButtonEvent',
@@ -2249,43 +2347,6 @@ class MbitMoreBlocks {
                             type: ArgumentType.STRING,
                             menu: 'buttonIDMenu',
                             defaultValue: MbitMoreButtonName.A
-                        }
-                    }
-                },
-                {
-                    opcode: 'whenTouchEvent',
-                    text: formatMessage({
-                        id: 'mbitMore.whenTouchEvent',
-                        default: 'when pin [NAME] is [EVENT]',
-                        description: 'when the selected touch pin on the micro:bit is touched'
-                    }),
-                    blockType: BlockType.HAT,
-                    arguments: {
-                        NAME: {
-                            type: ArgumentType.STRING,
-                            menu: 'touchIDMenu',
-                            defaultValue: MbitMoreButtonName.LOGO
-                        },
-                        EVENT: {
-                            type: ArgumentType.STRING,
-                            menu: 'touchEventMenu',
-                            defaultValue: MbitMoreButtonEventName.DOWN
-                        }
-                    }
-                },
-                {
-                    opcode: 'isPinTouched',
-                    text: formatMessage({
-                        id: 'mbitMore.isPinTouched',
-                        default: 'pin [NAME] is touched?',
-                        description: 'is the selected pin is touched?'
-                    }),
-                    blockType: BlockType.BOOLEAN,
-                    arguments: {
-                        NAME: {
-                            type: ArgumentType.STRING,
-                            menu: 'touchIDMenu',
-                            defaultValue: MbitMoreButtonName.LOGO
                         }
                     }
                 },
@@ -2338,6 +2399,121 @@ class MbitMoreBlocks {
                     }
                 },
                 {
+                    opcode: 'displayClear',
+                    text: formatMessage({
+                        id: 'mbitMore.clearDisplay',
+                        default: 'clear display',
+                        description: 'display nothing on the micro:bit display'
+                    }),
+                    blockType: BlockType.COMMAND
+                },
+                '---',
+                {
+                    opcode: 'isTilted',
+                    text: formatMessage({
+                        id: 'mbitMore.isTilted',
+                        default: 'tilted [DIRECTION] ?',
+                        description: 'whether the micro:bit is tilted in a direction'
+                    }),
+                    blockType: BlockType.BOOLEAN,
+                    arguments: {
+                        DIRECTION: {
+                            type: ArgumentType.STRING,
+                            menu: 'tiltDirectionMenu',
+                            defaultValue: 'ANY'
+                        }
+                    }
+                },
+                {
+                    opcode: 'getTiltAngle',
+                    text: formatMessage({
+                        id: 'mbitMore.getTiltAngle',
+                        default: 'tilt angle [DIRECTION]',
+                        description: 'get the tilt angle in a direction'
+                    }),
+                    blockType: BlockType.REPORTER,
+                    arguments: {
+                        DIRECTION: {
+                            type: ArgumentType.STRING,
+                            menu: 'tiltAngleDirectionMenu',
+                            defaultValue: 'FRONT'
+                        }
+                    }
+                },
+                '---',
+                {
+                    opcode: 'whenPinConnected',
+                    text: formatMessage({
+                        id: 'mbitMore.whenPinConnected',
+                        default: 'when pin [PIN] connected',
+                        description: 'when the selected touch pin on the micro:bit is connected'
+                    }),
+                    blockType: BlockType.HAT,
+                    arguments: {
+                        PIN: {
+                            type: ArgumentType.STRING,
+                            menu: 'touchPinIDMenu',
+                            defaultValue: '0'
+                        }
+                    }
+                },
+                '---',
+                {
+                    opcode: 'whenConnectionChanged',
+                    text: formatMessage({
+                        id: 'mbitMore.whenConnectionChanged',
+                        default: 'when micro:bit [STATE]',
+                        description: 'when a micro:bit connection state changed'
+                    }),
+                    blockType: BlockType.HAT,
+                    arguments: {
+                        STATE: {
+                            type: ArgumentType.STRING,
+                            menu: 'connectionStateMenu',
+                            defaultValue: 'connected'
+                        }
+                    }
+                },
+                '---',
+                {
+                    opcode: 'whenTouchEvent',
+                    text: formatMessage({
+                        id: 'mbitMore.whenTouchEvent',
+                        default: 'when pin [NAME] is [EVENT]',
+                        description: 'when the selected touch pin on the micro:bit is touched'
+                    }),
+                    blockType: BlockType.HAT,
+                    arguments: {
+                        NAME: {
+                            type: ArgumentType.STRING,
+                            menu: 'touchIDMenu',
+                            defaultValue: MbitMoreButtonName.LOGO
+                        },
+                        EVENT: {
+                            type: ArgumentType.STRING,
+                            menu: 'touchEventMenu',
+                            defaultValue: MbitMoreButtonEventName.DOWN
+                        }
+                    }
+                },
+                {
+                    opcode: 'isPinTouched',
+                    text: formatMessage({
+                        id: 'mbitMore.isPinTouched',
+                        default: 'pin [NAME] is touched?',
+                        description: 'is the selected pin is touched?'
+                    }),
+                    blockType: BlockType.BOOLEAN,
+                    arguments: {
+                        NAME: {
+                            type: ArgumentType.STRING,
+                            menu: 'touchIDMenu',
+                            defaultValue: MbitMoreButtonName.LOGO
+                        }
+                    }
+                },
+                '---',
+                {
                     opcode: 'displayText',
                     text: formatMessage({
                         id: 'mbitMore.displayText',
@@ -2355,15 +2531,6 @@ class MbitMoreBlocks {
                             defaultValue: 120
                         }
                     }
-                },
-                {
-                    opcode: 'displayClear',
-                    text: formatMessage({
-                        id: 'mbitMore.clearDisplay',
-                        default: 'clear display',
-                        description: 'display nothing on the micro:bit display'
-                    }),
-                    blockType: BlockType.COMMAND
                 },
                 '---',
                 {
@@ -2733,6 +2900,10 @@ class MbitMoreBlocks {
                     acceptReporters: false,
                     items: this.TOUCH_ID_MENU
                 },
+                touchPinIDMenu: {
+                    acceptReporters: false,
+                    items: this.TOUCH_PIN_ID_MENU
+                },
                 touchEventMenu: {
                     acceptReporters: false,
                     items: this.TOUCH_EVENT_MENU
@@ -2740,6 +2911,14 @@ class MbitMoreBlocks {
                 gestures: {
                     acceptReporters: false,
                     items: this.GESTURES_MENU
+                },
+                tiltDirectionMenu: {
+                    acceptReporters: false,
+                    items: this.TILT_DIRECTION_MENU
+                },
+                tiltAngleDirectionMenu: {
+                    acceptReporters: false,
+                    items: this.TILT_ANGLE_DIRECTION_MENU
                 },
                 analogInPins: {
                     acceptReporters: false,
@@ -2832,7 +3011,21 @@ class MbitMoreBlocks {
 
 
     /**
-     * Test whether the touch event raised at the pin.
+     * Test whether the pin is connected (touched).
+     * @param {object} args - the block's arguments.
+     * @param {string} args.PIN - name of the pin.
+     * @param {object} util - utility object provided by the runtime.
+     * @return {boolean|Promise<boolean>|undefined} - true if the event raised or promise that or undefinde if yield.
+     */
+    whenPinConnected (args, util) {
+        return this.whenTouchEvent({
+            NAME: args.PIN,
+            EVENT: MbitMoreButtonEventName.DOWN
+        }, util);
+    }
+
+    /**
+     * Test whether the touch-pin event raised.
      * @param {object} args - the block's arguments.
      * @param {string} args.NAME - name of the pin to catch.
      * @param {string} args.EVENT - event to catch.
@@ -2947,11 +3140,75 @@ class MbitMoreBlocks {
 
             return shouldFire;
         }
+        if (gestureName === 'TILTED') {
+            const tiltGestures = [
+                MbitMoreGestureName.TILT_UP,
+                MbitMoreGestureName.TILT_DOWN,
+                MbitMoreGestureName.TILT_LEFT,
+                MbitMoreGestureName.TILT_RIGHT
+            ];
+            return tiltGestures.some(name => {
+                const lastTimestamp = this._peripheral.getGestureEventTimestamp(name);
+                if (lastTimestamp === null) return false;
+                if (!this.prevGestureEvents[name]) return true;
+                return lastTimestamp !== this.prevGestureEvents[name];
+            });
+        }
         const lastTimestamp =
             this._peripheral.getGestureEventTimestamp(gestureName);
         if (lastTimestamp === null) return false;
         if (!this.prevGestureEvents[gestureName]) return true;
         return lastTimestamp !== this.prevGestureEvents[gestureName];
+    }
+
+    /**
+     * Test whether the micro:bit is tilted in a direction.
+     * @param {object} args - the block's arguments.
+     * @param {string} args.DIRECTION - the direction to check.
+     * @return {boolean} - true if tilted within the time window.
+     */
+    isTilted (args) {
+        if (args.DIRECTION === 'ANY') {
+            return (
+                this.getTiltAngle({DIRECTION: 'FRONT'}) >= 15 ||
+                this.getTiltAngle({DIRECTION: 'BACK'}) >= 15 ||
+                this.getTiltAngle({DIRECTION: 'LEFT'}) >= 15 ||
+                this.getTiltAngle({DIRECTION: 'RIGHT'}) >= 15
+            );
+        }
+        const directionMap = {
+            [MbitMoreGestureName.TILT_UP]: 'FRONT',
+            [MbitMoreGestureName.TILT_DOWN]: 'BACK',
+            [MbitMoreGestureName.TILT_LEFT]: 'LEFT',
+            [MbitMoreGestureName.TILT_RIGHT]: 'RIGHT'
+        };
+        const direction = directionMap[args.DIRECTION];
+        return this.getTiltAngle({DIRECTION: direction}) >= 15;
+    }
+
+    /**
+     * Get the tilt angle in a direction.
+     * @param {object} args - the block's arguments.
+     * @param {string} args.DIRECTION - the direction to check (FRONT, BACK, LEFT, RIGHT).
+     * @return {number} - the tilt angle in degrees.
+     */
+    getTiltAngle (args) {
+        const direction = args.DIRECTION;
+        const pitch = this._peripheral.readPitch();
+        const roll = this._peripheral.readRoll();
+
+        switch (direction) {
+        case 'FRONT':
+            return -pitch;
+        case 'BACK':
+            return pitch;
+        case 'LEFT':
+            return -roll;
+        case 'RIGHT':
+            return roll;
+        default:
+            return 0;
+        }
     }
 
     /**
