@@ -288,6 +288,31 @@ const MbitMoreGestureID =
 };
 
 /**
+ * Enum for name of tilt direction.
+ * @readonly
+ * @enum {string}
+ */
+const MbitMoreTiltDirectionName =
+{
+    FRONT: 'FRONT',
+    BACK: 'BACK',
+    LEFT: 'LEFT',
+    RIGHT: 'RIGHT',
+    ANY: 'ANY'
+};
+
+/**
+ * Tilt direction to gesture name mapping
+ * @readonly
+ */
+const MbitMoreTiltDirectionToGestureName = {
+    FRONT: MbitMoreGestureName.TILT_UP,
+    BACK: MbitMoreGestureName.TILT_DOWN,
+    LEFT: MbitMoreGestureName.TILT_LEFT,
+    RIGHT: MbitMoreGestureName.TILT_RIGHT
+};
+
+/**
  * Enum for event type in the micro:bit runtime.
  * @readonly
  * @enum {number}
@@ -1729,19 +1754,19 @@ class MbitMoreBlocks {
         return [
             {
                 text: formatMessage({
-                    id: 'mbitMore.tiltDirectionMenu.up',
+                    id: 'mbitMore.tiltDirectionMenu.front',
                     default: 'front',
                     description: 'label for front element in tilt direction picker for Microbit More extension'
                 }),
-                value: MbitMoreGestureName.TILT_UP
+                value: MbitMoreTiltDirectionName.FRONT
             },
             {
                 text: formatMessage({
-                    id: 'mbitMore.tiltDirectionMenu.down',
+                    id: 'mbitMore.tiltDirectionMenu.back',
                     default: 'back',
                     description: 'label for back element in tilt direction picker for Microbit More extension'
                 }),
-                value: MbitMoreGestureName.TILT_DOWN
+                value: MbitMoreTiltDirectionName.BACK
             },
             {
                 text: formatMessage({
@@ -1749,7 +1774,7 @@ class MbitMoreBlocks {
                     default: 'left',
                     description: 'label for left element in tilt direction picker for Microbit More extension'
                 }),
-                value: MbitMoreGestureName.TILT_LEFT
+                value: MbitMoreTiltDirectionName.LEFT
             },
             {
                 text: formatMessage({
@@ -1757,7 +1782,7 @@ class MbitMoreBlocks {
                     default: 'right',
                     description: 'label for right element in tilt direction picker for Microbit More extension'
                 }),
-                value: MbitMoreGestureName.TILT_RIGHT
+                value: MbitMoreTiltDirectionName.RIGHT
             },
             {
                 text: formatMessage({
@@ -1765,7 +1790,7 @@ class MbitMoreBlocks {
                     default: 'any',
                     description: 'label for any direction element in tilt direction picker for Microbit More extension'
                 }),
-                value: 'ANY'
+                value: MbitMoreTiltDirectionName.ANY
             }
         ];
     }
@@ -1781,7 +1806,7 @@ class MbitMoreBlocks {
                     default: 'front',
                     description: 'label for front element in tilt angle direction picker for Microbit More extension'
                 }),
-                value: 'FRONT'
+                value: MbitMoreTiltDirectionName.FRONT
             },
             {
                 text: formatMessage({
@@ -1789,7 +1814,7 @@ class MbitMoreBlocks {
                     default: 'back',
                     description: 'label for back element in tilt angle direction picker for Microbit More extension'
                 }),
-                value: 'BACK'
+                value: MbitMoreTiltDirectionName.BACK
             },
             {
                 text: formatMessage({
@@ -1797,7 +1822,7 @@ class MbitMoreBlocks {
                     default: 'left',
                     description: 'label for left element in tilt angle direction picker for Microbit More extension'
                 }),
-                value: 'LEFT'
+                value: MbitMoreTiltDirectionName.LEFT
             },
             {
                 text: formatMessage({
@@ -1805,7 +1830,7 @@ class MbitMoreBlocks {
                     default: 'right',
                     description: 'label for right element in tilt angle direction picker for Microbit More extension'
                 }),
-                value: 'RIGHT'
+                value: MbitMoreTiltDirectionName.RIGHT
             }
         ];
     }
@@ -2441,7 +2466,7 @@ class MbitMoreBlocks {
                         DIRECTION: {
                             type: ArgumentType.STRING,
                             menu: 'tiltDirectionMenu',
-                            defaultValue: 'ANY'
+                            defaultValue: MbitMoreTiltDirectionName.ANY
                         }
                     }
                 },
@@ -2457,7 +2482,7 @@ class MbitMoreBlocks {
                         DIRECTION: {
                             type: ArgumentType.STRING,
                             menu: 'tiltDirectionMenu',
-                            defaultValue: 'ANY'
+                            defaultValue: MbitMoreTiltDirectionName.ANY
                         }
                     }
                 },
@@ -2473,7 +2498,7 @@ class MbitMoreBlocks {
                         DIRECTION: {
                             type: ArgumentType.STRING,
                             menu: 'tiltAngleDirectionMenu',
-                            defaultValue: 'FRONT'
+                            defaultValue: MbitMoreTiltDirectionName.FRONT
                         }
                     }
                 },
@@ -3247,7 +3272,7 @@ class MbitMoreBlocks {
             }, this.runtime.currentStepTime);
         }
         const direction = args.DIRECTION;
-        if (direction === 'ANY') {
+        if (direction === MbitMoreTiltDirectionName.ANY) {
             const tiltGestures = [
                 MbitMoreGestureName.TILT_UP,
                 MbitMoreGestureName.TILT_DOWN,
@@ -3261,10 +3286,11 @@ class MbitMoreBlocks {
                 return lastTimestamp !== this.prevGestureEvents[name];
             });
         }
-        const lastTimestamp = this._peripheral.getGestureEventTimestamp(direction);
+        const gestureName = MbitMoreTiltDirectionToGestureName[direction];
+        const lastTimestamp = this._peripheral.getGestureEventTimestamp(gestureName);
         if (lastTimestamp === null) return false;
-        if (!this.prevGestureEvents[direction]) return true;
-        return lastTimestamp !== this.prevGestureEvents[direction];
+        if (!this.prevGestureEvents[gestureName]) return true;
+        return lastTimestamp !== this.prevGestureEvents[gestureName];
     }
 
     /**
@@ -3277,13 +3303,13 @@ class MbitMoreBlocks {
         switch (args.DIRECTION) {
         case 'ANY':
             return Math.abs(this._peripheral.pitch) > 15 || Math.abs(this._peripheral.roll) > 15;
-        case MbitMoreGestureName.TILT_UP:
+        case MbitMoreTiltDirectionName.FRONT:
             return this._peripheral.pitch < -15;
-        case MbitMoreGestureName.TILT_DOWN:
+        case MbitMoreTiltDirectionName.BACK:
             return this._peripheral.pitch > 15;
-        case MbitMoreGestureName.TILT_LEFT:
+        case MbitMoreTiltDirectionName.LEFT:
             return this._peripheral.roll < -15;
-        case MbitMoreGestureName.TILT_RIGHT:
+        case MbitMoreTiltDirectionName.RIGHT:
             return this._peripheral.roll > 15;
         default:
             return false;
@@ -3298,13 +3324,13 @@ class MbitMoreBlocks {
      */
     getTiltAngle (args) {
         switch (args.DIRECTION) {
-        case 'FRONT':
+        case MbitMoreTiltDirectionName.FRONT:
             return -this._peripheral.pitch;
-        case 'BACK':
+        case MbitMoreTiltDirectionName.BACK:
             return this._peripheral.pitch;
-        case 'LEFT':
+        case MbitMoreTiltDirectionName.LEFT:
             return -this._peripheral.roll;
-        case 'RIGHT':
+        case MbitMoreTiltDirectionName.RIGHT:
             return this._peripheral.roll;
         default:
             return 0;
