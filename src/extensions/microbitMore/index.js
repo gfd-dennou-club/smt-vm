@@ -3299,13 +3299,13 @@ class MbitMoreBlocks {
     getTiltAngle (args) {
         switch (args.DIRECTION) {
         case 'FRONT':
-            return Math.max(0, -this._peripheral.pitch);
+            return -this._peripheral.pitch;
         case 'BACK':
-            return Math.max(0, this._peripheral.pitch);
+            return this._peripheral.pitch;
         case 'LEFT':
-            return Math.max(0, -this._peripheral.roll);
+            return -this._peripheral.roll;
         case 'RIGHT':
-            return Math.max(0, this._peripheral.roll);
+            return this._peripheral.roll;
         default:
             return 0;
         }
