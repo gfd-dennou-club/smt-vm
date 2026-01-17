@@ -263,7 +263,8 @@ const MbitMoreGestureName =
     G3: 'G3',
     G6: 'G6',
     G8: 'G8',
-    SHAKE: 'SHAKE'
+    SHAKE: 'SHAKE',
+    JUMPED: 'JUMPED'
 };
 
 /**
@@ -1616,6 +1617,22 @@ class MbitMoreBlocks {
             },
             {
                 text: formatMessage({
+                    id: 'mbitMore.gesturesMenu.shake',
+                    default: 'shaken',
+                    description: 'label for shaken gesture in gesture picker for microbit more extension'
+                }),
+                value: MbitMoreGestureName.SHAKE
+            },
+            {
+                text: formatMessage({
+                    id: 'mbitMore.gesturesMenu.jumped',
+                    default: 'jumped',
+                    description: 'label for jumped gesture in gesture picker for microbit more extension'
+                }),
+                value: MbitMoreGestureName.JUMPED
+            },
+            {
+                text: formatMessage({
                     id: 'mbitMore.gesturesMenu.tilted',
                     default: 'tilted any',
                     description: 'label for tilted any direction gesture in gesture picker for microbit more extension'
@@ -1698,17 +1715,9 @@ class MbitMoreBlocks {
                 text: formatMessage({
                     id: 'mbitMore.gesturesMenu.g8',
                     default: '8G',
-                    description: 'label for 3G gesture in gesture picker for microbit more extension'
+                    description: 'label for 8G gesture in gesture picker for microbit more extension'
                 }),
                 value: MbitMoreGestureName.G8
-            },
-            {
-                text: formatMessage({
-                    id: 'mbitMore.gesturesMenu.shake',
-                    default: 'shake',
-                    description: 'label for shaken gesture in gesture picker for microbit more extension'
-                }),
-                value: MbitMoreGestureName.SHAKE
             }
         ];
     }
@@ -1718,14 +1727,6 @@ class MbitMoreBlocks {
      */
     get TILT_DIRECTION_MENU () {
         return [
-            {
-                text: formatMessage({
-                    id: 'mbitMore.tiltDirectionMenu.any',
-                    default: 'any',
-                    description: 'label for any direction element in tilt direction picker for Microbit More extension'
-                }),
-                value: 'ANY'
-            },
             {
                 text: formatMessage({
                     id: 'mbitMore.tiltDirectionMenu.up',
@@ -1757,6 +1758,14 @@ class MbitMoreBlocks {
                     description: 'label for right element in tilt direction picker for Microbit More extension'
                 }),
                 value: MbitMoreGestureName.TILT_RIGHT
+            },
+            {
+                text: formatMessage({
+                    id: 'mbitMore.tiltDirectionMenu.any',
+                    default: 'any',
+                    description: 'label for any direction element in tilt direction picker for Microbit More extension'
+                }),
+                value: 'ANY'
             }
         ];
     }
@@ -2299,6 +2308,18 @@ class MbitMoreBlocks {
          * @type {Object.<number, Object>}
          */
         this.prevReceivedData = {};
+
+        /**
+         * The timestamp of the last G3 gesture.
+         * @type {number}
+         */
+        this.lastG3Timestamp = 0;
+
+        /**
+         * The timestamp of the simulated JUMPED gesture.
+         * @type {number}
+         */
+        this.jumpedTimestamp = 0;
     }
 
     /**
@@ -2408,6 +2429,22 @@ class MbitMoreBlocks {
                     blockType: BlockType.COMMAND
                 },
                 '---',
+                {
+                    opcode: 'whenTilted',
+                    text: formatMessage({
+                        id: 'mbitMore.whenTilted',
+                        default: 'when tilted [DIRECTION]',
+                        description: 'when the micro:bit is tilted to the selected direction'
+                    }),
+                    blockType: BlockType.HAT,
+                    arguments: {
+                        DIRECTION: {
+                            type: ArgumentType.STRING,
+                            menu: 'tiltDirectionMenu',
+                            defaultValue: 'ANY'
+                        }
+                    }
+                },
                 {
                     opcode: 'isTilted',
                     text: formatMessage({
@@ -3073,6 +3110,8 @@ class MbitMoreBlocks {
         Object.entries(this._peripheral.gestureEvents).forEach(([gestureName, timestamp]) => {
             this.prevGestureEvents[gestureName] = timestamp;
         });
+        // Add simulated JUMPED event
+        this.prevGestureEvents[MbitMoreGestureName.JUMPED] = this.jumpedTimestamp;
     }
 
     /**
@@ -3154,6 +3193,39 @@ class MbitMoreBlocks {
                 return lastTimestamp !== this.prevGestureEvents[name];
             });
         }
+        if (gestureName === 'TILTED') {
+            const tiltGestures = [
+                MbitMoreGestureName.TILT_UP,
+                MbitMoreGestureName.TILT_DOWN,
+                MbitMoreGestureName.TILT_LEFT,
+                MbitMoreGestureName.TILT_RIGHT
+            ];
+            return tiltGestures.some(name => {
+                const timestamp = this._peripheral.getGestureEventTimestamp(name);
+                if (timestamp === null) return false;
+                if (!this.prevGestureEvents[name]) return true;
+                return timestamp !== this.prevGestureEvents[name];
+            });
+        }
+        if (gestureName === MbitMoreGestureName.JUMPED) {
+            const g3Timestamp = this._peripheral.getGestureEventTimestamp(MbitMoreGestureName.G3);
+            const freefallTimestamp = this._peripheral.getGestureEventTimestamp(MbitMoreGestureName.FREEFALL);
+
+            if (g3Timestamp !== null && g3Timestamp !== this.lastG3Timestamp) {
+                this.lastG3Timestamp = g3Timestamp;
+            }
+
+            if (freefallTimestamp !== null && this.lastG3Timestamp !== 0) {
+                // Check if FREEFALL happened after G3 and within 1000ms
+                if (freefallTimestamp > this.lastG3Timestamp && (freefallTimestamp - this.lastG3Timestamp) < 1000) {
+                    this.jumpedTimestamp = freefallTimestamp;
+                }
+            }
+
+            if (this.jumpedTimestamp === 0) return false;
+            if (!this.prevGestureEvents[MbitMoreGestureName.JUMPED]) return true;
+            return this.jumpedTimestamp !== this.prevGestureEvents[MbitMoreGestureName.JUMPED];
+        }
         const lastTimestamp =
             this._peripheral.getGestureEventTimestamp(gestureName);
         if (lastTimestamp === null) return false;
@@ -3162,50 +3234,78 @@ class MbitMoreBlocks {
     }
 
     /**
-     * Test whether the micro:bit is tilted in a direction.
+     * Test whether the micro:bit is tilted to the selected direction.
      * @param {object} args - the block's arguments.
-     * @param {string} args.DIRECTION - the direction to check.
-     * @return {boolean} - true if tilted within the time window.
+     * @param {string} args.DIRECTION - direction of tilt.
+     * @return {boolean} - true if the condition is met.
      */
-    isTilted (args) {
-        if (args.DIRECTION === 'ANY') {
-            return (
-                this.getTiltAngle({DIRECTION: 'FRONT'}) >= 15 ||
-                this.getTiltAngle({DIRECTION: 'BACK'}) >= 15 ||
-                this.getTiltAngle({DIRECTION: 'LEFT'}) >= 15 ||
-                this.getTiltAngle({DIRECTION: 'RIGHT'}) >= 15
-            );
+    whenTilted (args) {
+        if (!this.updateLastGestureEventTimer) {
+            this.updateLastGestureEventTimer = setTimeout(() => {
+                this.updatePrevGestureEvents();
+                this.updateLastGestureEventTimer = null;
+            }, this.runtime.currentStepTime);
         }
-        const directionMap = {
-            [MbitMoreGestureName.TILT_UP]: 'FRONT',
-            [MbitMoreGestureName.TILT_DOWN]: 'BACK',
-            [MbitMoreGestureName.TILT_LEFT]: 'LEFT',
-            [MbitMoreGestureName.TILT_RIGHT]: 'RIGHT'
-        };
-        const direction = directionMap[args.DIRECTION];
-        return this.getTiltAngle({DIRECTION: direction}) >= 15;
+        const direction = args.DIRECTION;
+        if (direction === 'ANY') {
+            const tiltGestures = [
+                MbitMoreGestureName.TILT_UP,
+                MbitMoreGestureName.TILT_DOWN,
+                MbitMoreGestureName.TILT_LEFT,
+                MbitMoreGestureName.TILT_RIGHT
+            ];
+            return tiltGestures.some(name => {
+                const lastTimestamp = this._peripheral.getGestureEventTimestamp(name);
+                if (lastTimestamp === null) return false;
+                if (!this.prevGestureEvents[name]) return true;
+                return lastTimestamp !== this.prevGestureEvents[name];
+            });
+        }
+        const lastTimestamp = this._peripheral.getGestureEventTimestamp(direction);
+        if (lastTimestamp === null) return false;
+        if (!this.prevGestureEvents[direction]) return true;
+        return lastTimestamp !== this.prevGestureEvents[direction];
     }
 
     /**
-     * Get the tilt angle in a direction.
+     * Test whether the micro:bit is tilted to the selected direction.
      * @param {object} args - the block's arguments.
-     * @param {string} args.DIRECTION - the direction to check (FRONT, BACK, LEFT, RIGHT).
-     * @return {number} - the tilt angle in degrees.
+     * @param {string} args.DIRECTION - direction of tilt.
+     * @return {boolean} - true if the micro:bit is tilted.
+     */
+    isTilted (args) {
+        switch (args.DIRECTION) {
+        case 'ANY':
+            return Math.abs(this._peripheral.pitch) > 15 || Math.abs(this._peripheral.roll) > 15;
+        case MbitMoreGestureName.TILT_UP:
+            return this._peripheral.pitch < -15;
+        case MbitMoreGestureName.TILT_DOWN:
+            return this._peripheral.pitch > 15;
+        case MbitMoreGestureName.TILT_LEFT:
+            return this._peripheral.roll < -15;
+        case MbitMoreGestureName.TILT_RIGHT:
+            return this._peripheral.roll > 15;
+        default:
+            return false;
+        }
+    }
+
+    /**
+     * Get the tilt angle of the selected direction.
+     * @param {object} args - the block's arguments.
+     * @param {string} args.DIRECTION - direction of tilt.
+     * @return {number} - the tilt angle.
      */
     getTiltAngle (args) {
-        const direction = args.DIRECTION;
-        const pitch = this._peripheral.readPitch();
-        const roll = this._peripheral.readRoll();
-
-        switch (direction) {
+        switch (args.DIRECTION) {
         case 'FRONT':
-            return -pitch;
+            return -this._peripheral.pitch;
         case 'BACK':
-            return pitch;
+            return this._peripheral.pitch;
         case 'LEFT':
-            return -roll;
+            return -this._peripheral.roll;
         case 'RIGHT':
-            return roll;
+            return this._peripheral.roll;
         default:
             return 0;
         }
