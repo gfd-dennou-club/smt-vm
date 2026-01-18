@@ -30,6 +30,7 @@ const builtinExtensions = {
     smalrubotS1: () => require('../extensions/scratch3_smalrubot_s1')
 */
     kanirobo:   () => require('../extensions/smt_kanirobo'),
+    kaniroboR:  () => require('../extensions/smt_kaniroboR'),
     microcom:   () => require('../extensions/smt_microcom'),
     mctboard:   () => require('../extensions/smt_mctboard'),
     rboard:     () => require('../extensions/smt_rboard'),
