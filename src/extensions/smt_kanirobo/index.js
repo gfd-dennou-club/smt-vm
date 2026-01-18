@@ -14,8 +14,8 @@ const menuIconURI = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZ
 const KaniroboMenus = {
     menuMotorID: {
         items: [
-            { id: 'kanirobo.menuMotorID.right', default: 'right', value: '1' },
-            { id: 'kanirobo.menuMotorID.left', default: 'left', value: '2' }
+            { id: 'kanirobo.menuMotorID.right', default: 'right', value: '25' },
+            { id: 'kanirobo.menuMotorID.left',  default: 'left',  value: '32' }
         ]
     },
     menuMotorDir: {
@@ -37,16 +37,16 @@ const KaniroboMenus = {
     },
     menuSensorID: {
         items: [
-            { text: '1', value: '1' },
-            { text: '2', value: '2' },
-            { text: '3', value: '3' },
-            { text: '4', value: '4' }
+            { text: '1', value: '36' },
+            { text: '2', value: '34' },
+            { text: '3', value: '35' },
+            { text: '4', value: '2' }
         ]
     },
     menuServoID: {
         items: [
-            { text: '1', value: '1' },
-            { text: '2', value: '2' }
+            { text: '1', value: '27' },
+            { text: '2', value: '14' }
         ]
     },
     menuServoAngle: {

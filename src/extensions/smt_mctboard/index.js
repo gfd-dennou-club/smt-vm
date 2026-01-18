@@ -60,8 +60,8 @@ const MCTBoardMenus = {
     },
     menuLCD: {
 	items: [
-	    { text: '1', value: '0' },
-	    { text: '2', value: '1' }
+	    { text: '1', value: '1' },
+	    { text: '2', value: '2' }
 	]
     },
     menuRTC: {

@@ -65,6 +65,11 @@ const PeripheralsMenus = {
 	    { text: 'RX8035SA', value: 'RX8035SA' },
 	]
     },
+    menuLCD: {
+	items: [
+	    { text: 'AQM0802A', value: 'AQM0802A' },
+	]
+    },
     menuRTC: {
 	items: [
 	    {id: 'mctboard.menuRTC_str_datetime', default: '%Y%m%d %H%M%S', value: 'str_datetime' },
@@ -226,6 +231,64 @@ class Peripherals {
                     }
                     }
 */
+                {
+                    opcode: 'lcd_init',
+                    text: formatMessage({
+                        id: 'peripherals.lcd_init',
+                        default: 'LCD: [SENSOR] initialize'
+                    }),		    		    
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        SENSOR: {
+                            type: ArgumentType.STRING,
+                            menu: 'menuLCD'
+                        }
+                    }
+                },
+                {
+                    opcode: 'lcd_cursor',
+                    text: formatMessage({
+                        id: 'peripherals.lcd_cursor',
+                        default: 'LCD: [SENSOR] set cursor to line [LINE]',
+                    }),		    		    
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        SENSOR: {
+                            type: ArgumentType.STRING,
+                            menu: 'menuLCD'
+                        },
+			LINE: { type: ArgumentType.NUMBER, defaultValue: 1 }
+                    }
+                },
+                {
+                    opcode: 'lcd_print',
+                    text: formatMessage({
+                        id: 'peripherals.lcd_print',
+                        default: 'LCD: [SENSOR] print [TEXT]',
+                    }),		    		    
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+			SENSOR: {
+                            type: ArgumentType.STRING,
+                            menu: 'menuLCD'
+			},
+			TEXT: { type: ArgumentType.STRING, defaultValue: "hogehoge" }			
+		    }
+                },
+                {
+                    opcode: 'lcd_clear',
+                    text: formatMessage({
+                        id: 'peripherals.lcd_clear',
+                        default: 'LCD: [SENSOR] clear',
+                    }),		    		    
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+			SENSOR: {
+                            type: ArgumentType.STRING,
+			    menu: 'menuLCD'
+                        },
+                    }
+                },
                 {
                     opcode: 'rtc_init',
                     text: formatMessage({
@@ -429,6 +492,7 @@ class Peripherals {
 		menuSensors:  { acceptReporters: false, items: createMenuItems('menuSensors')},
 		menuSensors2: { acceptReporters: false, items: createMenuItems('menuSensors2')},
 		menuTargets:  { acceptReporters: false, items: createMenuItems('menuTargets')},
+		menuLCD:      { acceptReporters: false, items: createMenuItems('menuLCD')},
 		// menuILI934Xline:   { acceptReporters: false, items: createMenuItems('menuILI934Xline')},
 		// menuILI934Xcircle: { acceptReporters: false, items: createMenuItems('menuILI934Xcircle')},
 		// menuILI934Xcolor:  { acceptReporters: false, items: createMenuItems('menuILI934Xcolor')},
@@ -447,6 +511,10 @@ class Peripherals {
 //    ili934x_write_line() {}
 //    ili934x_write_circle() {}
 //    ili934x_write_string() {}
+    lcd_init(){}
+    lcd_cursor(){}
+    lcd_print(){}
+    lcd_clear(){}
     rtc_init(){}
     rtc_write(){}
     rtc_read(){}
