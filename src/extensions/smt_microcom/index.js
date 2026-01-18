@@ -62,6 +62,7 @@ const MicrocomMenus = {
     },
     menuTools: {
         items: [
+	    { id: 'microcom.menutools.str',    default: '.to_s',     value: 'to_s' },
             { id: 'microcom.menutools.str16',  default: '.to_s(16)', value: 'to_s(16)' },
 	    { id: 'microcom.menutools.ord',    default: '.ord',      value: 'ord' },
             { id: 'microcom.menutools.bytes',  default: '.bytes',    value: 'bytes' },
