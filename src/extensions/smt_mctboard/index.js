@@ -410,6 +410,7 @@ class Mctboard {
 			MODE: { type: ArgumentType.STRING, menu: 'menuSDread' }
                     }		    
                 },		
+/*
                 {
                     opcode: 'puts',
                     text: formatMessage({ id: 'kanirobo.puts', default: 'output [TEXT]'}),
@@ -418,7 +419,8 @@ class Mctboard {
 			TEXT: { type: ArgumentType.STRING, defaultValue: "test" }
                     }
                 }
-            ],
+*/
+	    ],
             //ドロップボックスメニューを使う場合は以下に定義が必要
             menus: {
 		menuONOFF: { acceptReporters: false, items: createMenuItems('menuONOFF') },

@@ -551,6 +551,7 @@ class Microcom {
                         }
                     }
                 },
+/*
                 {
                     opcode: 'puts',
                     text: formatMessage({
@@ -573,7 +574,8 @@ class Microcom {
 			TEXT: { type: ArgumentType.STRING, defaultValue: "xxxxx" }
                     }
 		}
-            ],
+*/
+	    ],
             menus: {
                 menuGPIOdirection:  { acceptReporters: false, items: createMenuItems('menuGPIOdirection') },
                 menuTools:  { acceptReporters: false, items: createMenuItems('menuTools') },

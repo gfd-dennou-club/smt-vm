@@ -138,6 +138,7 @@ class Rboard {
                         PIN: { type: ArgumentType.STRING, menu: 'menuADC'}
                     }
                 },
+/*
                 {
                     opcode: 'puts',
                     text: formatMessage({
@@ -149,6 +150,7 @@ class Rboard {
 			TEXT: { type: ArgumentType.STRING, defaultValue: "xxxxx" }
                     }
 		}
+*/		
 	    ],
 	    
 	    //ドロップボックスメニューを使う場合は以下に定義が必要

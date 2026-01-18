@@ -109,6 +109,7 @@ class KaniroboR {
                         AGL: { type: ArgumentType.STRING, menu: 'menuServoAngle'}
                     }
                 },
+/*		
                 {
                     opcode: 'puts',
                     text: formatMessage({ id: 'kaniroboR.puts', default: 'output [TEXT]' }),
@@ -117,6 +118,7 @@ class KaniroboR {
                         TEXT: { type: ArgumentType.STRING, defaultValue: "test" }
                     }
                 }
+*/
             ],
             menus: {
                 menuMotorID:    { acceptReporters: false, items: createMenuItems('menuMotorID') },
