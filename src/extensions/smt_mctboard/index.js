@@ -381,14 +381,6 @@ class Mctboard {
                     }
                 },
                 {
-                    opcode: 'sd_close',
-                    text: formatMessage({
-                        id: 'mctboard.sd_close',
-                        default: 'SD: file close'
-                    }),		    		    
-                    blockType: BlockType.COMMAND,
-                },
-                {
                     opcode: 'sd_puts',
                     text: formatMessage({
                         id: 'mctboard.sd_puts',
@@ -410,6 +402,14 @@ class Mctboard {
 			MODE: { type: ArgumentType.STRING, menu: 'menuSDread' }
                     }		    
                 },		
+                {
+                    opcode: 'sd_close',
+                    text: formatMessage({
+                        id: 'mctboard.sd_close',
+                        default: 'SD: file close'
+                    }),		    		    
+                    blockType: BlockType.COMMAND,
+                },
 /*
                 {
                     opcode: 'puts',
