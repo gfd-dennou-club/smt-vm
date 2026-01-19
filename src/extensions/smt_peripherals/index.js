@@ -431,7 +431,6 @@ class Peripherals {
 			TARGET: { type: ArgumentType.STRING, menu: 'menuSNTP' }
                     }
                 },
-/*		
                 {
                     opcode: 'sd_init',
                     text: formatMessage({
@@ -486,7 +485,14 @@ class Peripherals {
                     }),		    		    
                     blockType: BlockType.COMMAND,
                 },
-*/		    		    
+                {
+                    opcode: 'sd_umount',
+                    text: formatMessage({
+                        id: 'peripherals.sd_umount',
+                        default: 'SD: umount'
+                    }),		    		    
+                    blockType: BlockType.COMMAND,
+                },
             ],
 	    menus: {
 		menuSensors:  { acceptReporters: false, items: createMenuItems('menuSensors')},
@@ -529,9 +535,10 @@ class Peripherals {
     sntp_value(){}
     sd_init(){}
     sd_open(){}
-    sd_close(){}
     sd_puts(){}
     sd_gets(){}
+    sd_close(){}
+    sd_umount(){}
 }
 
 module.exports = Peripherals
